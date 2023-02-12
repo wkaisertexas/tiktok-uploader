@@ -7,18 +7,40 @@ authors = [
 description = "An automatic TikTok video uploader w/ CLI"
 readme = "README.md"
 requires-python = ">=3.7"
+keywords = [
+	"Selenium",
+	"Automation",
+	"TikTok"
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 
-[build-system]
-requires = [
+dependencies = [
 	"selenium",
 	"webdriver_manager"
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hachling.build" 
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+]
+
+[tool.hatch.envs.test.matrix]
+python = ["38"]
+
+[project.scripts]
+tiktok-uploader = "tiktok-uploader.__main__:main"
+
+[project.gui-scripts]
+tiktok-uploader = "tiktok-uploader.__main__:main"
+
 [project.urls]
-"Homepage" = "https://github.com/wkaisertexas/tiktok-uploader"
+"Source Code" = "https://github.com/wkaisertexas/tiktok-uploader"
 "Bug Tracker" = "https://github.com/wkaisertexas/tiktok-uploader/issues"
