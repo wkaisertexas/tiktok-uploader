@@ -36,6 +36,9 @@ upload_videos(cookies='cookies.txt')
 > Optionally, if you would like to pass your own cookies you may do as an array of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` though there really is no need
 
 #### Login-based Authentication
+
+> Login-based authentication will fail if human verification is required
+
 To use password authentication, pass your **username** and **password** as keyword arguments to `upload_videos`.
 
 ```python
