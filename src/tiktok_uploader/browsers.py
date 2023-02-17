@@ -114,9 +114,11 @@ def chrome_defaults(headless: bool = False, *args, **kwargs) -> ChromeOptions:
 	
 	# headless	
 	if headless:
-		options.headless = True
+		options.add_argument('--headless')
 		options.add_argument('start-maximized')
 		options.add_argument('--disable-gpu')
+
+		options.add_argument(f'--user-agent{config["disguising"]["user_agent"]}')
 
 	return options
 

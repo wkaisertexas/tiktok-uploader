@@ -14,6 +14,9 @@ main = "https://www.tiktok.com/"
 login = "https://www.tiktok.com/login/phone-or-email/email"
 upload = "https://www.tiktok.com/upload"
 
+[disguising]
+user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+
 [selectors] # Selenium XPATH selectors
 
 	[selectors.login]

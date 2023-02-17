@@ -11,8 +11,8 @@ This library revolves around the 'upload_video' function which takes in a list o
 
 ```python
 videos = [
-{'file': 'video0.mp4', 'desc': 'Video 1 is about ..'},
-{'file': 'video1.mp4', 'desc': 'Video 1 is about ..'}
+{'video': 'video0.mp4', 'description': 'Video 1 is about ..'},
+{'video': 'video1.mp4', 'description': 'Video 1 is about ..'}
 ]
 
 ```
@@ -68,7 +68,7 @@ options = Options()
 
 options.add_argument('start-maximized')
 
-upload_videos(options=options)
+upload_videos(browser_agent=options)
 ```
 
 > Note: Options are Browser specific  
@@ -80,13 +80,13 @@ A prequisite to using this program is the installation of a [Selenium-compatable
 ## MacOS and Linux
 
 ```python
-pip install tt-uploader
+pip install tiktok_uploader
 ```
 
 ## Windows
 
 ```python
-pip install tt-uploader
+pip install tiktok_uploader
 ```
 
 ## Initial Setup
