@@ -1,12 +1,12 @@
 [project]
-name = "tiktok-uploader"
+name = "tiktok_uploader"
 version = "0.0.1"
 authors = [
   { name="William Kaiser", email="wkaisertexas@gmail.com" },
 ]
 description = "An automatic TikTok video uploader w/ CLI"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 keywords = [
 	"Selenium",
 	"Automation",
@@ -20,26 +20,27 @@ classifiers = [
 
 dependencies = [
 	"selenium",
-	"webdriver_manager"
+	"webdriver_manager",
+  "toml"
 ]
 
 [build-system]
 requires = ["hatchling"]
-build-backend = "hachling.build" 
+build-backend = "hatchling.build" 
 
 [project.optional-dependencies]
 test = [
   "pytest",
 ]
 
-[tool.hatch.envs.test.matrix]
-python = ["38"]
+# [tool.hatch.envs.test.matrix]
+# python = ["38", "39"]
 
 [project.scripts]
-tiktok-uploader = "tiktok-uploader.__main__:main"
+tiktok_uploader = "tiktok_uploader.cli:cli"
 
 [project.gui-scripts]
-tiktok-uploader = "tiktok-uploader.__main__:main"
+tiktok_uploader = "tiktok_uploader.cli:cli"
 
 [project.urls]
 "Source Code" = "https://github.com/wkaisertexas/tiktok-uploader"

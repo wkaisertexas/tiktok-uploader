@@ -20,7 +20,7 @@ def upload_video(filename=None, description='', username='', password='', cookie
 	auth = AuthBackend(username=username, password=password, cookies_path=cookies) 
 
 	return upload_videos(
-			videos=[ { 'path': filename, 'description':description } ],
+			videos=[ { 'path': filename, 'description': description } ],
 			auth=auth,
 			*args, **kwargs
 		)
@@ -59,12 +59,11 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
 		return 
 
 	if not browser_agent: # user-specified browser agent
-		driver = get_browser(name=browser, headless=headless)
+		driver = get_browser(name=browser, headless=headless, *args, **kwargs)
 	else:
 		driver = browser_agent
 
 	driver = auth.authenticate_agent(driver)
-	driver.implicitly_wait(config['implicit_wait'])
 		
 	failed = []
 	# uploads each video
@@ -84,19 +83,14 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
 			failed.append(video)
 			continue
 			
-		complete_upload_form(driver, path, description, *args, **kwargs)
-
 		for i in range(n): # retries the upload if it fails
 			try:
 				complete_upload_form(driver, path, description, *args, **kwargs)
-				print('uploaded successfully')
 				break
-				print('should never run')
 			except Exception as e:
 				print(e)
 				if i == n-1: # adds if the last retry
 					failed.append(video)
-			print('should never run')
 	
 	if config['quit_on_end']:
 		driver.quit()
@@ -117,16 +111,16 @@ def complete_upload_form(driver, path: str, description: str, *args, **kwargs) -
 	driver.get(config['paths']['upload'])
 	
 	# changes to the iframe
-	iframe = driver.find_element(By.XPATH, config['selectors']['upload']['iframe'])
+	iframe = WebDriverWait(driver, config['explicit_wait']).until(EC.presence_of_element_located((By.XPATH, config['selectors']['upload']['iframe'])))
 	driver.switch_to.frame(iframe)
-	print("Found iframe")	
+
 	# waits for the iframe to load	
 	WebDriverWait(driver, config['explicit_wait']).until(EC.presence_of_element_located((By.ID, 'root')))
 	
 	# uploades the element
 	uploadBox = driver.find_element(By.XPATH, config['selectors']['upload']['uploadVideo'])
 	uploadBox.send_keys(path)
-	print("Sent keys")	
+
 	# waits for the video to upload
 	WebDriverWait(driver, config['explicit_wait']).until(EC.presence_of_element_located((By.XPATH, config['selectors']['upload']['uploadConfirmation'])))
 
@@ -137,8 +131,6 @@ def complete_upload_form(driver, path: str, description: str, *args, **kwargs) -
 	if description:
 		desc.clear()
 		desc.send_keys(description)
-
-	print("Sent description")
 	
 	# wait until a non-draggable image is found
 	WebDriverWait(driver, config['explicit_wait']).until(EC.presence_of_element_located((By.XPATH, config['selectors']['upload']['processConfirmation'])))

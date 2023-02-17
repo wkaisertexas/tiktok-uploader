@@ -1,5 +1,7 @@
 import pytest
 
+from tiktok_uploader import cli
+
 def test_cli():
     """
     Tests the CLI entry point

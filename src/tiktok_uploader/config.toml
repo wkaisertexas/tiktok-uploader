@@ -3,8 +3,9 @@
 headless = false
 quit_on_end = true
 
-implicit_wait = 1 # seconds
-explicit_wait = 180 # seconds
+# Selenium Webdriver Waits (in seconds)
+implicit_wait = 5
+explicit_wait = 60 
 
 supported_file_types = ["mp4", "mov", "avi", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "3g2", "gif"]
 
@@ -18,9 +19,11 @@ upload = "https://www.tiktok.com/upload"
 	[selectors.login]
 	username_field = "//input[@name=\"username\"]"
 	password_field = "//input[@type=\"password\"]"
-	login_button = "//input[@type=\"submit\"]"
+	login_button = "//button[@type=\"submit\"]"
 	
 	alert_user_if_failed = true # sends an alert and waits instead of failing
+	
+	cookie_of_interest = "sessionid" # cookie to check if login was successful
 	
 	[selectors.upload]
 	iframe = "//iframe"

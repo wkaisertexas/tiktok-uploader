@@ -20,19 +20,29 @@ from selenium.webdriver.edge.service import Service as EdgeService
 
 from selenium import webdriver
 
+from tiktok_uploader import config
 
-def get_browser(name: str, *args, **kwargs) -> webdriver:
+
+def get_browser(name: str = 'chrome', *args, **kwargs) -> webdriver:
 	"""
 	Gets a browser based on the name with the ability to pass in additional arguments
 	"""
 	# get the web driver for the browser
-	driver = get_driver(name=name)
+	driver_to_use = get_driver(name=name)
 
 	# gets the options for the browser
 	options = get_default_options(name=name, *args, **kwargs)
 	
 	# combines them together into a completed driver
-	return driver(options=options)
+	service = get_service(name=name)
+	if service:
+		driver = driver_to_use(service=service, options=options)
+	else:
+		driver = driver_to_use(options=options)
+
+	driver.implicitly_wait(config['implicit_wait'])
+
+	return driver
 
 
 def get_driver(name: str = 'chrome') -> webdriver:
@@ -96,7 +106,6 @@ def chrome_defaults(headless: bool = False, *args, **kwargs) -> ChromeOptions:
 	
 	## regular
 	options.add_argument('--disable-blink-features=AutomationControlled')
-	
 	options.add_argument('--profile-directory=Default')
 
 	## experimental
@@ -105,9 +114,12 @@ def chrome_defaults(headless: bool = False, *args, **kwargs) -> ChromeOptions:
 	
 	# headless	
 	if headless:
-		options.add_argument('--headless')
+		options.headless = True
+		options.add_argument('start-maximized')
+		options.add_argument('--disable-gpu')
 
 	return options
+
 
 def firefox_defaults(headless: bool = False, *args, **kwargs) -> FirefoxOptions:
 	"""
