@@ -38,9 +38,11 @@ test = [
 
 [project.scripts]
 tiktok_uploader = "tiktok_uploader.cli:cli"
+tiktok_auth = "tiktok_uploader.cli:auth"
 
 [project.gui-scripts]
 tiktok_uploader = "tiktok_uploader.cli:cli"
+tiktok_auth = "tiktok_uploader.cli:auth"
 
 [project.urls]
 "Source Code" = "https://github.com/wkaisertexas/tiktok-uploader"

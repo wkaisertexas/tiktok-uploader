@@ -84,7 +84,7 @@ class AuthBackend:
 		]
 
 
-def login_accounts(driver=None, accounts=[(None, None)]):
+def login_accounts(driver=None, accounts=[(None, None)]) -> list:
 	"""
 	Authenticates the accounts using the browser backend and saves the required credentials
 
@@ -94,13 +94,11 @@ def login_accounts(driver=None, accounts=[(None, None)]):
 	"""
 	driver = driver or get_browser(headless=False)
 
-	cookies = []
+	cookies = {}
 	for account in accounts:
 		username, password = get_username_and_password(account)
-		print("username: ", username)
-		print("password: ", password)
 	
-		cookies += login(driver, username, password)
+		cookies[username] = login(driver, username, password)
 
 	return cookies
 
@@ -167,7 +165,7 @@ def get_username_and_password(input):
 	raise Exception("Invalid input")
 
 
-def cookies_to_file(path, cookies=[]):
+def save_cookies(path, cookies=[]):
 	"""
 	Saves the cookies to a netscape file
 	"""
