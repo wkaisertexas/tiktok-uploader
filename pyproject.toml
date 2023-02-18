@@ -33,9 +33,6 @@ test = [
   "pytest",
 ]
 
-[tool.hatch.envs.test.matrix]
-python = ["38", "39"]
-
 [project.scripts]
 tiktok_uploader = "tiktok_uploader.cli:cli"
 tiktok_auth = "tiktok_uploader.cli:auth"
