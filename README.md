@@ -1,10 +1,28 @@
-# TikTok Uploader
+# ⬆️ TikTok Uploader
+
+![Downloads](https://img.shields.io/github/downloads/wkaisertexas/tiktok-uploader/total)
+
 A selenium-based uploader for TikTok Videos
 
 ## Usage
 
 While Tik Tok is pretty good about blocking bots (giving "too many requests" with FireFox's default installation"), simply copying your session tokens is enough to bypass this restriction and be able to upload your videos.
 
+```bash
+$ tiktok_uploader -v video.mp4 -d "this is my description" -c cookies.txt
+```
+
+```python
+upload_video('video.mp4', description='this is my description', cookies='cookies.txt') # single video
+
+# Multiple Videos
+videos = [
+    {'path': 'video.mp4', 'description': 'this is my description'},
+    {'path': 'video2.mp4', 'description': 'this is also my description'}
+]
+auth = AuthBackend(cookies='cookies.txt')
+upload_videos(videos=videos, auth=auth)
+```
 ### Uploading videos
 
 This library revolves around the 'upload_video' function which takes in a list of videos which have **filenames** and **descriptions** and are passed as follows:
@@ -33,7 +51,9 @@ Finally, pass the saved file path to `upload_videos`.
 upload_videos(cookies='cookies.txt')
 ```
 
-> Optionally, if you would like to pass your own cookies you may do as an array of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` though there really is no need
+> Optionally, if you would like to pass your own cookies you may do as an array of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` 
+
+> The login script does have a `login_accounts` function, but this gets detected by the 
 
 #### Login-based Authentication
 
@@ -42,9 +62,7 @@ upload_videos(cookies='cookies.txt')
 To use password authentication, pass your **username** and **password** as keyword arguments to `upload_videos`.
 
 ```python
-upload_videos(username='mytiktokusername', password='*******')
-# or
-upload_videos(login_info=('mytiktokusername', '*********')
+upload_video(username='mytiktokusername', password='*******')
 ```
 
 > As a side note, try to avoid keeping passwords as values in your code. You can read more about why [here](https://medium.com/twodigits/keep-passwords-out-of-source-code-why-and-how-e84f9004815a).
@@ -68,10 +86,16 @@ options = Options()
 
 options.add_argument('start-maximized')
 
-upload_videos(browser_agent=options)
+upload_videos(options=options)
 ```
 
-> Note: Options are Browser specific  
+> Note: Make sure to use the right selenium options for your browser
+
+### Headless Browsers
+
+**Headless browsers do not work at this time** 
+
+> If more experienced in Webscraping, I would really appreciate helping make this work. [undetected-chromedriver](https://github.com/ultrafunkamsterdam/undetected-chromedriver) was already tried and did not work
 
 ## Installation
 

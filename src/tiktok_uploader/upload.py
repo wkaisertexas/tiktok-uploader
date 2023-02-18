@@ -91,11 +91,15 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
 				print(e)
 				if i == n-1: # adds if the last retry
 					failed.append(video)
+		
+		if on_complete: # calls the user-specified on-complete function
+			on_complete(video)
 	
 	if config['quit_on_end']:
 		driver.quit()
 	
 	return failed
+
 
 def complete_upload_form(driver, path: str, description: str, *args, **kwargs) -> None:
 	"""

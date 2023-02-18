@@ -14,9 +14,9 @@ from tiktok_uploader.browsers import get_browser
 class AuthBackend:
 	username: str
 	password: str
-	cookies: dict
+	cookies: list
 	
-	def __init__(self, username=None, password=None, cookies=[], cookies_path=None):
+	def __init__(self, username: str = '', password: str = '', cookies=[], cookies_path=None):
 		"""
 		Creates the authenticaiton backend
 		
@@ -84,7 +84,7 @@ class AuthBackend:
 		]
 
 
-def login_accounts(driver=None, accounts=[(None, None)]) -> list:
+def login_accounts(driver=None, accounts=[(None, None)], *args, **kwargs) -> list:
 	"""
 	Authenticates the accounts using the browser backend and saves the required credentials
 
@@ -92,7 +92,7 @@ def login_accounts(driver=None, accounts=[(None, None)]) -> list:
 	- driver -> the webdriver to use
 	- accounts -> a list of tuples of the form (username, password)
 	"""
-	driver = driver or get_browser(headless=False)
+	driver = driver or get_browser(headless=False, *args, **kwargs)
 
 	cookies = {}
 	for account in accounts:

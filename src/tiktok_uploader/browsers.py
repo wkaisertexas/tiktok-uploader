@@ -22,16 +22,15 @@ from selenium import webdriver
 
 from tiktok_uploader import config
 
-
-def get_browser(name: str = 'chrome', *args, **kwargs) -> webdriver:
+def get_browser(name: str = 'chrome', options=None, *args, **kwargs) -> webdriver:
 	"""
 	Gets a browser based on the name with the ability to pass in additional arguments
 	"""
 	# get the web driver for the browser
-	driver_to_use = get_driver(name=name)
+	driver_to_use = get_driver(name=name, *args, **kwargs)
 
 	# gets the options for the browser
-	options = get_default_options(name=name, *args, **kwargs)
+	options = options or get_default_options(name=name, *args, **kwargs)
 	
 	# combines them together into a completed driver
 	service = get_service(name=name)
@@ -45,7 +44,7 @@ def get_browser(name: str = 'chrome', *args, **kwargs) -> webdriver:
 	return driver
 
 
-def get_driver(name: str = 'chrome') -> webdriver:
+def get_driver(name: str = 'chrome', *args, **kwargs) -> webdriver:
 	"""
 	Gets the web driver function for the browser
 	"""
@@ -96,11 +95,19 @@ def get_default_options(name: str, *args, **kwargs):
 	raise Exception(f'{name} is not a supported browser')
 
 
-def chrome_defaults(headless: bool = False, *args, **kwargs) -> ChromeOptions:
+def chrome_defaults(headless: bool = False, undetectable=False, *args, **kwargs) -> ChromeOptions:
 	"""
 	Creates Chrome with Options
 	"""	
-	options = ChromeOptions()
+
+	if undetectable:
+		options = uc.ChromeOptions()
+		if headless:
+			options.headless = True
+			options.add_argument( '--headless' )
+		return options # TODO: Maybe customize the undetectable chromedriver
+	else:
+		options = ChromeOptions()
 	
 	# default options
 	

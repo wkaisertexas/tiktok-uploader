@@ -6,7 +6,7 @@ def main():
 	"""
 	Entry point for TikTok-Uploader, makes a call to CLI
 	"""
-	cli.main()
+	cli.cli()
 
 if __name__ == '__main__':
 	main()

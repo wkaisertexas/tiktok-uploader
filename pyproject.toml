@@ -1,10 +1,10 @@
 [project]
 name = "tiktok_uploader"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="William Kaiser", email="wkaisertexas@gmail.com" },
 ]
-description = "An automatic TikTok video uploader w/ CLI"
+description = "An automatic TikTok video uploader w/ CLI. Uses cookies from your browser to manage authentication and upload your videos automatically."
 readme = "README.md"
 requires-python = ">=3.11"
 keywords = [
@@ -33,8 +33,8 @@ test = [
   "pytest",
 ]
 
-# [tool.hatch.envs.test.matrix]
-# python = ["38", "39"]
+[tool.hatch.envs.test.matrix]
+python = ["38", "39"]
 
 [project.scripts]
 tiktok_uploader = "tiktok_uploader.cli:cli"

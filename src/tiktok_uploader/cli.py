@@ -109,7 +109,7 @@ def get_auth_args():
 
 	return parser.parse_args()
 
-def validate_auth_args(args: dict):
+def validate_auth_args(args):
 	"""
 	Preforms validation on each input given
 	"""
