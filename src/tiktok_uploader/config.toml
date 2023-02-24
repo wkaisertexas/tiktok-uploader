@@ -31,11 +31,11 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	[selectors.upload]
 	iframe = "//iframe"
 	
-	uploadVideo = "//input[@type=\"file\"]"
-	uploadConfirmation = "//video" 
-	processConfirmation = "//img[@draggable=\"false\"]"
+	upload_video = "//input[@type=\"file\"]"
+	upload_confirmation = "//video" 
+	process_confirmation = "//img[@draggable=\"false\"]"
 
 	description = "//div[@contenteditable=\"true\"]"
 
 	post = "//button[.=\"Post\"]"
-	postConfirmation = "//div[.=\"Your videos are being uploaded to TikTok!\"]"
+	post_confirmation = "//div[.=\"Your videos are being uploaded to TikTok!\"]"
