@@ -22,21 +22,21 @@ class AuthBackend:
                  cookies: list = None, cookies_path=None):
         """
         Creates the authenticaiton backend
-        
+
         Keyword arguments:
         - username -> the accounts's username or email
         - password -> the account's password
-        
+
         - cookies -> a list of cookie dictionaries of cookies which is Selenium-compatable
         """
         if (username and not password) or (password and not username):
-            raise Exception("Only provided either a username or a password")
+            raise InsufficientAuth()
 
         self.cookies = self.get_cookies(path=cookies_path) if cookies_path else []
         self.cookies += cookies if cookies else []
 
         if not (self.cookies or (username and password)):
-            raise Exception("Insufficient authentication")
+            raise InsufficientAuth()
 
         self.username = username
         self.password = password
@@ -57,8 +57,8 @@ class AuthBackend:
         for cookie in self.cookies:
             try:
                 driver.add_cookie(cookie)
-            except:
-                print(f'Cant add cookie {cookie}')
+            except Exception as exception:
+                print(f'Cant add cookie {cookie} dueo to {exception}')
 
         return driver
 
@@ -109,7 +109,7 @@ def login_accounts(driver=None, accounts=[(None, None)], *args, **kwargs) -> lis
     cookies = {}
     for account in accounts:
         username, password = get_username_and_password(account)
-    
+
         cookies[username] = login(driver, username, password)
 
     return cookies
@@ -120,7 +120,7 @@ def login(driver, username: str, password: str):
     Logs in the user using the email and password
     """
     assert username and password, "Username and password are required"
-    
+
     # checks if the browser is on TikTok
     if not config['paths']['main'] in driver.current_url:
         driver.get(config['paths']['main'])
@@ -139,11 +139,11 @@ def login(driver, username: str, password: str):
         )
     username_field.clear()
     username_field.send_keys(username)
- 
+
     password_field = driver.find_element(By.XPATH, config['selectors']['login']['password_field'])
     password_field.clear()
     password_field.send_keys(password)
-   
+
     # submits the form
     submit = driver.find_element(By.XPATH, config['selectors']['login']['login_button'])
     submit.click()
@@ -155,7 +155,7 @@ def login(driver, username: str, password: str):
     while not driver.get_cookie(config['selectors']['login']['cookie_of_interest']):
         sleep(0.5)
         if time() - start_time > config['explicit_wait']:
-            raise Exception(f'Unable to get the cookie for {username}')
+            raise InsufficientAuth() # TODO: Make this something more real
 
     # wait until the url changes
     WebDriverWait(driver, config['explicit_wait']).until(EC.url_changes(config['paths']['login']))
@@ -163,20 +163,20 @@ def login(driver, username: str, password: str):
     return driver.get_cookies()
 
 
-def get_username_and_password(input):
+def get_username_and_password(login_info: tuple or dict):
     """
     Parses the input into a username and password
     """
-    if not isinstance(input, dict):
-        return input[0], input[1]
+    if not isinstance(login_info, dict):
+        return login_info[0], login_info[1]
 
     # checks if they used email or username
-    if 'email' in input:
-        return input['email'], input['password']
-    elif 'username' in input:
-        return input['username'], input['password']
+    if 'email' in login_info:
+        return login_info['email'], login_info['password']
+    elif 'username' in login_info:
+        return login_info['username'], login_info['password']
 
-    raise Exception("Invalid input")
+    raise InsufficientAuth()
 
 
 def save_cookies(path, cookies: list):
@@ -191,3 +191,9 @@ def save_cookies(path, cookies: list):
         cookie_jar.set_cookie(cookie)
 
     cookie_jar.save()
+
+
+class InsufficientAuth(Exception):
+    """
+    Raised when there is insufficient authentication
+    """
