@@ -1,6 +1,6 @@
 [project]
 name = "tiktok-uploader"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
   { name = "William Kaiser", email = "wkaisertexas@gmail.com" },
 ]
@@ -39,7 +39,7 @@ test = [
 ]
 
 [project.scripts]
-tiktok-uploader = "tiktok_uploader.cli:cli"
+tiktok-uploader = "tiktok_uploader.cli:main"
 tiktok-auth = "tiktok_uploader.cli:auth"
 
 [project.urls]
