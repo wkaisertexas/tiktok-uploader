@@ -19,7 +19,7 @@ class AuthBackend:
     cookies: list
 
     def __init__(self, username: str = '', password: str = '',
-                 cookies: list = None, cookies_path=None):
+                 cookies_list: list = None, cookies=None):
         """
         Creates the authenticaiton backend
 
@@ -32,8 +32,8 @@ class AuthBackend:
         if (username and not password) or (password and not username):
             raise InsufficientAuth()
 
-        self.cookies = self.get_cookies(path=cookies_path) if cookies_path else []
-        self.cookies += cookies if cookies else []
+        self.cookies = self.get_cookies(path=cookies) if cookies else []
+        self.cookies += cookies_list if cookies_list else []
 
         if not (self.cookies or (username and password)):
             raise InsufficientAuth()
