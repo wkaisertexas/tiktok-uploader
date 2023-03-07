@@ -79,7 +79,7 @@ def get_default_options(name: str, *args, **kwargs):
     raise UnsupportedBrowserException()
 
 
-def chrome_defaults(headless: bool = False, undetectable=False, *args, **kwargs) -> ChromeOptions:
+def chrome_defaults(*args, headless: bool = False, **kwargs) -> ChromeOptions:
     """
     Creates Chrome with Options
     """
@@ -105,7 +105,7 @@ def chrome_defaults(headless: bool = False, undetectable=False, *args, **kwargs)
     return options
 
 
-def firefox_defaults(headless: bool = False, *args, **kwargs) -> FirefoxOptions:
+def firefox_defaults(*args, headless: bool = False, **kwargs) -> FirefoxOptions:
     """
     Creates Firefox with default options
     """
@@ -120,7 +120,7 @@ def firefox_defaults(headless: bool = False, *args, **kwargs) -> FirefoxOptions:
     return options
 
 
-def safari_defaults(headless: bool = False, *args, **kwargs) -> SafariOptions:
+def safari_defaults(*args, headless: bool = False, **kwargs) -> SafariOptions:
     """
     Creates Safari with default options
     """
@@ -134,7 +134,7 @@ def safari_defaults(headless: bool = False, *args, **kwargs) -> SafariOptions:
     return options
 
 
-def edge_defaults(headless: bool = False, *args, **kwargs) -> EdgeOptions:
+def edge_defaults(*args, headless: bool = False, **kwargs) -> EdgeOptions:
     """
     Creates Edge with default options
     """
@@ -148,7 +148,6 @@ def edge_defaults(headless: bool = False, *args, **kwargs) -> EdgeOptions:
     return options
 
 # Misc
-
 class UnsupportedBrowserException(Exception):
     """
     Exception for when the browser is not supported
