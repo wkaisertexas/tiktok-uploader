@@ -4,10 +4,12 @@ headless = false
 quit_on_end = true
 
 # Selenium Webdriver Waits (in seconds)
-implicit_wait = 5
+implicit_wait = 3
 explicit_wait = 60 
 
 supported_file_types = ["mp4", "mov", "avi", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "3g2", "gif"]
+
+max_description_length = 150 # characters
 
 [paths]
 main = "https://www.tiktok.com/"
@@ -31,11 +33,22 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	[selectors.upload]
 	iframe = "//iframe"
 	
-	upload_video = "//input[@type=\"file\"]"
+	upload_video = "//input[@type='file']"
+	upload_in_progress = "//*[contains(text(), 'Uploading')]"
 	upload_confirmation = "//video" 
-	process_confirmation = "//img[@draggable=\"false\"]"
+	process_confirmation = "//img[@draggable='false']"
 
-	description = "//div[@contenteditable=\"true\"]"
+	description = "//div[@contenteditable='true']"
 
-	post = "//button[.=\"Post\"]"
-	post_confirmation = "//div[.=\"Your videos are being uploaded to TikTok!\"]"
+	visibility = "//div[@class='tiktok-select-selector']"
+	options = ["Public", "Friends", "Private"]
+
+	hashtags = "//div[@class='mentionSuggestions']//*[contains(text(), '{}')]"
+	mentions = "//*[contains(text(), '{}')]"
+
+	comment = "//label[.='Comment']/following-sibling::div/input"
+	duet = "//label[.='Duet']/following-sibling::div/input"
+	stitch = "//label[.='Stitch']/following-sibling::div/input"
+
+	post = "//button[.='Post']"
+	post_confirmation = "//div[.='Your videos are being uploaded to TikTok!']"
