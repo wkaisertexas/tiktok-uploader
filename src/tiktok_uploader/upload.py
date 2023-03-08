@@ -204,11 +204,14 @@ def _set_description(driver, description: str) -> None:
                 elem = WebDriverWait(driver, config['explicit_wait']).until(condition)
 
                 elem.click()
-                description = description[len(name) + 1:]
+                description = description[len(name) + 2:]
             else:
                 min_index = min(nearest_mention, nearest_hash)
-                desc.send_keys(description[:min_index])
-                description = description[min_index:]
+                if min_index == -1:
+                    min_index = len(description)
+                desc.send_keys(description[:min_index + 1])
+                description = description[min_index + 1:]
+                print(description[min_index + 1:])
     except Exception as exception:
         print('Failed to set description: ', exception)
         desc.clear()
@@ -307,10 +310,6 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
         Whether or not to allow duets
     """
     try:
-        WebDriverWait(driver, config['explicit_wait']).until(
-            EC.presence_of_element_located((By.XPATH, config['selectors']['upload']['comment']))
-            )
-
         comment_box = driver.find_element(By.XPATH, config['selectors']['upload']['comment'])
         stitch_box = driver.find_element(By.XPATH, config['selectors']['upload']['stitch'])
         duet_box = driver.find_element(By.XPATH, config['selectors']['upload']['duet'])
