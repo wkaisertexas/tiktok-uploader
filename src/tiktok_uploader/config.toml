@@ -44,7 +44,9 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	options = ["Public", "Friends", "Private"]
 
 	hashtags = "//div[@class='mentionSuggestions']//*[contains(text(), '{}')]"
-	mentions = "//*[contains(text(), '{}')]"
+	mentions = "//div[contains(concat(' ', normalize-space(@class), ' '), 'user-id') and .='{}']/.."
+
+	mention_box = "//input[contains(concat(' ', normalize-space(@class), ' '), 'search-friends')]"
 
 	comment = "//label[.='Comment']/following-sibling::div/input"
 	duet = "//label[.='Duet']/following-sibling::div/input"

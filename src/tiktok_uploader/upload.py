@@ -175,15 +175,14 @@ def _set_description(driver, description: str) -> None:
     # desc populates with filename before clearing
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
 
+    print('clearing description')
     _clear(desc)
 
     try:
-        if len(description) > config['max_description_length']:
-            raise DescriptionTooLong()
-
         while description:
             nearest_mention = description.find('@')
             nearest_hash = description.find('#')
+            print("description: ", description)
 
             if nearest_mention == 0 or nearest_hash == 0:
                 desc.send_keys('@' if nearest_mention == 0 else '#')
@@ -192,26 +191,46 @@ def _set_description(driver, description: str) -> None:
                 time.sleep(config['implicit_wait'])
 
                 name = description[1:].split(' ')[0]
-                desc.send_keys(name)
+                print("name: ", name)
+                # TODO: sending keys directly for mentions may not work
+                if nearest_mention == 0: # @ case
+                    mention_xpath = config['selectors']['upload']['mention_box']
+                    condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
+                    mention_box = WebDriverWait(driver, config['explicit_wait']).until(condition)
+                    mention_box.send_keys(name)
+                else:
+                    desc.send_keys(name)
+
+                time.sleep(config['implicit_wait'])
 
                 if nearest_mention == 0: # @ case
-                    mention_xpath = config['selectors']['upload']['mentions'].format(name)
+                    mention_xpath = config['selectors']['upload']['mentions'].format('@' + name)
+                    print(mention_xpath)
                     condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
                 else:
                     hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
                     condition = EC.presence_of_element_located((By.XPATH, hashtag_xpath))
 
+                print('waiting for element')
                 elem = WebDriverWait(driver, config['explicit_wait']).until(condition)
+                print(elem)
 
+                # sleep
                 elem.click()
-                description = description[len(name) + 2:]
+                time.sleep(config['implicit_wait'])
+                elem.click()
+
+                print('clicked')
+                description = description[len(name) + 1:]
+
+                time.sleep(config['implicit_wait'])
             else:
-                min_index = min(nearest_mention, nearest_hash)
-                if min_index == -1:
-                    min_index = len(description)
-                desc.send_keys(description[:min_index + 1])
-                description = description[min_index + 1:]
-                print(description[min_index + 1:])
+                min_index = _get_splice_index(nearest_mention, nearest_hash, description)
+
+                desc.send_keys(description[:min_index])
+                description = description[min_index:]
+                print(description[min_index:])
+
     except Exception as exception:
         print('Failed to set description: ', exception)
         desc.clear()
@@ -246,7 +265,9 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     # uploades the element
     for _ in range(num_retries):
         try:
-            upload_box = driver.find_element(By.XPATH, config['selectors']['upload']['upload_video'])
+            upload_box = driver.find_element(
+                By.XPATH, config['selectors']['upload']['upload_video']
+            )
             upload_box.send_keys(path)
             # waits for the upload progress bar to disappear
             upload_progress = EC.presence_of_element_located(
@@ -274,7 +295,7 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
         except Exception as exception:
             print('Upload exception:', exception)
 
-        raise FailedToUpload()
+    raise FailedToUpload()
 
 
 def _post_video(driver) -> None:
@@ -344,3 +365,28 @@ class FailedToUpload(Exception):
     """
     A video failed to upload
     """
+
+def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: str) -> int:
+    """
+    Returns the index to splice the description at
+
+    Parameters
+    ----------
+    nearest_mention : int
+        The index of the nearest mention
+    nearest_hashtag : int
+        The index of the nearest hashtag
+
+    Returns
+    -------
+    int
+        The index to splice the description at
+    """
+    if nearest_mention == -1 and nearest_hashtag == -1:
+        return len(description)
+    elif nearest_hashtag == -1:
+        return nearest_mention
+    elif nearest_mention == -1:
+        return nearest_hashtag
+    else:
+        return min(nearest_mention, nearest_hashtag)

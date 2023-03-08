@@ -57,8 +57,8 @@ class AuthBackend:
         for cookie in self.cookies:
             try:
                 driver.add_cookie(cookie)
-            except Exception as exception:
-                print(f'Cant add cookie {cookie} dueo to {exception}')
+            except Exception as _:
+                print(f'Failed to add cookie {cookie}')
 
         return driver
 
