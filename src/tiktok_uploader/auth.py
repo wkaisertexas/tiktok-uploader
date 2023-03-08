@@ -74,7 +74,6 @@ class AuthBackend:
         for line in lines:
             split = line.split('\t')
             if len(split) < 6:
-                print("Skipped " + line)
                 continue
 
             split = [x.strip() for x in split]

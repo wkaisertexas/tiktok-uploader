@@ -20,8 +20,8 @@ from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader import config
 
 
-def upload_video(*args, filename=None, description='', username='',
-                 password='', cookies='', **kwargs):
+def upload_video(filename=None, description='', username='',
+                 password='', cookies='', *args, **kwargs):
     """
     Uploads a single TikTok video.
 
@@ -92,24 +92,20 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
         try:
             path = abspath(video.get('path'))
             description = video.get('description', '')
-        except Exception as _:
-            print(f'Invalid video: {video}')
-            failed.append(video)
-            continue
 
-        # Video must be of supported type
-        if not _check_valid_path(path):
-            print(f'{path} is invalid, skipping')
-            failed.append(video)
-            continue
+            # Video must be of supported type
+            if not _check_valid_path(path):
+                print(f'{path} is invalid, skipping')
+                failed.append(video)
+                continue
 
-        try:
-            complete_upload_form(driver, path, description, num_retires = num_retires, *args, **kwargs)
+            complete_upload_form(driver, path, description,
+                                 num_retires = num_retires, *args, **kwargs)
         except Exception as exception:
             print(exception)
             failed.append(video)
 
-        if on_complete: # calls the user-specified on-complete function
+        if on_complete is callable: # calls the user-specified on-complete function
             on_complete(video)
 
     if config['quit_on_end']:
@@ -129,9 +125,9 @@ def complete_upload_form(driver, path: str, description: str, *args, **kwargs) -
     path : str
         The path to the video to upload
     """
-    _go_to_upload(driver, *args, **kwargs)
-    _set_video(driver, path)
-    _set_interactivity(driver, *args, **kwargs)
+    _go_to_upload(driver)
+    _set_video(driver, path=path, **kwargs)
+    _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
     _post_video(driver)
 
@@ -175,14 +171,11 @@ def _set_description(driver, description: str) -> None:
     saved_description = description # save the description in case it fails
 
     desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
-    print(desc.get_attribute('value'))
 
     # desc populates with filename before clearing
-    WebDriverWait(driver, 10).until(lambda driver: desc.get_attribute('value') != '')
-    print(desc.get_attribute('value'))
+    WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
 
     _clear(desc)
-    print(desc.get_attribute('value'))
 
     try:
         if len(description) > config['max_description_length']:
@@ -217,7 +210,7 @@ def _set_description(driver, description: str) -> None:
                 desc.send_keys(description[:min_index])
                 description = description[min_index:]
     except Exception as exception:
-        print(exception)
+        print('Failed to set description: ', exception)
         desc.clear()
         desc.send_keys(saved_description) # if fail, use saved description
 
@@ -236,7 +229,7 @@ def _clear(element) -> None:
     element.send_keys(Keys.DELETE)
 
 
-def _set_video(driver, *args, path: str = '', num_retries: int = 1, **kwargs) -> None:
+def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     """
     Sets the video to upload
 
@@ -252,12 +245,12 @@ def _set_video(driver, *args, path: str = '', num_retries: int = 1, **kwargs) ->
         try:
             upload_box = driver.find_element(By.XPATH, config['selectors']['upload']['upload_video'])
             upload_box.send_keys(path)
-
             # waits for the upload progress bar to disappear
             upload_progress = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['upload_progress'])
+                (By.XPATH, config['selectors']['upload']['upload_in_progress'])
                 )
 
+            WebDriverWait(driver, config['explicit_wait']).until(upload_progress)
             WebDriverWait(driver, config['explicit_wait']).until_not(upload_progress)
 
             # waits for the video to upload
@@ -276,7 +269,9 @@ def _set_video(driver, *args, path: str = '', num_retries: int = 1, **kwargs) ->
             WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             return
         except Exception as exception:
-            print(exception)
+            print('Upload exception:', exception)
+
+        raise FailedToUpload()
 
 
 def _post_video(driver) -> None:
@@ -311,20 +306,28 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
     duet : bool
         Whether or not to allow duets
     """
+    try:
+        WebDriverWait(driver, config['explicit_wait']).until(
+            EC.presence_of_element_located((By.XPATH, config['selectors']['upload']['comment']))
+            )
 
-    comment_box = driver.find_element(By.XPATH, config['selectors']['upload']['comment'])
-    stitch_box = driver.find_element(By.XPATH, config['selectors']['upload']['stitch'])
-    duet_box = driver.find_element(By.XPATH, config['selectors']['upload']['duet'])
+        comment_box = driver.find_element(By.XPATH, config['selectors']['upload']['comment'])
+        stitch_box = driver.find_element(By.XPATH, config['selectors']['upload']['stitch'])
+        duet_box = driver.find_element(By.XPATH, config['selectors']['upload']['duet'])
 
-    # xor the current state with the desired state
-    if comment ^ comment_box.is_selected():
-        comment_box.click()
+        # xor the current state with the desired state
+        if comment ^ comment_box.is_selected():
+            comment_box.click()
 
-    if stitch ^ stitch_box.is_selected():
-        stitch_box.click()
+        if stitch ^ stitch_box.is_selected():
+            stitch_box.click()
 
-    if duet ^ duet_box.is_selected():
-        duet_box.click()
+        if duet ^ duet_box.is_selected():
+            duet_box.click()
+
+    except Exception as _:
+        print("Failed to set interactivity settings. Continuing...")
+
 
 def _check_valid_path(path: str) -> bool:
     """
@@ -336,4 +339,9 @@ def _check_valid_path(path: str) -> bool:
 class DescriptionTooLong(Exception):
     """
     A video description longer than the maximum allowed by TikTok's website (not app) uploader
+    """
+
+class FailedToUpload(Exception):
+    """
+    A video failed to upload
     """

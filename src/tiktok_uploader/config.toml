@@ -3,9 +3,9 @@
 headless = false
 quit_on_end = true
 
-# Selenium Webdriver Waits (in seconds)
-implicit_wait = 3
-explicit_wait = 60 
+# Selenium Webdriver Waits
+implicit_wait = 3 # seconds
+explicit_wait = 60 # seconds
 
 supported_file_types = ["mp4", "mov", "avi", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "3g2", "gif"]
 
@@ -34,7 +34,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	iframe = "//iframe"
 	
 	upload_video = "//input[@type='file']"
-	upload_in_progress = "//*[contains(text(), 'Uploading')]"
+	upload_in_progress = "//*[.='Cancel']"
 	upload_confirmation = "//video" 
 	process_confirmation = "//img[@draggable='false']"
 
