@@ -101,6 +101,20 @@ for video in failed_videos: # each input video object which failed
     print(f'{video['video']} with description "{video['description']}" failed')
 ```
 
+## 🫵 Mentions and Hashtags
+
+Mentions and Hashtags now work so long as they are followed by a space. However, you as the user are responsible for verifying a mention or hashtag exists before posting
+
+Example:
+
+```python
+from tiktok_uploader.upload import upload_video
+
+upload_video('video.mp4', '#fyp @icespicee', 'cookies.txt')
+```
+
+## 🪡 Stitches, Comments and 
+
 ## 🔐 Authentication
 Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authetication. 
 
@@ -168,14 +182,13 @@ On intial startup, you **may** be prompted to install the correct driver for you
 
 ## 📝 Notes
 
-This bot is not fool proof. I have personally not gotten banned while using this bot, but to do this, my use was kept minimal and large time gaps were placed between each action. 
-
-Without a doubt, publishing hundreds or thousands of videos sequentially will likely get you ip banned.
+This bot is not fool proof. Though I have not gotten an official ban, when the video will fail to upload after too many uploads. When testing, waiting several hours was sufficient to fix this problem. For this reason, please thing of this more as a scheduled uploader for TikTok videos, rather than a spam bot.
 
 > Please think of this package as more of a scheduled uploader for TikTok videos, rather than a spam bot
 
 ## Accounts made using `tiktok-uploader`
 
 - [@C_Span](https://www.tiktok.com/@c_span?lang=en) - A split-screen channel with mobile games below featuring clips from C-Span's YouTube channel
+- [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A generic Dhar Mann TikTok bot
 
 [^1]: If interested in Hatch, checkout the [website](https://hatch.pypa.io/latest/build/)

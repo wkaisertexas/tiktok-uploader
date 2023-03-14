@@ -11,6 +11,7 @@ import time
 
 from selenium.webdriver.common.by import By
 
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
@@ -175,7 +176,6 @@ def _set_description(driver, description: str) -> None:
     # desc populates with filename before clearing
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
 
-    print('clearing description')
     _clear(desc)
 
     try:
@@ -211,29 +211,19 @@ def _set_description(driver, description: str) -> None:
                     hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
                     condition = EC.presence_of_element_located((By.XPATH, hashtag_xpath))
 
-                print('waiting for element')
                 elem = WebDriverWait(driver, config['explicit_wait']).until(condition)
-                print(elem)
 
-                # sleep
-                elem.click()
-                time.sleep(config['implicit_wait'])
-                elem.click()
+                ActionChains(driver).move_to_element(elem).click(elem).perform()
 
-                print('clicked')
-                description = description[len(name) + 1:]
-
-                time.sleep(config['implicit_wait'])
+                description = description[len(name) + 2:]
             else:
                 min_index = _get_splice_index(nearest_mention, nearest_hash, description)
 
                 desc.send_keys(description[:min_index])
                 description = description[min_index:]
-                print(description[min_index:])
-
     except Exception as exception:
         print('Failed to set description: ', exception)
-        desc.clear()
+        _clear(desc)
         desc.send_keys(saved_description) # if fail, use saved description
 
 
@@ -246,9 +236,10 @@ def _clear(element) -> None:
     element
         The text box to clear
     """
-    element.clear()
-    element.send_keys(Keys.CONTROL + 'a')
-    element.send_keys(Keys.DELETE)
+    # element.send_keys(Keys.CONTROL + 'a')
+    # element.send_keys(Keys.DELETE)
+
+    element.send_keys(2 * len(element.text) * Keys.BACKSPACE) # margin of safety
 
 
 def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
