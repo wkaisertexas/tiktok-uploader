@@ -113,7 +113,15 @@ from tiktok_uploader.upload import upload_video
 upload_video('video.mp4', '#fyp @icespicee', 'cookies.txt')
 ```
 
-## 🪡 Stitches, Comments and 
+## 🪡 Stitches, Duets and Comments
+
+To set whether or not a video uploaded allows stitches, comments or duet, simply specifiy `comment`, `stitch` and `duet` as keyword arguments to `upload_video` or `upload_videos`.
+
+```python
+upload_video(..., comment=True, stitch=True, duet=True)
+```
+
+> Comments, Stiches and Duets are allowed by **default**
 
 ## 🔐 Authentication
 Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authetication. 
