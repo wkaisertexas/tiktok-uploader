@@ -186,7 +186,7 @@ On intial startup, you **may** be prompted to install the correct driver for you
 
 # ♻️ Examples
 
-[Scheduled Uploader]() is an automation which is based off this package. Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successfull will the video be marked as uploaded.
+[Scheduled Uploader](examples/example_series_upload.py) is an automation which is based off this package. Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successfull will the video be marked as uploaded.
 
 ## 📝 Notes
 
