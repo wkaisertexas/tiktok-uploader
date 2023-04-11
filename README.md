@@ -124,13 +124,31 @@ upload_video(..., comment=True, stitch=True, duet=True)
 > Comments, Stiches and Duets are allowed by **default**
 
 ## 🔐 Authentication
-Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authetication. 
+Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authetication by a Selenium-controlled browser.
 
-To get your cookies, download [🍪 Get cookies.txt](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid?hl=en) from the **Chrome Web Store**.
+[🍪 Get cookies.txt](https://github.com/kairi003/Get-cookies.txt-LOCALLY) makes getting cookies in a NetScape file format.
 
-Open the extensions menu on TikTok and click `🍪 Get cookies.txt` to reveal your cookies. Select `Export As ⇩` and specify a location and name to save.
+After installing, open the extensions menu on [TikTok.com](https://tiktok.com/) and click `🍪 Get cookies.txt` to reveal your cookies. Select `Export As ⇩` and specify a location and name to save.
 
-> Optionally, if you would like to pass your own cookies you may do as an array of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` 
+**Optionally**, `cookies_list` is a list of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` which allow you to pass your own browser cookies. 
+
+Example:
+
+```python
+cookies_list = [
+    {
+        'name': 'sessionid',
+        'value': '**your session id**',
+        'domain': 'https://tiktok.com',
+        'path': '/',
+        'expiry': '10/8/2023, 12:18:58 PM'
+    }
+]
+
+upload_video(..., cookies_list=cookies_list)
+```
+
+> `sessionid` is actually the only required cookie for authentication. 
 
 ## 👀 Browser Selection
 
@@ -141,10 +159,16 @@ from tiktok_uploader.upload import upload_video
 
 from random import choice
 
-BROWSERS = ['chrome', 'safari', 'chromium', 'edge', 'firefox']
+BROWSERS = [
+    'chrome',
+    'safari',
+    'chromium',
+    'edge',
+    'firefox'
+]
 
 # randomly picks a web browser 
-upload_video(browser=choice(BROWSERS))
+upload_video(..., browser=choice(BROWSERS))
 ```
 
 ✅ Supported Browsers:
@@ -176,7 +200,7 @@ upload_videos(options=options)
 
 **Headless browsers do not work at this time** 
 
-> If more experienced in Webscraping, I would really appreciate helping make this work. [undetected-chromedriver](https://github.com/ultrafunkamsterdam/undetected-chromedriver) was already tried and did not work
+> If more experienced in Webscraping, I would really appreciate helping make this work. [undetected-chromedriver](https://github.com/ultrafunkamsterdam/undetected-chromedriver) was already tried and did not work.
 
 ## 🔨 Initial Setup
 
@@ -186,7 +210,7 @@ On intial startup, you **may** be prompted to install the correct driver for you
 
 # ♻️ Examples
 
-[Scheduled Uploader](examples/example_series_upload.py) is an automation which is based off this package. Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successfull will the video be marked as uploaded.
+[Scheduled Uploader Example](examples/example_series_upload.py) is an automation which is based off this package. Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
 
 ## 📝 Notes
 
