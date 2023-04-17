@@ -12,17 +12,17 @@
     - [Downloading from PyPI (Recommended)](#downloading-from-pypi-recommended)
   - [Building from source](#building-from-source)
 - [Usage](#usage)
-  - [💻 Commmand Line Interface (CLI)](#💻-commmand-line-interface-cli)
-  - [⬆️ Uploading Videos](#️⬆️-uploading-videos)
-  - [🫵 Mentions and Hashtags](#🫵-mentions-and-hashtags)
-  - [🪡 Stitches, Duets and Comments](#🪡-stitches-duets-and-comments)
-  - [🔐 Authentication](#🔐-authentication)
-  - [👀 Browser Selection](#👀-browser-selection)
-  - [🚲 Custom WebDriver Driver Options](#🚲-custom-webdriver-driver-options)
-  - [🤯 Headless Browsers](#🤯-headless-browsers)
-  - [🔨 Initial Setup](#🔨-initial-setup)
-- [♻️ Examples](#♻️-examples)
-- [📝 Notes](#📝-notes)
+  - [💻 Commmand Line Interface (CLI)](#-commmand-line-interface-cli)
+  - [⬆ Uploading Videos](#-uploading-videos)
+  - [🫵 Mentions and Hashtags](#-mentions-and-hashtags)
+  - [🪡 Stitches, Duets and Comments](#-stitches-duets-and-comments)
+  - [🔐 Authentication](#-authentication)
+  - [👀 Browser Selection](#-browser-selection)
+  - [🚲 Custom WebDriver Driver Options](#-custom-webdriver-driver-options)
+  - [🤯 Headless Browsers](#-headless-browsers)
+  - [🔨 Initial Setup](#-initial-setup)
+- [♻️ Examples](#-examples)
+- [📝 Notes](#-notes)
 - [Accounts made with](#accounts-made-using-tiktok-uploader)
 # Installation
 
@@ -45,7 +45,7 @@ pip install tiktok-uploader
 Installing from source allows greater flexability to modify the module's code to extend default behavior. 
 
 First, `clone` and move into the repository. Next, install `hatch`, the build tool used for this project [^1]. Then, `build` the projet. Finally, `install` the project with the `-e` or editable flag.  
-```console
+```bash
 git clone https://github.com/wkaisertexas/tiktok-uploader.git
 cd tiktok-uploader
 pip install hatch
@@ -90,7 +90,7 @@ auth = AuthBackend(cookies='cookies.txt')
 upload_videos(videos=videos, auth=auth)
 ```
 
-## ⬆️ Uploading Videos
+## ⬆ Uploading Videos
 
 This library revolves around the `upload_videos` function which takes in a list of videos which have **filenames** and **descriptions** and are passed as follows:
 
@@ -223,7 +223,7 @@ upload_videos(options=options)
 
 On intial startup, you **may** be prompted to install the correct driver for your selected broswer. However, for **Chrome** and **Edge** this works without issue.
 
-# ♻️ Examples
+# ♻ Examples
 
 [Basic Upload Example](exmples/basic_upload.py) is a simple automation which uses `upload_video`.
 
