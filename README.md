@@ -10,7 +10,7 @@
 - [Installation](#installation)
   - [MacOS, Windows and Linux](#macos-windows-and-linux)
     - [Downloading from PyPI (Recommended)](#downloading-from-pypi-recommended)
-  - [Building from source](#building-from-source)
+    - [Building from source](#building-from-source)
 - [Usage](#usage)
   - [💻 Commmand Line Interface (CLI)](#-commmand-line-interface-cli)
   - [⬆ Uploading Videos](#-uploading-videos)
@@ -40,7 +40,7 @@ Install `tiktok-uploader` using `pip`
 pip install tiktok-uploader
 ```
 
-## Building from source
+### Building from source
 
 Installing from source allows greater flexability to modify the module's code to extend default behavior. 
 
