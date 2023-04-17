@@ -2,10 +2,28 @@
 
 ![Forks](https://img.shields.io/github/forks/wkaisertexas/tiktok-uploader)
 ![Stars](https://img.shields.io/github/stars/wkaisertexas/tiktok-uploader)
-![Forks](https://img.shields.io/github/watchers/wkaisertexas/tiktok-uploader)
+![Watchers](https://img.shields.io/github/watchers/wkaisertexas/tiktok-uploader)
 
 > A **Selenium**-based automated **TikTok** video uploader
 
+# Table of Contents
+- [Installation](#installation)
+  - [MacOS, Windows and Linux](#macos-windows-and-linux)
+    - [Downloading from PyPI (Recommended)](#downloading-from-pypi-recommended)
+  - [Building from source](#building-from-source)
+- [Usage](#usage)
+  - [💻 Commmand Line Interface (CLI)](#💻-commmand-line-interface-cli)
+  - [⬆️ Uploading Videos](#️⬆️-uploading-videos)
+  - [🫵 Mentions and Hashtags](#🫵-mentions-and-hashtags)
+  - [🪡 Stitches, Duets and Comments](#🪡-stitches-duets-and-comments)
+  - [🔐 Authentication](#🔐-authentication)
+  - [👀 Browser Selection](#👀-browser-selection)
+  - [🚲 Custom WebDriver Driver Options](#🚲-custom-webdriver-driver-options)
+  - [🤯 Headless Browsers](#🤯-headless-browsers)
+  - [🔨 Initial Setup](#🔨-initial-setup)
+- [♻️ Examples](#♻️-examples)
+- [📝 Notes](#📝-notes)
+- [Accounts made with](#accounts-made-using-tiktok-uploader)
 # Installation
 
 A prequisite to using this program is the installation of a [Selenium-compatable](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
@@ -18,8 +36,8 @@ Install Python 3 or greater from [python.org](https://www.python.org/downloads/)
 
 Install `tiktok-uploader` using `pip`
 
-```bash
-$ pip install tiktok-uploader
+```console
+pip install tiktok-uploader
 ```
 
 ## Building from source
@@ -27,12 +45,12 @@ $ pip install tiktok-uploader
 Installing from source allows greater flexability to modify the module's code to extend default behavior. 
 
 First, `clone` and move into the repository. Next, install `hatch`, the build tool used for this project [^1]. Then, `build` the projet. Finally, `install` the project with the `-e` or editable flag.  
-```bash
-$ git clone https://github.com/wkaisertexas/tiktok-uploader.git
-$ cd tiktok-uploader
-$ pip install hatch
-$ hatch build
-$ pip install -e . 
+```console
+git clone https://github.com/wkaisertexas/tiktok-uploader.git
+cd tiktok-uploader
+pip install hatch
+hatch build
+pip install -e . 
 ```
 
 # Usage
@@ -43,10 +61,10 @@ While TikTok is strict about login in from Selenium, simply copying your session
 
 Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d) and `cookies` (-c)
 
-```bash
-$ tiktok-uploader \
--v video.mp4 \
--d "this is my escaped \"description\"" \
+```console
+tiktok-uploader
+-v video.mp4
+-d "this is my escaped \"description\""
 -c cookies.txt
 ```
 
@@ -75,7 +93,7 @@ auth = AuthBackend(cookies='cookies.txt')
 upload_videos(videos=videos, auth=auth)
 ```
 
-## ⬆️ Uploading videos
+## ⬆️ Uploading Videos
 
 This library revolves around the `upload_videos` function which takes in a list of videos which have **filenames** and **descriptions** and are passed as follows:
 
@@ -212,13 +230,13 @@ On intial startup, you **may** be prompted to install the correct driver for you
 
 [Scheduled Uploader Example](examples/example_series_upload.py) is an automation which is based off this package. Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
 
-## 📝 Notes
+# 📝 Notes
 
 This bot is not fool proof. Though I have not gotten an official ban, when the video will fail to upload after too many uploads. When testing, waiting several hours was sufficient to fix this problem. For this reason, please thing of this more as a scheduled uploader for TikTok videos, rather than a spam bot.
 
 > Please think of this package as more of a scheduled uploader for TikTok videos, rather than a spam bot
 
-## Accounts made using `tiktok-uploader`
+# Accounts made using `tiktok-uploader`
 
 - [@C_Span](https://www.tiktok.com/@c_span?lang=en) - A split-screen channel with mobile games below featuring clips from C-Span's YouTube channel
 - [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A generic Dhar Mann TikTok bot
