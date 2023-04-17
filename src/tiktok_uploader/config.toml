@@ -3,6 +3,10 @@
 headless = false
 quit_on_end = true
 
+# Messing around with inputs
+valid_path_names = ["path", "filename", "video", "video_path"]
+valid_descriptions = ["description", "desc", "caption"]
+
 # Selenium Webdriver Waits
 implicit_wait = 3 # seconds
 explicit_wait = 60 # seconds
