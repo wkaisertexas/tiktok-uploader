@@ -62,10 +62,7 @@ While TikTok is strict about login in from Selenium, simply copying your session
 Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d) and `cookies` (-c)
 
 ```console
-tiktok-uploader
--v video.mp4
--d "this is my escaped \"description\""
--c cookies.txt
+tiktok-uploader -v video.mp4 -d "this is my escaped \"description\"" -c cookies.txt
 ```
 
 ```python
@@ -228,6 +225,10 @@ On intial startup, you **may** be prompted to install the correct driver for you
 
 # ♻️ Examples
 
+[Basic Upload Example](exmples/basic_upload.py) is a simple automation which uses `upload_video`.
+
+[Series Upload Example](examples/series_upload.py) is a automation which uploads the same video multiple times using `upload_videos`.
+
 [Scheduled Uploader Example](examples/example_series_upload.py) is an automation which is based off this package. Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
 
 # 📝 Notes
@@ -239,6 +240,6 @@ This bot is not fool proof. Though I have not gotten an official ban, when the v
 # Accounts made using `tiktok-uploader`
 
 - [@C_Span](https://www.tiktok.com/@c_span?lang=en) - A split-screen channel with mobile games below featuring clips from C-Span's YouTube channel
-- [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A generic Dhar Mann TikTok bot
+- [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A Reddit to TikTok bot for a data science project
 
 [^1]: If interested in Hatch, checkout the [website](https://hatch.pypa.io/latest/build/)

@@ -196,3 +196,19 @@ class InsufficientAuth(Exception):
     """
     Raised when there is insufficient authentication
     """
+
+    # sets the exception message
+    def __init__(self, message="""
+    Insufficient authentication:
+
+    > TikTok uses cookies to keep track of the user's authentication or session.
+
+    Either:
+        - Use a cookies file passed as the `cookies` argument
+            - easily obtained using https://github.com/kairi003/Get-cookies.txt-LOCALLY
+        - Use a cookies list passed as the `cookies_list` argument
+            - can be obtained from your browser's developer tools under storage -> cookies
+            - only the `sessionid` cookie is required
+    """):
+        self.message = message
+        super().__init__(self.message)
