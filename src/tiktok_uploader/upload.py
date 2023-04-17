@@ -7,6 +7,7 @@ upload_video : Uploads a single TikTok video
 upload_videos : Uploads multiple TikTok videos
 """
 from os.path import abspath, exists
+from typing import List
 import time
 
 from selenium.webdriver.common.by import By
@@ -75,11 +76,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     failed : list
         A list of videos which failed to upload
     """
-    is_valid, videos = _convert_videos_dict(videos)
-
-    if not is_valid:
-        print("Invalid Videos Dictionary:", videos)
-        return
+    videos = _convert_videos_dict(videos)
 
     if not browser_agent: # user-specified browser agent
         driver = get_browser(name=browser, headless=headless, *args, **kwargs)
@@ -378,14 +375,14 @@ def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: s
     else:
         return min(nearest_mention, nearest_hashtag)
 
-def _convert_videos_dict(videos_list_of_dictionaries) -> (bool, list):
+def _convert_videos_dict(videos_list_of_dictionaries) -> List:
     """
     Takes in a videos dictionary and converts it.
 
     This allows the user to use the wrong stuff and thing to just work
     """
     if not videos_list_of_dictionaries:
-        return False, None
+        raise RuntimeError("No videos to upload")
 
     valid_path = config['valid_path_names']
     valid_description = config['valid_descriptions']
@@ -403,10 +400,18 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> (bool, list):
         elem = {k.strip().lower(): v for k, v in elem.items()}
 
         keys = elem.keys()
-        path_names_intersect = intersection(valid_path, keys)
-        descriptions_intersect = intersection(valid_description, keys)
+        path_intersection = intersection(valid_path, keys)
+        description_interesection = intersection(valid_description, keys)
 
-        if not path_names_intersect:
+        if path_intersection:
+            # we have a path
+            path = elem[path_intersection.pop()]
+
+            if not _check_valid_path(path):
+                raise RuntimeError("Invalid path: " + path)
+
+            elem[correct_path] = path
+        else:
             # iterates over the elem and find a key which is a path with a valid extension
             for _, value in elem.items():
                 if _check_valid_path(value):
@@ -414,18 +419,12 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> (bool, list):
                     break
             else:
                 # no valid path found
-                return False, None
+                raise RuntimeError("Path not found in dictionary: " + str(elem))
+
+        if description_interesection:
+            # we have a description
+            elem[correct_description] = elem[description_interesection.pop()]
         else:
-            # we have a path
-            path = elem[path_names_intersect.pop()]
-
-            if not _check_valid_path(path):
-                # invalid path
-                return False, None # this should probably throw and error or something
-
-            elem[correct_path] = path
-
-        if not descriptions_intersect:
             # iterates over the elem and finds a description which is not a valid path
             for _, value in elem.items():
                 if not _check_valid_path(value):
@@ -433,10 +432,7 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> (bool, list):
                     break
             else:
                 elem[correct_description] = '' # null description is fine
-        else:
-            # we have a description
-            elem[correct_description] = elem[descriptions_intersect.pop()]
 
         return_list.append(elem)
 
-    return True, return_list
+    return return_list
