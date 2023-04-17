@@ -7,6 +7,7 @@ upload_video : Uploads a single TikTok video
 upload_videos : Uploads multiple TikTok videos
 """
 from os.path import abspath, exists
+from typing import List
 import time
 
 from selenium.webdriver.common.by import By
@@ -75,9 +76,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     failed : list
         A list of videos which failed to upload
     """
-    if not videos:
-        print("No videos were provided")
-        return
+    videos = _convert_videos_dict(videos)
 
     if not browser_agent: # user-specified browser agent
         driver = get_browser(name=browser, headless=headless, *args, **kwargs)
@@ -182,7 +181,6 @@ def _set_description(driver, description: str) -> None:
         while description:
             nearest_mention = description.find('@')
             nearest_hash = description.find('#')
-            print("description: ", description)
 
             if nearest_mention == 0 or nearest_hash == 0:
                 desc.send_keys('@' if nearest_mention == 0 else '#')
@@ -191,8 +189,6 @@ def _set_description(driver, description: str) -> None:
                 time.sleep(config['implicit_wait'])
 
                 name = description[1:].split(' ')[0]
-                print("name: ", name)
-                # TODO: sending keys directly for mentions may not work
                 if nearest_mention == 0: # @ case
                     mention_xpath = config['selectors']['upload']['mention_box']
                     condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
@@ -205,7 +201,6 @@ def _set_description(driver, description: str) -> None:
 
                 if nearest_mention == 0: # @ case
                     mention_xpath = config['selectors']['upload']['mentions'].format('@' + name)
-                    print(mention_xpath)
                     condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
                 else:
                     hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
@@ -236,8 +231,6 @@ def _clear(element) -> None:
     element
         The text box to clear
     """
-    # element.send_keys(Keys.CONTROL + 'a')
-    # element.send_keys(Keys.DELETE)
 
     element.send_keys(2 * len(element.text) * Keys.BACKSPACE) # margin of safety
 
@@ -381,3 +374,65 @@ def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: s
         return nearest_hashtag
     else:
         return min(nearest_mention, nearest_hashtag)
+
+def _convert_videos_dict(videos_list_of_dictionaries) -> List:
+    """
+    Takes in a videos dictionary and converts it.
+
+    This allows the user to use the wrong stuff and thing to just work
+    """
+    if not videos_list_of_dictionaries:
+        raise RuntimeError("No videos to upload")
+
+    valid_path = config['valid_path_names']
+    valid_description = config['valid_descriptions']
+
+    correct_path = valid_path[0]
+    correct_description = valid_description[0]
+
+    def intersection(lst1, lst2):
+        """ return the intersection of two lists """
+        return list(set(lst1) & set(lst2))
+
+    return_list = []
+    for elem in videos_list_of_dictionaries:
+        # preprocesses the dictionary
+        elem = {k.strip().lower(): v for k, v in elem.items()}
+
+        keys = elem.keys()
+        path_intersection = intersection(valid_path, keys)
+        description_interesection = intersection(valid_description, keys)
+
+        if path_intersection:
+            # we have a path
+            path = elem[path_intersection.pop()]
+
+            if not _check_valid_path(path):
+                raise RuntimeError("Invalid path: " + path)
+
+            elem[correct_path] = path
+        else:
+            # iterates over the elem and find a key which is a path with a valid extension
+            for _, value in elem.items():
+                if _check_valid_path(value):
+                    elem[correct_path] = value
+                    break
+            else:
+                # no valid path found
+                raise RuntimeError("Path not found in dictionary: " + str(elem))
+
+        if description_interesection:
+            # we have a description
+            elem[correct_description] = elem[description_interesection.pop()]
+        else:
+            # iterates over the elem and finds a description which is not a valid path
+            for _, value in elem.items():
+                if not _check_valid_path(value):
+                    elem[correct_description] = value
+                    break
+            else:
+                elem[correct_description] = '' # null description is fine
+
+        return_list.append(elem)
+
+    return return_list
