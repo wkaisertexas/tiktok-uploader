@@ -19,17 +19,19 @@ from selenium.webdriver.edge.service import Service as EdgeService
 
 from selenium import webdriver
 
-from tiktok_uploader import config
+from tiktok_uploader import config, logger
 
 
 def get_browser(name: str = 'chrome', options=None, *args, **kwargs) -> webdriver:
     """
     Gets a browser based on the name with the ability to pass in additional arguments
     """
+
     # get the web driver for the browser
     driver_to_use = get_driver(name=name, *args, **kwargs)
 
     # gets the options for the browser
+
     options = options or get_default_options(name=name, *args, **kwargs)
 
     # combines them together into a completed driver
@@ -48,7 +50,7 @@ def get_driver(name: str = 'chrome', *args, **kwargs) -> webdriver:
     """
     Gets the web driver function for the browser
     """
-    if clean_name(name) in drivers:
+    if _clean_name(name) in drivers:
         return drivers[name]
 
     raise UnsupportedBrowserException()
@@ -60,9 +62,9 @@ def get_service(name: str = 'chrome'):
 
     https://pypi.org/project/webdriver-manager/
     """
-    if clean_name(name) in services:
+    if _clean_name(name) in services:
         return services[name]()
-  
+
     return None # Safari doesn't need a service
 
 
@@ -70,8 +72,7 @@ def get_default_options(name: str, *args, **kwargs):
     """
     Gets the default options for each browser to help remain undetected
     """
-    name = clean_name(name)
-
+    name = _clean_name(name)
 
     if name in defaults:
         return defaults[name](*args, **kwargs)
@@ -96,11 +97,7 @@ def chrome_defaults(*args, headless: bool = False, **kwargs) -> ChromeOptions:
 
     # headless
     if headless:
-        options.add_argument('--headless')
-        options.add_argument('start-maximized')
-        options.add_argument('--disable-gpu')
-
-        options.add_argument(f'--user-agent{config["disguising"]["user_agent"]}')
+        options.add_argument('--headless=new')
 
     return options
 
@@ -150,14 +147,25 @@ def edge_defaults(*args, headless: bool = False, **kwargs) -> EdgeOptions:
 # Misc
 class UnsupportedBrowserException(Exception):
     """
-    Exception for when the browser is not supported
+    Browser is not supported by the library
+
+    Supported browsers are:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
     """
 
-def clean_name(name: str) -> str:
+    def __init__(self, message=None):
+        super().__init__(message or self.__doc__)
+
+
+def _clean_name(name: str) -> str:
     """
     Cleans the name of the browser to make it easier to use
     """
     return name.strip().lower()
+
 
 drivers = {
     'chrome': webdriver.Chrome,
@@ -172,6 +180,7 @@ defaults = {
     'safari': safari_defaults,
     'edge': edge_defaults,
 }
+
 
 services = {
     'chrome': lambda : ChromeService(ChromeDriverManager().install()),

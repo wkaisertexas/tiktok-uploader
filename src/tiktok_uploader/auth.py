@@ -7,8 +7,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from tiktok_uploader import config
+from tiktok_uploader import config, logger
 from tiktok_uploader.browsers import get_browser
+from tiktok_uploader.utils import green
 
 class AuthBackend:
     """
@@ -19,7 +20,7 @@ class AuthBackend:
     cookies: list
 
     def __init__(self, username: str = '', password: str = '',
-                 cookies_list: list = None, cookies=None):
+                 cookies_list: list = None, cookies=None, sessionid: str = None):
         """
         Creates the authenticaiton backend
 
@@ -34,6 +35,7 @@ class AuthBackend:
 
         self.cookies = self.get_cookies(path=cookies) if cookies else []
         self.cookies += cookies_list if cookies_list else []
+        self.cookies += [{'name': 'sessionid', 'value': sessionid}] if sessionid else []
 
         if not (self.cookies or (username and password)):
             raise InsufficientAuth()
@@ -50,6 +52,8 @@ class AuthBackend:
         if not self.cookies and self.username and self.password:
             self.cookies = login(driver, username=self.username, password=self.password)
 
+        logger.debug(green("Authenticating browser with cookies"))
+
         driver.get(config['paths']['main'])
 
         WebDriverWait(driver, config['explicit_wait']).until(EC.title_contains("TikTok"))
@@ -58,7 +62,7 @@ class AuthBackend:
             try:
                 driver.add_cookie(cookie)
             except Exception as _:
-                print(f'Failed to add cookie {cookie}')
+                logger.error('Failed to add cookie %s', cookie)
 
         return driver
 
@@ -194,11 +198,6 @@ def save_cookies(path, cookies: list):
 
 class InsufficientAuth(Exception):
     """
-    Raised when there is insufficient authentication
-    """
-
-    # sets the exception message
-    def __init__(self, message="""
     Insufficient authentication:
 
     > TikTok uses cookies to keep track of the user's authentication or session.
@@ -209,6 +208,7 @@ class InsufficientAuth(Exception):
         - Use a cookies list passed as the `cookies_list` argument
             - can be obtained from your browser's developer tools under storage -> cookies
             - only the `sessionid` cookie is required
-    """):
-        self.message = message
-        super().__init__(self.message)
+    """
+
+    def __init__(self, message=None):
+        super().__init__(message or self.__doc__)

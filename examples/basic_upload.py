@@ -10,7 +10,7 @@ FILENAME = "upload.mp4"
 if __name__ == "__main__":
     # download random video
     urllib.request.urlretrieve(URL, FILENAME)
-    
+
     # upload video to TikTok
     upload_video(FILENAME,
                  description="This is a video I just downloaded",

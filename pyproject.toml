@@ -1,10 +1,10 @@
 [project]
 name = "tiktok-uploader"
-version = "0.1.2"
+version = "1.0.0"
 authors = [
   { name = "William Kaiser", email = "wkaisertexas@gmail.com" },
 ]
-description = "An automatic TikTok video uploader w/ CLI. Uses cookies from your browser to manage authentication and upload your videos automatically."
+description = "An automatic TikTok video uploader w/ CLI. Uploads videos automatically using an automated browser and your cookies for authentication."
 readme = "README.md"
 requires-python = ">=3.0"
 keywords = [

@@ -4,7 +4,7 @@
 ![Stars](https://img.shields.io/github/stars/wkaisertexas/tiktok-uploader)
 ![Watchers](https://img.shields.io/github/watchers/wkaisertexas/tiktok-uploader)
 
-> A **Selenium**-based automated **TikTok** video uploader
+A **Selenium**-based automated **TikTok** video uploader
 
 # Table of Contents
 - [Installation](#installation)
@@ -36,7 +36,7 @@ Install Python 3 or greater from [python.org](https://www.python.org/downloads/)
 
 Install `tiktok-uploader` using `pip`
 
-```console
+```bash
 pip install tiktok-uploader
 ```
 
@@ -44,8 +44,8 @@ pip install tiktok-uploader
 
 Installing from source allows greater flexability to modify the module's code to extend default behavior. 
 
-First, `clone` and move into the repository. Next, install `hatch`, the build tool used for this project [^1]. Then, `build` the projet. Finally, `install` the project with the `-e` or editable flag.  
-```bash
+First, `clone` and move into the repository. Next, install `hatch`, the build tool used for this project [^1]. Then, `build` the project. Finally, `install` the project with the `-e` or editable flag.  
+```console
 git clone https://github.com/wkaisertexas/tiktok-uploader.git
 cd tiktok-uploader
 pip install hatch
@@ -55,19 +55,19 @@ pip install -e .
 
 # Usage
 
-While TikTok is strict about login in from Selenium, simply copying your session tokens is enough to bypass this restriction and be able to upload your videos.
+`tiktok-uploader` works by duplicating your browser's **cookies** which tricks **TikTok** into believing you are logged in on a remote-controlled browser.
 
 ## 💻 Commmand Line Interface (CLI)
 
 Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d) and `cookies` (-c)
 
-```console
+```bash
 tiktok-uploader -v video.mp4 -d "this is my escaped \"description\"" -c cookies.txt
 ```
 
 ```python
 from tiktok_uploader.upload import upload_video, upload_videos
-from tiktok_uploaader.auth import AuthBackend
+from tiktok_uploader.auth import AuthBackend
 
 # single video
 upload_video('video.mp4', 
@@ -120,8 +120,7 @@ for video in failed_videos: # each input video object which failed
 
 Mentions and Hashtags now work so long as they are followed by a space. However, you as the user are responsible for verifying a mention or hashtag exists before posting
 
-Example:
-
+**Example:**
 ```python
 from tiktok_uploader.upload import upload_video
 
@@ -130,7 +129,7 @@ upload_video('video.mp4', '#fyp @icespicee', 'cookies.txt')
 
 ## 🪡 Stitches, Duets and Comments
 
-To set whether or not a video uploaded allows stitches, comments or duet, simply specifiy `comment`, `stitch` and `duet` as keyword arguments to `upload_video` or `upload_videos`.
+To set whether or not a video uploaded allows stitches, comments or duet, simply specify `comment`, `stitch` and/or `duet` as keyword arguments to `upload_video` or `upload_videos`.
 
 ```python
 upload_video(..., comment=True, stitch=True, duet=True)
@@ -141,13 +140,15 @@ upload_video(..., comment=True, stitch=True, duet=True)
 ## 🔐 Authentication
 Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authetication by a Selenium-controlled browser.
 
-[🍪 Get cookies.txt](https://github.com/kairi003/Get-cookies.txt-LOCALLY) makes getting cookies in a NetScape file format.
+Your `sessionid` is all that is required for authentication and can be passed as an argument to nearly any function
+
+[🍪 Get cookies.txt](https://github.com/kairi003/Get-cookies.txt-LOCALLY) makes getting cookies in a [NetScape cookies format](http://fileformats.archiveteam.org/wiki/Netscape_cookies.txt).
 
 After installing, open the extensions menu on [TikTok.com](https://tiktok.com/) and click `🍪 Get cookies.txt` to reveal your cookies. Select `Export As ⇩` and specify a location and name to save.
 
 **Optionally**, `cookies_list` is a list of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` which allow you to pass your own browser cookies. 
 
-Example:
+**Example:**
 
 ```python
 cookies_list = [
@@ -163,11 +164,9 @@ cookies_list = [
 upload_video(..., cookies_list=cookies_list)
 ```
 
-> `sessionid` is actually the only required cookie for authentication. 
-
 ## 👀 Browser Selection
 
-[Google Chrome](https://www.google.com/chrome) is the prefered browser for **TikTokUploader**. The default anti-detection techniques used in this packaged are optimized for this. However, if you wish to use a different browser you may specify that in `upload_videos`.
+[Google Chrome](https://www.google.com/chrome) is the prefered browser for **TikTokUploader**. The default anti-detection techniques used in this packaged are optimized for this. However, if you wish to use a different browser you may specify the `browser` in `upload_video` or `upload_videos`.
 
 ```python
 from tiktok_uploader.upload import upload_video
@@ -206,40 +205,41 @@ options = Options()
 
 options.add_argument('start-maximized')
 
-upload_videos(options=options)
+upload_videos(..., options=options)
 ```
 
 > Note: Make sure to use the right selenium options for your browser
 
 ## 🤯 Headless Browsers
 
-**Headless browsers do not work at this time** 
+Headless browsing only works on Chrome. When using Chrome, adding the `--headless` flag using the CLI or passing `headless` as a keyword argument to `upload_video` or `upload_videos` is all that is required.
 
-> If more experienced in Webscraping, I would really appreciate helping make this work. [undetected-chromedriver](https://github.com/ultrafunkamsterdam/undetected-chromedriver) was already tried and did not work.
+```python
+upload_video(..., headless=True)
+upload_videos(..., headless=True)
+```
 
 ## 🔨 Initial Setup
 
 [WebDriverManager](https://bonigarcia.dev/webdrivermanager/) is used to manage driver versions. 
 
-On intial startup, you **may** be prompted to install the correct driver for your selected broswer. However, for **Chrome** and **Edge** this works without issue.
+On intial startup, you **may** be prompted to install the correct driver for your selected browser. However, for **Chrome** and **Edge** the driver is automatically installed.
 
 # ♻ Examples
 
-[Basic Upload Example](exmples/basic_upload.py) is a simple automation which uses `upload_video`.
+- **[Basic Upload Example](exmples/basic_upload.py):** Uses `upload_video` to make one post.
 
-[Series Upload Example](examples/series_upload.py) is a automation which uploads the same video multiple times using `upload_videos`.
+- **[Series Upload Example](examples/series_upload.py):** Uploads the same video multiple times using `upload_videos`.
 
-[Scheduled Uploader Example](examples/example_series_upload.py) is an automation which is based off this package. Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
+- **[Scheduled Uploader Example](examples/example_series_upload.py):** Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
 
 # 📝 Notes
 
-This bot is not fool proof. Though I have not gotten an official ban, when the video will fail to upload after too many uploads. When testing, waiting several hours was sufficient to fix this problem. For this reason, please thing of this more as a scheduled uploader for TikTok videos, rather than a spam bot.
+This bot is not fool proof. Though I have not gotten an official ban, the video will fail to upload after too many uploads. In testing, waiting several hours was sufficient to fix this problem. For this reason, please thing of this more as a scheduled uploader for TikTok videos, rather than a spam bot.
 
-> Please think of this package as more of a scheduled uploader for TikTok videos, rather than a spam bot
-
-# Accounts made using `tiktok-uploader`
+# Accounts made with
 
 - [@C_Span](https://www.tiktok.com/@c_span?lang=en) - A split-screen channel with mobile games below featuring clips from C-Span's YouTube channel
-- [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A Reddit to TikTok bot for a data science project
+- [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A Reddit bot to see which SubReddit is most viral on TikTok
 
 [^1]: If interested in Hatch, checkout the [website](https://hatch.pypa.io/latest/build/)

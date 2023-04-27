@@ -19,11 +19,12 @@ from selenium.webdriver.common.keys import Keys
 
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
-from tiktok_uploader import config
+from tiktok_uploader import config, logger
+from tiktok_uploader.utils import bold, green
 
 
 def upload_video(filename=None, description='', username='',
-                 password='', cookies='', *args, **kwargs):
+                 password='', cookies='', sessionid=None, cookies_list=None, *args, **kwargs):
     """
     Uploads a single TikTok video.
 
@@ -37,8 +38,12 @@ def upload_video(filename=None, description='', username='',
         The description to set for the video
     cookies : str
         The cookies to use for uploading
+    sessionid: str
+        The `sessionid` is the only required cookie for uploading,
+            but it is recommended to use all cookies to avoid detection
     """
-    auth = AuthBackend(username=username, password=password, cookies=cookies)
+    auth = AuthBackend(username=username, password=password, cookies=cookies, 
+                       cookies_list=cookies_list, sessionid=sessionid)
 
     return upload_videos(
             videos=[ { 'path': filename, 'description': description } ],
@@ -66,6 +71,8 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
         Whether or not the browser should be run in headless mode
     num_retries : int
         The number of retries to attempt if the upload fails
+    options : SeleniumOptions
+        The options to pass into the browser -> custom privacy settings, etc.
     *args :
         Additional arguments to pass into the upload function
     **kwargs :
@@ -78,9 +85,15 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     """
     videos = _convert_videos_dict(videos)
 
+    if videos and len(videos) > 1:
+        logger.debug("Uploading %d videos", len(videos))
+
     if not browser_agent: # user-specified browser agent
+        logger.debug('Create a %s browser instance %s', browser,
+                    'in headless mode' if headless else '')
         driver = get_browser(name=browser, headless=headless, *args, **kwargs)
     else:
+        logger.debug('Using user-defined browser agent')
         driver = browser_agent
 
     driver = auth.authenticate_agent(driver)
@@ -88,10 +101,12 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     failed = []
     # uploads each video
     for video in videos:
-        print(f'Uploading {video.get("path")}')
         try:
             path = abspath(video.get('path'))
             description = video.get('description', '')
+
+            logger.debug('Posting %s%s', bold(video.get('path')),
+            f'\n{" " * 15}with description: {bold(description)}' if description else '')
 
             # Video must be of supported type
             if not _check_valid_path(path):
@@ -100,9 +115,11 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
                 continue
 
             complete_upload_form(driver, path, description,
-                                 num_retires = num_retires, *args, **kwargs)
+                                 num_retires = num_retires, headless=headless, 
+                                 *args, **kwargs)
         except Exception as exception:
-            print(exception)
+            logger.error('Failed to upload %s', path)
+            logger.error(exception)
             failed.append(video)
 
         if on_complete is callable: # calls the user-specified on-complete function
@@ -114,7 +131,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     return failed
 
 
-def complete_upload_form(driver, path: str, description: str, *args, **kwargs) -> None:
+def complete_upload_form(driver, path: str, description: str, headless=False, *args, **kwargs) -> None:
     """
     Actually uploades each video
 
@@ -140,6 +157,8 @@ def _go_to_upload(driver) -> None:
     ----------
     driver : selenium.webdriver
     """
+    logger.debug(green('Navigating to upload page'))
+
     driver.get(config['paths']['upload'])
 
     # changes to the iframe
@@ -167,6 +186,8 @@ def _set_description(driver, description: str) -> None:
     if description is None:
         # if no description is provided, filename
         return
+
+    logger.debug(green('Setting description'))
 
     saved_description = description # save the description in case it fails
 
@@ -231,8 +252,7 @@ def _clear(element) -> None:
     element
         The text box to clear
     """
-
-    element.send_keys(2 * len(element.text) * Keys.BACKSPACE) # margin of safety
+    element.send_keys(2 * len(element.text) * Keys.BACKSPACE)
 
 
 def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
@@ -247,6 +267,8 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     num_retries : number of retries (can occassionally fail)
     """
     # uploades the element
+    logger.debug(green('Uploading video file'))
+
     for _ in range(num_retries):
         try:
             upload_box = driver.find_element(
@@ -277,27 +299,9 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
             WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             return
         except Exception as exception:
-            print('Upload exception:', exception)
+            print(exception)
 
     raise FailedToUpload()
-
-
-def _post_video(driver) -> None:
-    """
-    Posts the video
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    """
-    post = driver.find_element(By.XPATH, config['selectors']['upload']['post'])
-    post.click()
-
-    # waits for the video to upload
-    post_confirmation = EC.presence_of_element_located(
-        (By.XPATH, config['selectors']['upload']['post_confirmation'])
-        )
-    WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
 
 
 def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kwargs) -> None:
@@ -315,6 +319,8 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
         Whether or not to allow duets
     """
     try:
+        logger.debug(green('Setting interactivity settings'))
+
         comment_box = driver.find_element(By.XPATH, config['selectors']['upload']['comment'])
         stitch_box = driver.find_element(By.XPATH, config['selectors']['upload']['stitch'])
         duet_box = driver.find_element(By.XPATH, config['selectors']['upload']['duet'])
@@ -330,8 +336,32 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
             duet_box.click()
 
     except Exception as _:
-        print("Failed to set interactivity settings. Continuing...")
+        logger.error('Failed to set interactivity settings')
 
+
+def _post_video(driver) -> None:
+    """
+    Posts the video by clicking the post button
+
+    Parameters
+    ----------
+    driver : selenium.webdriver
+    """
+    logger.debug(green('Clicking the post button'))
+
+    post = driver.find_element(By.XPATH, config['selectors']['upload']['post'])
+    post.click()
+
+    # waits for the video to upload
+    post_confirmation = EC.presence_of_element_located(
+        (By.XPATH, config['selectors']['upload']['post_confirmation'])
+        )
+    WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
+
+    logger.debug(green('Video posted successfully'))
+
+
+# HELPERS
 
 def _check_valid_path(path: str) -> bool:
     """
@@ -339,16 +369,6 @@ def _check_valid_path(path: str) -> bool:
     """
     return exists(path) and path.split('.')[-1] in config['supported_file_types']
 
-
-class DescriptionTooLong(Exception):
-    """
-    A video description longer than the maximum allowed by TikTok's website (not app) uploader
-    """
-
-class FailedToUpload(Exception):
-    """
-    A video failed to upload
-    """
 
 def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: str) -> int:
     """
@@ -436,3 +456,20 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
         return_list.append(elem)
 
     return return_list
+
+class DescriptionTooLong(Exception):
+    """
+    A video description longer than the maximum allowed by TikTok's website (not app) uploader
+    """
+
+    def __init__(self, message=None):
+        super().__init__(message or self.__doc__)
+
+
+class FailedToUpload(Exception):
+    """
+    A video failed to upload
+    """
+
+    def __init__(self, message=None):
+        super().__init__(message or self.__doc__)
