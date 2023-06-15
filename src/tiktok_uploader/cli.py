@@ -23,8 +23,8 @@ def main():
         username=args.username,
         password=args.password,
         cookies=args.cookies,
-        session_id=args.sessionid,
-        headless=args.headless
+        sessionid=args.sessionid,
+        headless=not args.attach,
     )
 
     print('-------------------------')
@@ -56,7 +56,7 @@ def get_uploader_args():
     parser.add_argument('-p', '--password', help='Your TikTok password')
 
     # selenium arguments
-    parser.add_argument('--headless', action='store_true', default=True,
+    parser.add_argument('--attach', '-a', action='store_true', default=False,
                          help='Runs the program in headless mode (no browser window)')
 
     return parser.parse_args()

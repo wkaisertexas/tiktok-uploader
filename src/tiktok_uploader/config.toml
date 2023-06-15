@@ -1,6 +1,6 @@
 # TikTok Uploader Default Configuation File
 
-headless = false
+headless = true
 quit_on_end = true
 
 # Messing around with inputs
@@ -8,7 +8,7 @@ valid_path_names = ["path", "filename", "video", "video_path"]
 valid_descriptions = ["description", "desc", "caption"]
 
 # Selenium Webdriver Waits
-implicit_wait = 3 # seconds
+implicit_wait = 5  # seconds
 explicit_wait = 60 # seconds
 
 supported_file_types = ["mp4", "mov", "avi", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "3g2", "gif"]

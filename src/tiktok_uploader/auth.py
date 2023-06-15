@@ -43,6 +43,15 @@ class AuthBackend:
         self.username = username
         self.password = password
 
+        if cookies:
+            logger.debug(green("Authenticating browser with cookies"))
+        elif username and password:
+            logger.debug(green("Authenticating browser with username and password"))
+        elif sessionid:
+            logger.debug(green("Authenticating browser with sessionid"))
+        elif cookies_list:
+            logger.debug(green("Authenticating browser with cookies_list"))
+
 
     def authenticate_agent(self, driver):
         """

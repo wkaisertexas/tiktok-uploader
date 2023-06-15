@@ -42,7 +42,7 @@ def upload_video(filename=None, description='', username='',
         The `sessionid` is the only required cookie for uploading,
             but it is recommended to use all cookies to avoid detection
     """
-    auth = AuthBackend(username=username, password=password, cookies=cookies, 
+    auth = AuthBackend(username=username, password=password, cookies=cookies,
                        cookies_list=cookies_list, sessionid=sessionid)
 
     return upload_videos(
