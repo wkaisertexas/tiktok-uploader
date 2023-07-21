@@ -166,7 +166,18 @@ def _go_to_upload(driver) -> None:
         (By.XPATH, config['selectors']['upload']['iframe'])
         )
     iframe = WebDriverWait(driver, config['explicit_wait']).until(iframe_selector)
-    driver.switch_to.frame(iframe)
+    
+    creator_center_iframe_selector = EC.presence_of_element_located(
+        (By.XPATH, config['selectors']['upload']['creator_center_iframe'])
+    )
+    
+    try:
+        creator_center_iframe = WebDriverWait(driver, config['explicit_wait']).until(creator_center_iframe_selector)
+        driver.switch_to.frame(creator_center_iframe)
+    except Exception as _:
+        driver.switch_to.frame(iframe)
+    
+    
 
     # waits for the iframe to load
     root_selector = EC.presence_of_element_located((By.ID, 'root'))

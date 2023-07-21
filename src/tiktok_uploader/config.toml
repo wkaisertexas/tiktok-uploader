@@ -36,13 +36,14 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	
 	[selectors.upload]
 	iframe = "//iframe"
+	creator_center_iframe = "//iframe[@src='https://www.tiktok.com/creator#/upload?scene=creator_center']"
 	
 	upload_video = "//input[@type='file']"
 	upload_in_progress = "//*[.='Cancel']"
 	upload_confirmation = "//video" 
 	process_confirmation = "//img[@draggable='false']"
 
-	description = "//div[@contenteditable='true']"
+	description = "//*[.='Caption']/../../..//div[@contenteditable='true']"
 
 	visibility = "//div[@class='tiktok-select-selector']"
 	options = ["Public", "Friends", "Private"]
