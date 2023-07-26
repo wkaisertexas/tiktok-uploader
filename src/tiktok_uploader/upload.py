@@ -21,6 +21,7 @@ from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader import config, logger
 from tiktok_uploader.utils import bold, green
+from proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
 def upload_video(filename=None, description='', username='',
@@ -53,7 +54,7 @@ def upload_video(filename=None, description='', username='',
 
 
 def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome',
-                  browser_agent=None, on_complete=None, headless=False, num_retires : int = 1, *args, **kwargs):
+                  browser_agent=None, on_complete=None, headless=False, num_retires : int = 1, proxy: dict = None, *args, **kwargs):
     """
     Uploads multiple videos to TikTok
 
@@ -91,12 +92,17 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     if not browser_agent: # user-specified browser agent
         logger.debug('Create a %s browser instance %s', browser,
                     'in headless mode' if headless else '')
-        driver = get_browser(name=browser, headless=headless, *args, **kwargs)
+        driver = get_browser(name=browser, headless=headless, proxy=proxy, *args, **kwargs)
     else:
         logger.debug('Using user-defined browser agent')
         driver = browser_agent
-
     driver = auth.authenticate_agent(driver)
+    if proxy:
+        if proxy_is_working(driver, proxy['host']):
+            logger.debug(green(f"Proxy is working, my ip is: {proxy['host']}"))
+        else:
+            logger.error("Proxy is not working")
+            driver.quit()
 
     failed = []
     # uploads each video

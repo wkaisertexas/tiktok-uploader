@@ -20,6 +20,7 @@ from selenium.webdriver.edge.service import Service as EdgeService
 from selenium import webdriver
 
 from tiktok_uploader import config, logger
+from proxy_auth_extension.proxy_auth_extension import generate_proxy_auth_extension
 
 
 def get_browser(name: str = 'chrome', options=None, *args, **kwargs) -> webdriver:
@@ -80,7 +81,7 @@ def get_default_options(name: str, *args, **kwargs):
     raise UnsupportedBrowserException()
 
 
-def chrome_defaults(*args, headless: bool = False, **kwargs) -> ChromeOptions:
+def chrome_defaults(*args, headless: bool = False, proxy: dict = None, **kwargs) -> ChromeOptions:
     """
     Creates Chrome with Options
     """
@@ -98,11 +99,16 @@ def chrome_defaults(*args, headless: bool = False, **kwargs) -> ChromeOptions:
     # headless
     if headless:
         options.add_argument('--headless=new')
+    if proxy:
+        # This can fail if you are executing the funtion more than once in the same time
+        extension_file = 'temp_proxy_auth_extension.zip'
+        generate_proxy_auth_extension(proxy['host'], proxy['port'], proxy['user'], proxy['pass'], extension_file)
+        options.add_extension(extension_file)
 
     return options
 
 
-def firefox_defaults(*args, headless: bool = False, **kwargs) -> FirefoxOptions:
+def firefox_defaults(*args, headless: bool = False, proxy: dict = None, **kwargs) -> FirefoxOptions:
     """
     Creates Firefox with default options
     """
@@ -113,11 +119,12 @@ def firefox_defaults(*args, headless: bool = False, **kwargs) -> FirefoxOptions:
 
     if headless:
         options.add_argument('--headless')
-
+    if proxy:
+        raise NotImplementedError('Proxy support is not implemented for this browser')
     return options
 
 
-def safari_defaults(*args, headless: bool = False, **kwargs) -> SafariOptions:
+def safari_defaults(*args, headless: bool = False, proxy: dict = None, **kwargs) -> SafariOptions:
     """
     Creates Safari with default options
     """
@@ -127,11 +134,12 @@ def safari_defaults(*args, headless: bool = False, **kwargs) -> SafariOptions:
 
     if headless:
         options.add_argument('--headless')
-
+    if proxy:
+        raise NotImplementedError('Proxy support is not implemented for this browser')
     return options
 
 
-def edge_defaults(*args, headless: bool = False, **kwargs) -> EdgeOptions:
+def edge_defaults(*args, headless: bool = False, proxy: dict = None, **kwargs) -> EdgeOptions:
     """
     Creates Edge with default options
     """
@@ -141,7 +149,8 @@ def edge_defaults(*args, headless: bool = False, **kwargs) -> EdgeOptions:
 
     if headless:
         options.add_argument('--headless')
-
+    if proxy:
+        raise NotImplementedError('Proxy support is not implemented for this browser')
     return options
 
 # Misc
