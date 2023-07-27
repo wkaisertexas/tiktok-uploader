@@ -22,7 +22,7 @@ from selenium import webdriver
 from tiktok_uploader import config, logger
 
 
-def get_browser(name: str = 'chrome', options=None, *args, **kwargs) -> webdriver:
+def get_browser(name: str = "chrome", options=None, *args, **kwargs) -> webdriver:
     """
     Gets a browser based on the name with the ability to pass in additional arguments
     """
@@ -41,12 +41,12 @@ def get_browser(name: str = 'chrome', options=None, *args, **kwargs) -> webdrive
     else:
         driver = driver_to_use(options=options)
 
-    driver.implicitly_wait(config['implicit_wait'])
+    driver.implicitly_wait(config["implicit_wait"])
 
     return driver
 
 
-def get_driver(name: str = 'chrome', *args, **kwargs) -> webdriver:
+def get_driver(name: str = "chrome", *args, **kwargs) -> webdriver:
     """
     Gets the web driver function for the browser
     """
@@ -56,7 +56,7 @@ def get_driver(name: str = 'chrome', *args, **kwargs) -> webdriver:
     raise UnsupportedBrowserException()
 
 
-def get_service(name: str = 'chrome'):
+def get_service(name: str = "chrome"):
     """
     Gets a service to install the browser driver per webdriver-manager docs
 
@@ -65,7 +65,7 @@ def get_service(name: str = 'chrome'):
     if _clean_name(name) in services:
         return services[name]()
 
-    return None # Safari doesn't need a service
+    return None  # Safari doesn't need a service
 
 
 def get_default_options(name: str, *args, **kwargs):
@@ -88,16 +88,16 @@ def chrome_defaults(*args, headless: bool = False, **kwargs) -> ChromeOptions:
     options = ChromeOptions()
 
     ## regular
-    options.add_argument('--disable-blink-features=AutomationControlled')
-    options.add_argument('--profile-directory=Default')
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--profile-directory=Default")
 
     ## experimental
-    options.add_experimental_option('excludeSwitches', ['enable-automation'])
-    options.add_experimental_option('useAutomationExtension', False)
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
 
     # headless
     if headless:
-        options.add_argument('--headless=new')
+        options.add_argument("--headless=new")
 
     return options
 
@@ -112,7 +112,7 @@ def firefox_defaults(*args, headless: bool = False, **kwargs) -> FirefoxOptions:
     # default options
 
     if headless:
-        options.add_argument('--headless')
+        options.add_argument("--headless")
 
     return options
 
@@ -126,7 +126,7 @@ def safari_defaults(*args, headless: bool = False, **kwargs) -> SafariOptions:
     # default options
 
     if headless:
-        options.add_argument('--headless')
+        options.add_argument("--headless")
 
     return options
 
@@ -140,9 +140,10 @@ def edge_defaults(*args, headless: bool = False, **kwargs) -> EdgeOptions:
     # default options
 
     if headless:
-        options.add_argument('--headless')
+        options.add_argument("--headless")
 
     return options
+
 
 # Misc
 class UnsupportedBrowserException(Exception):
@@ -168,22 +169,22 @@ def _clean_name(name: str) -> str:
 
 
 drivers = {
-    'chrome': webdriver.Chrome,
-    'firefox': webdriver.Firefox,
-    'safari': webdriver.Safari,
-    'edge': webdriver.ChromiumEdge,
+    "chrome": webdriver.Chrome,
+    "firefox": webdriver.Firefox,
+    "safari": webdriver.Safari,
+    "edge": webdriver.ChromiumEdge,
 }
 
 defaults = {
-    'chrome': chrome_defaults,
-    'firefox': firefox_defaults,
-    'safari': safari_defaults,
-    'edge': edge_defaults,
+    "chrome": chrome_defaults,
+    "firefox": firefox_defaults,
+    "safari": safari_defaults,
+    "edge": edge_defaults,
 }
 
 
 services = {
-    'chrome': lambda : ChromeService(ChromeDriverManager().install()),
-    'firefox': lambda : FirefoxService(GeckoDriverManager().install()),
-    'edge': lambda : EdgeService(EdgeChromiumDriverManager().install()),
+    "chrome": lambda: ChromeService(),
+    "firefox": lambda: FirefoxService(),
+    "edge": lambda: EdgeService(),
 }
