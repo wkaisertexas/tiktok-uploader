@@ -127,7 +127,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
                 valid_tiktok_minute_multiple = 5
                 schedule = _get_valid_schedule_minute(schedule, valid_tiktok_minute_multiple)
                 if not _check_valid_schedule(schedule):
-                    print(f'{schedule} is invalid, skipping')
+                    print(f'{schedule} is invalid, the schedule datetime must be as least 20 minutes in the future, and a maximum of 10 days, skipping')
                     failed.append(video)
                     continue
 
