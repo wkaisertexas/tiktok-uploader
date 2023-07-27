@@ -25,7 +25,7 @@ classifiers = [
 
 dependencies = [
 	"selenium",
-	"webdriver_manager == 3.8.6",
+	"webdriver_manager",
   "toml"
 ]
 
