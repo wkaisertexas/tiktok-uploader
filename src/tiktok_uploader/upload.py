@@ -122,6 +122,15 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
                 failed.append(video)
                 continue
 
+            # Video must have a valid datetime for tiktok's scheduler
+            if schedule:
+                valid_tiktok_minute_multiple = 5
+                schedule = _get_valid_schedule_minute(schedule, valid_tiktok_minute_multiple)
+                if not _check_valid_schedule(schedule):
+                    print(f'{schedule} is invalid, skipping')
+                    failed.append(video)
+                    continue
+
             complete_upload_form(driver, path, description, schedule,
                                  num_retires=num_retires, headless=headless,
                                  *args, **kwargs)
@@ -358,16 +367,11 @@ def _set_schedule_video(driver, date: datetime.datetime) -> None:
     date : str
         The datetime to set
     """
-    # Verify valid input to add_schedule TODO
-    # If the option of schedule is used first verify the datetime will be valid, to not waste time
-    # Remember the limit of 10 days at future and not permit past dates than now more 20 minutes (are 15 but, 5 of margin)
-    # Hours 0-23, Minutes 0, 5, 10 ... 55
-    # TODO refactor clean code
     # TODO support timezones
+    # TODO refactor clean code
 
-    logger.debug(green('Setting schedule'))
+    logger.debug(green(f'Setting schedule'))
 
-    year = date.year
     month = date.month
     day = date.day
     hour = date.hour
@@ -426,7 +430,7 @@ def __verify_date_picked_is_correct(driver, month: int, day: int):
     date_selected_month = int(date_selected.split('-')[1])
     date_selected_day = int(date_selected.split('-')[2])
 
-    if date_selected_month == month or date_selected_day == day:
+    if date_selected_month == month and date_selected_day == day:
         logger.debug(green('Date picked correctly'))
     else:
         msg = f'Something went wrong with the date picker, expected {month}-{day} but got {date_selected_month}-{date_selected_day}'
@@ -451,11 +455,11 @@ def __time_picker(driver, hour: int, minute: int) -> None:
     # 00 = 0, 01 = 1, 02 = 2, 03 = 3, 04 = 4, 05 = 5, 06 = 6, 07 = 7, 08 = 8, 09 = 9, 10 = 10, 11 = 11, 12 = 12,
     # 13 = 13, 14 = 14, 15 = 15, 16 = 16, 17 = 17, 18 = 18, 19 = 19, 20 = 20, 21 = 21, 22 = 22, 23 = 23
     hour_options = driver.find_elements(By.XPATH, config['selectors']['schedule']['timepicker_hours'])
-    # 00 == 1, 05 == 2, 10 == 3, 15 == 4, 20 == 5, 25 == 6, 30 == 7, 35 == 8, 40 == 9, 45 == 10, 50 == 11, 55 == 12
+    # 00 == 0, 05 == 1, 10 == 2, 15 == 3, 20 == 4, 25 == 5, 30 == 6, 35 == 7, 40 == 8, 45 == 9, 50 == 10, 55 == 11
     minute_options = driver.find_elements(By.XPATH, config['selectors']['schedule']['timepicker_minutes'])
 
     hour_to_click = hour_options[hour]
-    minute_option_correct_index = int((minute + 5) / 5)
+    minute_option_correct_index = int(minute / 5)
     minute_to_click = minute_options[minute_option_correct_index]
 
     driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", hour_to_click)
@@ -475,7 +479,7 @@ def __verify_time_picked_is_correct(driver, hour: int, minute: int):
     time_selected_hour = int(time_selected.split(':')[0])
     time_selected_minute = int(time_selected.split(':')[1])
 
-    if time_selected_hour == hour or time_selected_minute == minute:
+    if time_selected_hour == hour and time_selected_minute == minute:
         logger.debug(green('Time picked correctly'))
     else:
         msg = f'Something went wrong with the time picker, expected {hour}:{minute} but got {time_selected_hour}:{time_selected_minute}'
@@ -512,6 +516,52 @@ def _check_valid_path(path: str) -> bool:
     Returns whether or not the filetype is supported by TikTok
     """
     return exists(path) and path.split('.')[-1] in config['supported_file_types']
+
+
+def _get_valid_schedule_minute(schedule, valid_multiple) -> datetime.datetime:
+    """
+    Returns a datetime.datetime with valid minute for TikTok
+    """
+    if _is_valid_schedule_minute(schedule.minute, valid_multiple):
+        return schedule
+    else:
+        return _set_valid_schedule_minute(schedule, valid_multiple)
+
+
+def _is_valid_schedule_minute(minute, valid_multiple) -> bool:
+    if minute % valid_multiple != 0:
+        return False
+    else:
+        return True
+
+
+def _set_valid_schedule_minute(schedule, valid_multiple) -> datetime.datetime:
+    minute = schedule.minute
+
+    remainder = minute % valid_multiple
+    integers_to_valid_multiple = 5 - remainder
+    schedule += datetime.timedelta(minutes=integers_to_valid_multiple)
+
+    return schedule
+
+
+def _check_valid_schedule(schedule: datetime.datetime) -> bool:
+    """
+    Returns if the schedule is supported by TikTok
+    """
+    valid_tiktok_minute_multiple = 5
+    margin_to_complete_upload_form = 5
+
+    min_datetime_tiktok_valid = datetime.datetime.now() + datetime.timedelta(minutes=15)
+    min_datetime_tiktok_valid += datetime.timedelta(minutes=margin_to_complete_upload_form)
+    max_datetime_tiktok_valid = datetime.datetime.now() + datetime.timedelta(days=10)
+    if schedule < min_datetime_tiktok_valid \
+            or schedule > max_datetime_tiktok_valid:
+        return False
+    elif not _is_valid_schedule_minute(schedule.minute, valid_tiktok_minute_multiple):
+        return False
+    else:
+        return True
 
 
 def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: str) -> int:
