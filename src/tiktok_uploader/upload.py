@@ -96,13 +96,13 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     else:
         logger.debug('Using user-defined browser agent')
         driver = browser_agent
-    driver = auth.authenticate_agent(driver)
     if proxy:
         if proxy_is_working(driver, proxy['host']):
             logger.debug(green(f"Proxy is working, my ip is: {proxy['host']}"))
         else:
             logger.error("Proxy is not working")
             driver.quit()
+    driver = auth.authenticate_agent(driver)
 
     failed = []
     # uploads each video
