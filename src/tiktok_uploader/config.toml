@@ -56,5 +56,20 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	duet = "//label[.='Duet']/following-sibling::div/input"
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
-	post = "//button[.='Post']"
+	post = "//div[contains(@class, 'btn-post')]"
 	post_confirmation = "//div[.='Your videos are being uploaded to TikTok!']"
+
+	[selectors.schedule]
+	switch = "//*[@id='tux-3']"
+
+	date_picker = "//div[contains(@class, 'date-picker-input')]"
+	calendar = "//div[contains(@class, 'calendar-wrapper')]"
+	calendar_month = "//span[contains(@class, 'month-title')]"
+	calendar_valid_days = "//div[@class='jsx-4172176419 days-wrapper']//span[contains(@class, 'day') and contains(@class, 'valid')]"
+	calendar_arrows = "//span[contains(@class, 'arrow')]"  # first last, second next
+
+	time_picker = "//div[contains(@class, 'time-picker-input')]"
+	time_picker_text = "//div[contains(@class, 'time-picker-input')]/*[1]"
+	time_picker_container = "//div[@class='tiktok-timepicker-time-picker-container']"
+	timepicker_hours = "//span[contains(@class, 'tiktok-timepicker-left')]"
+	timepicker_minutes = "//span[contains(@class, 'tiktok-timepicker-right')]"

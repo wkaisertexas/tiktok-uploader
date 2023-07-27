@@ -9,6 +9,7 @@ upload_videos : Uploads multiple TikTok videos
 from os.path import abspath, exists
 from typing import List
 import time
+import datetime
 
 from selenium.webdriver.common.by import By
 
@@ -24,7 +25,7 @@ from tiktok_uploader.utils import bold, green
 from proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
-def upload_video(filename=None, description='', username='',
+def upload_video(filename=None, description='', schedule: datetime.datetime = None, username='',
                  password='', cookies='', sessionid=None, cookies_list=None, *args, **kwargs):
     """
     Uploads a single TikTok video.
@@ -47,7 +48,7 @@ def upload_video(filename=None, description='', username='',
                        cookies_list=cookies_list, sessionid=sessionid)
 
     return upload_videos(
-            videos=[ { 'path': filename, 'description': description } ],
+            videos=[ { 'path': filename, 'description': description, 'schedule': schedule } ],
             auth=auth,
             *args, **kwargs
         )
@@ -110,6 +111,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
         try:
             path = abspath(video.get('path'))
             description = video.get('description', '')
+            schedule = video.get('schedule', None)
 
             logger.debug('Posting %s%s', bold(video.get('path')),
             f'\n{" " * 15}with description: {bold(description)}' if description else '')
@@ -120,8 +122,8 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
                 failed.append(video)
                 continue
 
-            complete_upload_form(driver, path, description,
-                                 num_retires = num_retires, headless=headless, 
+            complete_upload_form(driver, path, description, schedule,
+                                 num_retires=num_retires, headless=headless,
                                  *args, **kwargs)
         except Exception as exception:
             logger.error('Failed to upload %s', path)
@@ -137,7 +139,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     return failed
 
 
-def complete_upload_form(driver, path: str, description: str, headless=False, *args, **kwargs) -> None:
+def complete_upload_form(driver, path: str, description: str, schedule: datetime.datetime, headless=False, *args, **kwargs) -> None:
     """
     Actually uploades each video
 
@@ -152,6 +154,8 @@ def complete_upload_form(driver, path: str, description: str, headless=False, *a
     _set_video(driver, path=path, **kwargs)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
+    if schedule:
+        _set_schedule_video(driver, schedule)
     _post_video(driver)
 
 
@@ -342,6 +346,141 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
 
     except Exception as _:
         logger.error('Failed to set interactivity settings')
+
+
+def _set_schedule_video(driver, date: datetime.datetime) -> None:
+    """
+    Sets the schedule of the video
+
+    Parameters
+    ----------
+    driver : selenium.webdriver
+    date : str
+        The datetime to set
+    """
+    # Verify valid input to add_schedule TODO
+    # If the option of schedule is used first verify the datetime will be valid, to not waste time
+    # Remember the limit of 10 days at future and not permit past dates than now more 20 minutes (are 15 but, 5 of margin)
+    # Hours 0-23, Minutes 0, 5, 10 ... 55
+    # TODO refactor clean code
+    # TODO support timezones
+
+    logger.debug(green('Setting schedule'))
+
+    year = date.year
+    month = date.month
+    day = date.day
+    hour = date.hour
+    minute = date.minute
+
+    try:
+        switch = driver.find_element(By.XPATH, config['selectors']['schedule']['switch'])
+        switch.click()
+        __date_picker(driver, month, day)
+        __time_picker(driver, hour, minute)
+    except Exception as e:
+        msg = f'Failed to set schedule: {e}'
+        print(msg)
+        logger.error(msg)
+
+
+def __date_picker(driver, month: int, day: int) -> None:
+    logger.debug(green('Picking date'))
+
+    condition = EC.presence_of_element_located(
+        (By.XPATH, config['selectors']['schedule']['date_picker'])
+        )
+    date_picker = WebDriverWait(driver, config['implicit_wait']).until(condition)
+    date_picker.click()
+
+    condition = EC.presence_of_element_located(
+        (By.XPATH, config['selectors']['schedule']['calendar'])
+    )
+    calendar = WebDriverWait(driver, config['implicit_wait']).until(condition)
+
+    calendar_month = driver.find_element(By.XPATH, config['selectors']['schedule']['calendar_month']).text
+    n_calendar_month = datetime.datetime.strptime(calendar_month, '%B').month
+    if n_calendar_month != month:  # Max can be a month before or after
+        if n_calendar_month < month:
+            arrow = driver.find_elements(By.XPATH, config['selectors']['schedule']['calendar_arrows'])[-1]
+        else:
+            arrow = driver.find_elements(By.XPATH, config['selectors']['schedule']['calendar_arrows'])[0]
+        arrow.click()
+    valid_days = driver.find_elements(By.XPATH, config['selectors']['schedule']['calendar_valid_days'])
+
+    day_to_click = None
+    for day_option in valid_days:
+        if int(day_option.text) == day:
+            day_to_click = day_option
+            break
+    if day_to_click:
+        day_to_click.click()
+    else:
+        raise Exception('Day not found in calendar')
+
+    __verify_date_picked_is_correct(driver, month, day)
+
+
+def __verify_date_picked_is_correct(driver, month: int, day: int):
+    date_selected = driver.find_element(By.XPATH, config['selectors']['schedule']['date_picker']).text
+    date_selected_month = int(date_selected.split('-')[1])
+    date_selected_day = int(date_selected.split('-')[2])
+
+    if date_selected_month == month or date_selected_day == day:
+        logger.debug(green('Date picked correctly'))
+    else:
+        msg = f'Something went wrong with the date picker, expected {month}-{day} but got {date_selected_month}-{date_selected_day}'
+        logger.error(msg)
+        raise Exception(msg)
+
+
+def __time_picker(driver, hour: int, minute: int) -> None:
+    logger.debug(green('Picking time'))
+
+    condition = EC.presence_of_element_located(
+        (By.XPATH, config['selectors']['schedule']['time_picker'])
+        )
+    time_picker = WebDriverWait(driver, config['implicit_wait']).until(condition)
+    time_picker.click()
+
+    condition = EC.presence_of_element_located(
+        (By.XPATH, config['selectors']['schedule']['time_picker_container'])
+    )
+    time_picker_container = WebDriverWait(driver, config['implicit_wait']).until(condition)
+
+    # 00 = 0, 01 = 1, 02 = 2, 03 = 3, 04 = 4, 05 = 5, 06 = 6, 07 = 7, 08 = 8, 09 = 9, 10 = 10, 11 = 11, 12 = 12,
+    # 13 = 13, 14 = 14, 15 = 15, 16 = 16, 17 = 17, 18 = 18, 19 = 19, 20 = 20, 21 = 21, 22 = 22, 23 = 23
+    hour_options = driver.find_elements(By.XPATH, config['selectors']['schedule']['timepicker_hours'])
+    # 00 == 1, 05 == 2, 10 == 3, 15 == 4, 20 == 5, 25 == 6, 30 == 7, 35 == 8, 40 == 9, 45 == 10, 50 == 11, 55 == 12
+    minute_options = driver.find_elements(By.XPATH, config['selectors']['schedule']['timepicker_minutes'])
+
+    hour_to_click = hour_options[hour]
+    minute_option_correct_index = int((minute + 5) / 5)
+    minute_to_click = minute_options[minute_option_correct_index]
+
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", hour_to_click)
+    hour_to_click.click()
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", minute_to_click)
+    minute_to_click.click()
+
+    # click somewhere else to close the time picker
+    time_picker.click()
+
+
+    __verify_time_picked_is_correct(driver, hour, minute)
+
+
+def __verify_time_picked_is_correct(driver, hour: int, minute: int):
+    time_selected = driver.find_element(By.XPATH, config['selectors']['schedule']['time_picker_text']).text
+    time_selected_hour = int(time_selected.split(':')[0])
+    time_selected_minute = int(time_selected.split(':')[1])
+
+    if time_selected_hour == hour or time_selected_minute == minute:
+        logger.debug(green('Time picked correctly'))
+    else:
+        msg = f'Something went wrong with the time picker, expected {hour}:{minute} but got {time_selected_hour}:{time_selected_minute}'
+        logger.error(msg)
+        raise Exception(msg)
 
 
 def _post_video(driver) -> None:
