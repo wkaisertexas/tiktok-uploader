@@ -43,10 +43,10 @@ def get_my_ip(driver):
     driver.execute_script("window.open('', '_blank');")
     driver.switch_to.window(driver.window_handles[-1])
 
-    driver.get('https://httpbin.org/ip')
+    driver.get('https://api.ipify.org/?format=json')
 
     ip_row = driver.find_element(By.XPATH, '//body').text
-    ip = json.loads(ip_row)['origin']
+    ip = json.loads(ip_row)['ip']
 
     driver.close()
     driver.switch_to.window(origin_tab)
