@@ -18,21 +18,9 @@ def main():
 
     args = validate_uploader_args(args=args)
 
-    # parse args.schedule to datetime
-    if args.schedule:
-        schedule = datetime.datetime.strptime(args.schedule, '%Y-%m-%d %H:%M')
-
-    # parse args.proxy to dict
-    if args.proxy:
-        proxy = {}
-        if '@' in args.proxy:
-            proxy['user'] = args.proxy.split('@')[0].split(':')[0]
-            proxy['pass'] = args.proxy.split('@')[0].split(':')[1]
-            proxy['host'] = args.proxy.split('@')[1].split(':')[0]
-            proxy['port'] = args.proxy.split('@')[1].split(':')[1]
-        else:
-            proxy['host'] = args.proxy.split(':')[0]
-            proxy['port'] = args.proxy.split(':')[1]
+    # parse args
+    schedule = parse_schedule(args.schedule)
+    proxy = parse_proxy(args.proxy)
 
     # runs the program using the arguments provided
     result = upload_video(
@@ -160,3 +148,25 @@ def get_login_info(path: str, header=True) -> list:
         if header:
             file = file[1:]
         return [line.split(',')[:2] for line in file]
+
+
+def parse_schedule(schedule_raw):
+    if schedule_raw:
+        schedule = datetime.datetime.strptime(schedule_raw, '%Y-%m-%d %H:%M')
+    else:
+        schedule = None
+    return schedule
+
+
+def parse_proxy(proxy_raw):
+    proxy = {}
+    if proxy_raw:
+        if '@' in proxy_raw:
+            proxy['user'] = proxy_raw.split('@')[0].split(':')[0]
+            proxy['pass'] = proxy_raw.split('@')[0].split(':')[1]
+            proxy['host'] = proxy_raw.split('@')[1].split(':')[0]
+            proxy['port'] = proxy_raw.split('@')[1].split(':')[1]
+        else:
+            proxy['host'] = proxy_raw.split(':')[0]
+            proxy['port'] = proxy_raw.split(':')[1]
+    return proxy
