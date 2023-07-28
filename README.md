@@ -230,11 +230,11 @@ On intial startup, you **may** be prompted to install the correct driver for you
 
 # ♻ Examples
 
-- **[Basic Upload Example](exmples/basic_upload.py):** Uses `upload_video` to make one post.
+- **[Basic Upload Example](examples/basic_upload.py):** Uses `upload_video` to make one post.
 
-- **[Series Upload Example](examples/series_upload.py):** Uploads the same video multiple times using `upload_videos`.
+- **[Multiple Videos At Once](examples/multiple_videos_at_once.py):** Uploads the same video multiple times using `upload_videos`.
 
-- **[Scheduled Uploader Example](examples/example_series_upload.py):** Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
+- **[Series Upload Example](examples/series_upload.py):** Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
 
 # 📝 Notes
 
