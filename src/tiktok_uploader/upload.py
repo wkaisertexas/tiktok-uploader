@@ -27,7 +27,7 @@ from proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
 def upload_video(filename=None, description='', schedule: datetime.datetime = None, username='',
-                 password='', cookies='', sessionid=None, cookies_list=None, *args, **kwargs):
+                 password='', cookies='', sessionid=None, cookies_list=None, proxy=None, *args, **kwargs):
     """
     Uploads a single TikTok video.
 
@@ -53,12 +53,13 @@ def upload_video(filename=None, description='', schedule: datetime.datetime = No
     return upload_videos(
             videos=[ { 'path': filename, 'description': description, 'schedule': schedule } ],
             auth=auth,
+            proxy=proxy,
             *args, **kwargs
         )
 
 
-def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome',
-                  browser_agent=None, on_complete=None, headless=False, num_retires : int = 1, proxy: dict = None, *args, **kwargs):
+def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='chrome',
+                  browser_agent=None, on_complete=None, headless=False, num_retires : int = 1, *args, **kwargs):
     """
     Uploads multiple videos to TikTok
 
@@ -66,6 +67,8 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
     ----------
     videos : list
         A list of dictionaries containing the video's ('path') and description ('description')
+    proxy: dict
+        A dictionary containing the proxy user, pass, host and port
     browser : str
         The browser to use for uploading
     browser_agent : selenium.webdriver
