@@ -4,6 +4,7 @@ CLI is a controller for the command line use of this library
 
 from argparse import ArgumentParser
 from os.path import exists, join
+import datetime
 
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
@@ -16,10 +17,16 @@ def main():
 
     args = validate_uploader_args(args=args)
 
+    # parse args.schedule to datetime
+    if args.schedule:
+        schedule = datetime.datetime.strptime(args.schedule, '%Y-%m-%d %H:%M')
+    else:
+        schedule = args.schedule
     # runs the program using the arguments provided
     result = upload_video(
         filename=args.video,
         description=args.description,
+        schedule=schedule,
         username=args.username,
         password=args.password,
         cookies=args.cookies,
@@ -47,6 +54,7 @@ def get_uploader_args():
     # primary arguments
     parser.add_argument('-v', '--video', help='Video file', required=True)
     parser.add_argument('-d', '--description', help='Description', default='')
+    parser.add_argument('-t', '--schedule', help='Schedule UTC time in %Y-%m-%d %H:%M format ', default=None)
 
     # authentication arguments
     parser.add_argument('-c', '--cookies', help='The cookies you want to use')
