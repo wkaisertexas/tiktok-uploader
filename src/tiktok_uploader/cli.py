@@ -5,6 +5,7 @@ CLI is a controller for the command line use of this library
 from argparse import ArgumentParser
 from os.path import exists, join
 import datetime
+import json
 
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
@@ -20,8 +21,19 @@ def main():
     # parse args.schedule to datetime
     if args.schedule:
         schedule = datetime.datetime.strptime(args.schedule, '%Y-%m-%d %H:%M')
-    else:
-        schedule = args.schedule
+
+    # parse args.proxy to dict
+    if args.proxy:
+        proxy = {}
+        if '@' in args.proxy:
+            proxy['user'] = args.proxy.split('@')[0].split(':')[0]
+            proxy['pass'] = args.proxy.split('@')[0].split(':')[1]
+            proxy['host'] = args.proxy.split('@')[1].split(':')[0]
+            proxy['port'] = args.proxy.split('@')[1].split(':')[1]
+        else:
+            proxy['host'] = args.proxy.split(':')[0]
+            proxy['port'] = args.proxy.split(':')[1]
+
     # runs the program using the arguments provided
     result = upload_video(
         filename=args.video,
@@ -30,6 +42,7 @@ def main():
         username=args.username,
         password=args.password,
         cookies=args.cookies,
+        proxy=proxy,
         sessionid=args.sessionid,
         headless=not args.attach,
     )
@@ -54,7 +67,10 @@ def get_uploader_args():
     # primary arguments
     parser.add_argument('-v', '--video', help='Video file', required=True)
     parser.add_argument('-d', '--description', help='Description', default='')
+
+    # secondary arguments
     parser.add_argument('-t', '--schedule', help='Schedule UTC time in %Y-%m-%d %H:%M format ', default=None)
+    parser.add_argument('--proxy', help='Proxy user:pass@host:port or host:port format', default=None)
 
     # authentication arguments
     parser.add_argument('-c', '--cookies', help='The cookies you want to use')
