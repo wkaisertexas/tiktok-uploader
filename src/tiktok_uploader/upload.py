@@ -9,6 +9,7 @@ upload_videos : Uploads multiple TikTok videos
 from os.path import abspath, exists
 from typing import List
 import time
+import pytz
 import datetime
 
 from selenium.webdriver.common.by import By
@@ -38,6 +39,8 @@ def upload_video(filename=None, description='', schedule: datetime.datetime = No
         The path to the video to upload
     description : str
         The description to set for the video
+    schedule: datetime.datetime
+        The datetime to schedule the video, must be naive or aware with UTC timezone, if naive it will be aware with UTC timezone
     cookies : str
         The cookies to use for uploading
     sessionid: str
@@ -99,9 +102,9 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
         driver = browser_agent
     if proxy:
         if proxy_is_working(driver, proxy['host']):
-            logger.debug(green(f"Proxy is working, my ip is: {proxy['host']}"))
+            logger.debug(green('Proxy is working'))
         else:
-            logger.error("Proxy is not working")
+            logger.error('Proxy is not working')
             driver.quit()
     driver = auth.authenticate_agent(driver)
 
@@ -124,6 +127,16 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, browser='chrome
 
             # Video must have a valid datetime for tiktok's scheduler
             if schedule:
+                timezone = pytz.UTC
+                if int(schedule.utcoffset().total_seconds()) == 0:  # Equivalent to UTC
+                    schedule = schedule.astimezone(timezone)
+                elif schedule.tzinfo is None:
+                    schedule = timezone.localize(schedule)
+                else:
+                    print(f'{schedule} is invalid, the schedule datetime must be naive or aware with UTC timezone, skipping')
+                    failed.append(video)
+                    continue
+
                 valid_tiktok_minute_multiple = 5
                 schedule = _get_valid_schedule_minute(schedule, valid_tiktok_minute_multiple)
                 if not _check_valid_schedule(schedule):
@@ -357,25 +370,26 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
         logger.error('Failed to set interactivity settings')
 
 
-def _set_schedule_video(driver, date: datetime.datetime) -> None:
+def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
     """
     Sets the schedule of the video
 
     Parameters
     ----------
     driver : selenium.webdriver
-    date : str
+    schedule : datetime.datetime
         The datetime to set
     """
-    # TODO support timezones
-    # TODO refactor clean code
 
-    logger.debug(green(f'Setting schedule'))
+    logger.debug(green('Setting schedule'))
 
-    month = date.month
-    day = date.day
-    hour = date.hour
-    minute = date.minute
+    driver_timezone = __get_driver_timezone(driver)
+    schedule = schedule.astimezone(driver_timezone)
+
+    month = schedule.month
+    day = schedule.day
+    hour = schedule.hour
+    minute = schedule.minute
 
     try:
         switch = driver.find_element(By.XPATH, config['selectors']['schedule']['switch'])
@@ -470,7 +484,7 @@ def __time_picker(driver, hour: int, minute: int) -> None:
     # click somewhere else to close the time picker
     time_picker.click()
 
-
+    time.sleep(.5)  # wait for the DOM change
     __verify_time_picked_is_correct(driver, hour, minute)
 
 
@@ -482,7 +496,9 @@ def __verify_time_picked_is_correct(driver, hour: int, minute: int):
     if time_selected_hour == hour and time_selected_minute == minute:
         logger.debug(green('Time picked correctly'))
     else:
-        msg = f'Something went wrong with the time picker, expected {hour}:{minute} but got {time_selected_hour}:{time_selected_minute}'
+        msg = f'Something went wrong with the time picker, ' \
+              f'expected {hour:02d}:{minute:02d} ' \
+              f'but got {time_selected_hour:02d}:{time_selected_minute:02d}'
         logger.error(msg)
         raise Exception(msg)
 
@@ -552,9 +568,10 @@ def _check_valid_schedule(schedule: datetime.datetime) -> bool:
     valid_tiktok_minute_multiple = 5
     margin_to_complete_upload_form = 5
 
-    min_datetime_tiktok_valid = datetime.datetime.now() + datetime.timedelta(minutes=15)
+    datetime_utc_now = pytz.UTC.localize(datetime.datetime.utcnow())
+    min_datetime_tiktok_valid = datetime_utc_now + datetime.timedelta(minutes=15)
     min_datetime_tiktok_valid += datetime.timedelta(minutes=margin_to_complete_upload_form)
-    max_datetime_tiktok_valid = datetime.datetime.now() + datetime.timedelta(days=10)
+    max_datetime_tiktok_valid = datetime_utc_now + datetime.timedelta(days=10)
     if schedule < min_datetime_tiktok_valid \
             or schedule > max_datetime_tiktok_valid:
         return False
@@ -650,6 +667,13 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
         return_list.append(elem)
 
     return return_list
+
+def __get_driver_timezone(driver) -> pytz.timezone:
+    """
+    Returns the timezone of the driver
+    """
+    timezone_str = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
+    return pytz.timezone(timezone_str)
 
 class DescriptionTooLong(Exception):
     """
