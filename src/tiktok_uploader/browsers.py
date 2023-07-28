@@ -100,10 +100,13 @@ def chrome_defaults(*args, headless: bool = False, proxy: dict = None, **kwargs)
     if headless:
         options.add_argument('--headless=new')
     if proxy:
-        # This can fail if you are executing the funtion more than once in the same time
-        extension_file = 'temp_proxy_auth_extension.zip'
-        generate_proxy_auth_extension(proxy['host'], proxy['port'], proxy['user'], proxy['pass'], extension_file)
-        options.add_extension(extension_file)
+        if 'user' in proxy.keys() and 'pass' in proxy.keys():
+            # This can fail if you are executing the function more than once in the same time
+            extension_file = 'temp_proxy_auth_extension.zip'
+            generate_proxy_auth_extension(proxy['host'], proxy['port'], proxy['user'], proxy['pass'], extension_file)
+            options.add_extension(extension_file)
+        else:
+            options.add_argument(f'--proxy-server={proxy["host"]}:{proxy["port"]}')
 
     return options
 
