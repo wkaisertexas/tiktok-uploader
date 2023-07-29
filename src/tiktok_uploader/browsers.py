@@ -80,7 +80,9 @@ def get_default_options(name: str, *args, **kwargs):
     raise UnsupportedBrowserException()
 
 
-def chrome_defaults(*args, headless: bool = False, **kwargs) -> ChromeOptions:
+def chrome_defaults(
+    *args, headless: bool = False, is_gcp: bool = False, **kwargs
+) -> ChromeOptions:
     """
     Creates Chrome with Options
     """
@@ -98,6 +100,12 @@ def chrome_defaults(*args, headless: bool = False, **kwargs) -> ChromeOptions:
     # headless
     if headless:
         options.add_argument("--headless=new")
+        
+    if is_gcp:
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        options.add_argument("window-size=1024,768")
 
     return options
 

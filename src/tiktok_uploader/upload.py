@@ -76,6 +76,7 @@ def upload_videos(
     browser_agent=None,
     on_complete=None,
     headless=False,
+    is_gcp=False,
     num_retires: int = 1,
     *args,
     **kwargs
@@ -120,7 +121,9 @@ def upload_videos(
             browser,
             "in headless mode" if headless else "",
         )
-        driver = get_browser(name=browser, headless=headless, *args, **kwargs)
+        driver = get_browser(
+            name=browser, headless=headless, is_gcp=is_gcp, *args, **kwargs
+        )
     else:
         logger.debug("Using user-defined browser agent")
         driver = browser_agent
