@@ -23,7 +23,7 @@ from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader import config, logger
 from tiktok_uploader.utils import bold, green
-from proxy_auth_extension.proxy_auth_extension import proxy_is_working
+from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
 def upload_video(filename=None, description='', schedule: datetime.datetime = None, username='',

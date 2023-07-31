@@ -2,16 +2,11 @@
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.safari.options import Options as SafariOptions
-from selenium.webdriver.chromium import options as ChromiumOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
-from selenium.webdriver.ie.options import Options as IEOptions
 
 # Webdriver managers
 from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager, ChromeType
-from webdriver_manager.microsoft import IEDriverManager
-from selenium.webdriver.ie.service import Service as IEService
-from selenium.webdriver.safari.service import Service as SafariService
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
@@ -19,8 +14,8 @@ from selenium.webdriver.edge.service import Service as EdgeService
 
 from selenium import webdriver
 
-from tiktok_uploader import config, logger
-from proxy_auth_extension.proxy_auth_extension import generate_proxy_auth_extension
+from tiktok_uploader import config
+from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import generate_proxy_auth_extension
 
 
 def get_browser(name: str = 'chrome', options=None, *args, **kwargs) -> webdriver:
@@ -195,7 +190,8 @@ defaults = {
 
 
 services = {
-    'chrome': lambda : ChromeService(ChromeDriverManager().install()),
+    # 'chrome': lambda : ChromeService(ChromeDriverManager().install()),  # temp change beacuse of chrome version
+    'chrome': lambda : ChromeService(ChromeDriverManager('115.0.5790.90').install()),
     'firefox': lambda : FirefoxService(GeckoDriverManager().install()),
     'edge': lambda : EdgeService(EdgeChromiumDriverManager().install()),
 }
