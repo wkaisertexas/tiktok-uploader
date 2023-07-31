@@ -403,6 +403,8 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
         msg = f'Failed to set schedule: {e}'
         print(msg)
         logger.error(msg)
+        raise FailedToUpload()
+
 
 
 def __date_picker(driver, month: int, day: int) -> None:
