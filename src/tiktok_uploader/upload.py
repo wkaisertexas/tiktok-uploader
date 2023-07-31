@@ -109,6 +109,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
         else:
             logger.error('Proxy is not working')
             driver.quit()
+            raise Exception('Proxy is not working')
     driver = auth.authenticate_agent(driver)
 
     failed = []
