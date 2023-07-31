@@ -27,7 +27,7 @@ from proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
 def upload_video(filename=None, description='', schedule: datetime.datetime = None, username='',
-                 password='', cookies='', sessionid=None, cookies_list=None, proxy=None, *args, **kwargs):
+                 password='', cookies='', sessionid=None, cookies_list=None, cookies_str=None, proxy=None, *args, **kwargs):
     """
     Uploads a single TikTok video.
 
@@ -48,7 +48,7 @@ def upload_video(filename=None, description='', schedule: datetime.datetime = No
             but it is recommended to use all cookies to avoid detection
     """
     auth = AuthBackend(username=username, password=password, cookies=cookies,
-                       cookies_list=cookies_list, sessionid=sessionid)
+                       cookies_list=cookies_list, cookies_str=cookies_str, sessionid=sessionid)
 
     return upload_videos(
             videos=[ { 'path': filename, 'description': description, 'schedule': schedule } ],

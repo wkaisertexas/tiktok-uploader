@@ -20,7 +20,7 @@ class AuthBackend:
     cookies: list
 
     def __init__(self, username: str = '', password: str = '',
-                 cookies_list: list = None, cookies=None, sessionid: str = None):
+                 cookies_list: list = None, cookies=None, cookies_str=None, sessionid: str = None):
         """
         Creates the authenticaiton backend
 
@@ -34,6 +34,7 @@ class AuthBackend:
             raise InsufficientAuth()
 
         self.cookies = self.get_cookies(path=cookies) if cookies else []
+        self.cookies += self.get_cookies(cookies_str=cookies_str) if cookies_str else []
         self.cookies += cookies_list if cookies_list else []
         self.cookies += [{'name': 'sessionid', 'value': sessionid}] if sessionid else []
 
@@ -76,12 +77,15 @@ class AuthBackend:
         return driver
 
 
-    def get_cookies(self, path: str) -> dict:
+    def get_cookies(self, path: str = None, cookies_str: str = None) -> dict:
         """
         Gets cookies from the passed file using the netscape standard
         """
-        with open(path, 'r', encoding='utf-8') as file:
-            lines = file.read().split('\n')
+        if path:
+            with open(path, "r", encoding="utf-8") as file:
+                lines = file.read().split("\n")
+        else:
+            lines = cookies_str.split("\n")
 
         return_cookies = []
         for line in lines:
