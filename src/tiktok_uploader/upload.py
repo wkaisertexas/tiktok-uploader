@@ -132,9 +132,9 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
             # Video must have a valid datetime for tiktok's scheduler
             if schedule:
                 timezone = pytz.UTC
-                if int(schedule.utcoffset().total_seconds()) == 0:  # Equivalent to UTC
+                if schedule.tzinfo is None:
                     schedule = schedule.astimezone(timezone)
-                elif schedule.tzinfo is None:
+                elif int(schedule.utcoffset().total_seconds()) == 0:  # Equivalent to UTC
                     schedule = timezone.localize(schedule)
                 else:
                     print(f'{schedule} is invalid, the schedule datetime must be naive or aware with UTC timezone, skipping')
