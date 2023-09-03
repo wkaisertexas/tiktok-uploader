@@ -4,6 +4,8 @@ CLI is a controller for the command line use of this library
 
 from argparse import ArgumentParser
 from os.path import exists, join
+import datetime
+import json
 
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
@@ -16,13 +18,19 @@ def main():
 
     args = validate_uploader_args(args=args)
 
+    # parse args
+    schedule = parse_schedule(args.schedule)
+    proxy = parse_proxy(args.proxy)
+
     # runs the program using the arguments provided
     result = upload_video(
         filename=args.video,
         description=args.description,
+        schedule=schedule,
         username=args.username,
         password=args.password,
         cookies=args.cookies,
+        proxy=proxy,
         sessionid=args.sessionid,
         headless=not args.attach,
     )
@@ -47,6 +55,10 @@ def get_uploader_args():
     # primary arguments
     parser.add_argument('-v', '--video', help='Video file', required=True)
     parser.add_argument('-d', '--description', help='Description', default='')
+
+    # secondary arguments
+    parser.add_argument('-t', '--schedule', help='Schedule UTC time in %Y-%m-%d %H:%M format ', default=None)
+    parser.add_argument('--proxy', help='Proxy user:pass@host:port or host:port format', default=None)
 
     # authentication arguments
     parser.add_argument('-c', '--cookies', help='The cookies you want to use')
@@ -136,3 +148,25 @@ def get_login_info(path: str, header=True) -> list:
         if header:
             file = file[1:]
         return [line.split(',')[:2] for line in file]
+
+
+def parse_schedule(schedule_raw):
+    if schedule_raw:
+        schedule = datetime.datetime.strptime(schedule_raw, '%Y-%m-%d %H:%M')
+    else:
+        schedule = None
+    return schedule
+
+
+def parse_proxy(proxy_raw):
+    proxy = {}
+    if proxy_raw:
+        if '@' in proxy_raw:
+            proxy['user'] = proxy_raw.split('@')[0].split(':')[0]
+            proxy['pass'] = proxy_raw.split('@')[0].split(':')[1]
+            proxy['host'] = proxy_raw.split('@')[1].split(':')[0]
+            proxy['port'] = proxy_raw.split('@')[1].split(':')[1]
+        else:
+            proxy['host'] = proxy_raw.split(':')[0]
+            proxy['port'] = proxy_raw.split(':')[1]
+    return proxy

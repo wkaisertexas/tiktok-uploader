@@ -140,6 +140,24 @@ upload_video(..., comment=True, stitch=True, duet=True)
 
 > Comments, Stiches and Duets are allowed by **default**
 
+## 🌐 Proxy
+To set a proxy, currently only works with chrome as the browser, allow user:pass auth.
+
+```python
+# proxy = {'user': 'myuser', 'pass': 'mypass', 'host': '111.111.111', 'port': '99'}  # user:pass
+proxy = {'host': '111.111.111', 'port': '99'}
+upload_video(..., proxy=proxy)
+```
+## 📆 Schedule
+The datetime to schedule the video will be treated with the UTC timezone. <br>
+The scheduled datetime must be at least 20 minutes in the future and a maximum of 10 days.
+
+```python
+import datetime
+schedule = datetime.datetime(2020, 12, 20, 13, 00)
+upload_video(..., schedule=schedule)
+```
+
 ## 🔐 Authentication
 Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authetication by a Selenium-controlled browser.
 
@@ -230,11 +248,11 @@ On intial startup, you **may** be prompted to install the correct driver for you
 
 # ♻ Examples
 
-- **[Basic Upload Example](exmples/basic_upload.py):** Uses `upload_video` to make one post.
+- **[Basic Upload Example](examples/basic_upload.py):** Uses `upload_video` to make one post.
 
-- **[Series Upload Example](examples/series_upload.py):** Uploads the same video multiple times using `upload_videos`.
+- **[Multiple Videos At Once](examples/multiple_videos_at_once.py):** Uploads the same video multiple times using `upload_videos`.
 
-- **[Scheduled Uploader Example](examples/example_series_upload.py):** Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
+- **[Series Upload Example](examples/series_upload.py):** Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
 
 # 📝 Notes
 
