@@ -1,3 +1,7 @@
+<p align="center">
+<img src="https://github.com/wkaisertexas/tiktok-uploader/assets/27795014/f991fdc7-287a-4c3b-9a84-22c7ad8a57bf" alt="video working" />
+</p>
+
 # ⬆️ TikTok Uploader
 
 ![Forks](https://img.shields.io/github/forks/wkaisertexas/tiktok-uploader)
@@ -5,7 +9,7 @@
 ![Watchers](https://img.shields.io/github/watchers/wkaisertexas/tiktok-uploader)
 
 
-![output](https://github.com/wkaisertexas/tiktok-uploader/assets/27795014/f991fdc7-287a-4c3b-9a84-22c7ad8a57bf)
+
 
 A **Selenium**-based automated **TikTok** video uploader
 
