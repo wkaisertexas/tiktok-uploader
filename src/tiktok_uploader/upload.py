@@ -31,7 +31,7 @@ def upload_video(filename=None, description='', schedule: datetime.datetime = No
     """
     Uploads a single TikTok video.
 
-    Conder using `upload_videos` if using multiple videos
+    Consider using `upload_videos` if using multiple videos
 
     Parameters
     ----------
@@ -167,7 +167,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
 
 def complete_upload_form(driver, path: str, description: str, schedule: datetime.datetime, headless=False, *args, **kwargs) -> None:
     """
-    Actually uploades each video
+    Actually uploads each video
 
     Parameters
     ----------
@@ -633,12 +633,12 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
 
     return_list = []
     for elem in videos_list_of_dictionaries:
-        # preprocesses the dictionary
+        # preprocess the dictionary
         elem = {k.strip().lower(): v for k, v in elem.items()}
 
         keys = elem.keys()
         path_intersection = intersection(valid_path, keys)
-        description_interesection = intersection(valid_description, keys)
+        description_intersection = intersection(valid_description, keys)
 
         if path_intersection:
             # we have a path
@@ -658,9 +658,9 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
                 # no valid path found
                 raise RuntimeError("Path not found in dictionary: " + str(elem))
 
-        if description_interesection:
+        if description_intersection:
             # we have a description
-            elem[correct_description] = elem[description_interesection.pop()]
+            elem[correct_description] = elem[description_intersection.pop()]
         else:
             # iterates over the elem and finds a description which is not a valid path
             for _, value in elem.items():

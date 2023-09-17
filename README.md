@@ -15,7 +15,7 @@ A **Selenium**-based automated **TikTok** video uploader
     - [Downloading from PyPI (Recommended)](#downloading-from-pypi-recommended)
     - [Building from source](#building-from-source)
 - [Usage](#usage)
-  - [💻 Commmand Line Interface (CLI)](#-commmand-line-interface-cli)
+  - [💻 Command Line Interface (CLI)](#-commmand-line-interface-cli)
   - [⬆ Uploading Videos](#-uploading-videos)
   - [🫵 Mentions and Hashtags](#-mentions-and-hashtags)
   - [🪡 Stitches, Duets and Comments](#-stitches-duets-and-comments)
@@ -29,7 +29,7 @@ A **Selenium**-based automated **TikTok** video uploader
 - [Accounts made with](#accounts-made-using-tiktok-uploader)
 # Installation
 
-A prequisite to using this program is the installation of a [Selenium-compatable](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
+A perquisite to using this program is the installation of a [Selenium-compatible](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
 
 ## MacOS, Windows and Linux
 
@@ -45,7 +45,7 @@ pip install tiktok-uploader
 
 ### Building from source
 
-Installing from source allows greater flexability to modify the module's code to extend default behavior. 
+Installing from source allows greater flexibility to modify the module's code to extend default behavior. 
 
 First, `clone` and move into the repository. Next, install `hatch`, the build tool used for this project [^1]. Then, `build` the project. Finally, `install` the project with the `-e` or editable flag.  
 ```console
@@ -60,7 +60,7 @@ pip install -e .
 
 `tiktok-uploader` works by duplicating your browser's **cookies** which tricks **TikTok** into believing you are logged in on a remote-controlled browser.
 
-## 💻 Commmand Line Interface (CLI)
+## 💻 Command Line Interface (CLI)
 
 Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d) and `cookies` (-c)
 
@@ -138,7 +138,7 @@ To set whether or not a video uploaded allows stitches, comments or duet, simply
 upload_video(..., comment=True, stitch=True, duet=True)
 ```
 
-> Comments, Stiches and Duets are allowed by **default**
+> Comments, Stitches and Duets are allowed by **default**
 
 ## 🌐 Proxy
 To set a proxy, currently only works with chrome as the browser, allow user:pass auth.
@@ -159,7 +159,7 @@ upload_video(..., schedule=schedule)
 ```
 
 ## 🔐 Authentication
-Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authetication by a Selenium-controlled browser.
+Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authentication by a Selenium-controlled browser.
 
 Your `sessionid` is all that is required for authentication and can be passed as an argument to nearly any function
 
@@ -187,7 +187,7 @@ upload_video(..., cookies_list=cookies_list)
 
 ## 👀 Browser Selection
 
-[Google Chrome](https://www.google.com/chrome) is the prefered browser for **TikTokUploader**. The default anti-detection techniques used in this packaged are optimized for this. However, if you wish to use a different browser you may specify the `browser` in `upload_video` or `upload_videos`.
+[Google Chrome](https://www.google.com/chrome) is the preferred browser for **TikTokUploader**. The default anti-detection techniques used in this packaged are optimized for this. However, if you wish to use a different browser you may specify the `browser` in `upload_video` or `upload_videos`.
 
 ```python
 from tiktok_uploader.upload import upload_video
@@ -244,7 +244,7 @@ upload_videos(..., headless=True)
 
 [WebDriverManager](https://bonigarcia.dev/webdrivermanager/) is used to manage driver versions. 
 
-On intial startup, you **may** be prompted to install the correct driver for your selected browser. However, for **Chrome** and **Edge** the driver is automatically installed.
+On initial startup, you **may** be prompted to install the correct driver for your selected browser. However, for **Chrome** and **Edge** the driver is automatically installed.
 
 # ♻ Examples
 

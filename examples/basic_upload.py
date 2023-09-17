@@ -1,4 +1,4 @@
-"""Gets a video from the internet and uplaods it"""
+"""Gets a video from the internet and uploads it"""
 
 import urllib.request
 

@@ -22,7 +22,7 @@ class AuthBackend:
     def __init__(self, username: str = '', password: str = '',
                  cookies_list: list = None, cookies=None, cookies_str=None, sessionid: str = None):
         """
-        Creates the authenticaiton backend
+        Creates the authentication backend
 
         Keyword arguments:
         - username -> the accounts's username or email
