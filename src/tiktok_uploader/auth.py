@@ -28,7 +28,7 @@ class AuthBackend:
         - username -> the accounts's username or email
         - password -> the account's password
 
-        - cookies -> a list of cookie dictionaries of cookies which is Selenium-compatable
+        - cookies -> a list of cookie dictionaries of cookies which is Selenium-compatible
         """
         if (username and not password) or (password and not username):
             raise InsufficientAuth()

@@ -300,9 +300,9 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     driver : selenium.webdriver
     path : str
         The path to the video to upload
-    num_retries : number of retries (can occassionally fail)
+    num_retries : number of retries (can occasionally fail)
     """
-    # uploades the element
+    # uploads the element
     logger.debug(green('Uploading video file'))
 
     for _ in range(num_retries):
