@@ -2,16 +2,14 @@
 <img src="https://github.com/wkaisertexas/tiktok-uploader/assets/27795014/f991fdc7-287a-4c3b-9a84-22c7ad8a57bf" alt="video working" />
 </p>
 
-# ⬆️ TikTok Uploader
+<h1 align="center"> ⬆️ TikTok Uploader </h1>
+<p align="center">A <strong>Selenium</strong>-based automated <strong>TikTok</strong> video uploader</p>
 
-![Forks](https://img.shields.io/github/forks/wkaisertexas/tiktok-uploader)
-![Stars](https://img.shields.io/github/stars/wkaisertexas/tiktok-uploader)
-![Watchers](https://img.shields.io/github/watchers/wkaisertexas/tiktok-uploader)
-
-
-
-
-A **Selenium**-based automated **TikTok** video uploader
+<p align="center">
+  <img alt="Forks" src="https://img.shields.io/github/forks/wkaisertexas/tiktok-uploader" />
+  <img alt="Stars" src="https://img.shields.io/github/stars/wkaisertexas/tiktok-uploader" />
+  <img alt="Watchers" src="https://img.shields.io/github/watchers/wkaisertexas/tiktok-uploader" />
+</p>
 
 # Table of Contents
 - [Installation](#installation)
