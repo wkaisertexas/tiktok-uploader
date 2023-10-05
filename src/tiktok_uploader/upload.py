@@ -195,7 +195,12 @@ def _go_to_upload(driver) -> None:
     """
     logger.debug(green('Navigating to upload page'))
 
-    driver.get(config['paths']['upload'])
+    # if the upload page is not open, navigate to it
+    if driver.current_url != config['paths']['upload']:
+        driver.get(config['paths']['upload'])
+    # otherwise, refresh the page and accept the reload alert
+    else:
+        _refresh_with_alert(driver)
 
     # changes to the iframe
     iframe_selector = EC.presence_of_element_located(
@@ -683,6 +688,20 @@ def __get_driver_timezone(driver) -> pytz.timezone:
     """
     timezone_str = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
     return pytz.timezone(timezone_str)
+
+def _refresh_with_alert(driver) -> None:
+    try:
+        # attempt to refresh the page
+        driver.refresh()
+
+        # wait for the alert to appear
+        WebDriverWait(driver, config['explicit_wait']).until(EC.alert_is_present())
+
+        # accept the alert
+        driver.switch_to.alert.accept()
+    except:
+        # if no alert appears, the page is fine
+        pass
 
 class DescriptionTooLong(Exception):
     """
