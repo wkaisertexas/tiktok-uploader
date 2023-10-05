@@ -225,6 +225,9 @@ def _set_description(driver, description: str) -> None:
 
     logger.debug(green('Setting description'))
 
+    # Remove any characters outside the BMP range (emojis, etc)
+    description = description.encode('ascii', 'ignore').decode('ascii')
+
     saved_description = description # save the description in case it fails
 
     desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
