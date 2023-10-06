@@ -18,6 +18,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import ElementClickInterceptedException
 
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
@@ -527,8 +528,12 @@ def _post_video(driver) -> None:
     """
     logger.debug(green('Clicking the post button'))
 
-    post = driver.find_element(By.XPATH, config['selectors']['upload']['post'])
-    post.click()
+    try:
+        post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
+        post.click()
+    except ElementClickInterceptedException:
+        logger.debug(green("Trying to click on the button again"))
+        driver.execute_script('document.querySelector(".btn-post > button").click()')
 
     # waits for the video to upload
     post_confirmation = EC.presence_of_element_located(
