@@ -251,9 +251,6 @@ def _set_description(driver, description: str) -> None:
             if nearest_mention == 0 or nearest_hash == 0:
                 desc.send_keys('@' if nearest_mention == 0 else '#')
 
-                # wait for the frames to load
-                time.sleep(config['implicit_wait'])
-
                 name = description[1:].split(' ')[0]
                 if nearest_mention == 0: # @ case
                     mention_xpath = config['selectors']['upload']['mention_box']
@@ -272,7 +269,13 @@ def _set_description(driver, description: str) -> None:
                     hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
                     condition = EC.presence_of_element_located((By.XPATH, hashtag_xpath))
 
-                elem = WebDriverWait(driver, config['explicit_wait']).until(condition)
+                # if the element never appears (timeout exception) remove the tag and continue
+                try:
+                    elem = WebDriverWait(driver, config['implicit_wait']).until(condition)
+                except:
+                    desc.send_keys(Keys.BACKSPACE * (len(name) + 1))
+                    description = description[len(name) + 2:]
+                    continue
 
                 ActionChains(driver).move_to_element(elem).click(elem).perform()
 
