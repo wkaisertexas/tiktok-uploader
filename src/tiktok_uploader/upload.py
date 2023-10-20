@@ -18,6 +18,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import ElementClickInterceptedException
 
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
@@ -195,7 +196,12 @@ def _go_to_upload(driver) -> None:
     """
     logger.debug(green('Navigating to upload page'))
 
-    driver.get(config['paths']['upload'])
+    # if the upload page is not open, navigate to it
+    if driver.current_url != config['paths']['upload']:
+        driver.get(config['paths']['upload'])
+    # otherwise, refresh the page and accept the reload alert
+    else:
+        _refresh_with_alert(driver)
 
     # changes to the iframe
     iframe_selector = EC.presence_of_element_located(
@@ -225,6 +231,9 @@ def _set_description(driver, description: str) -> None:
 
     logger.debug(green('Setting description'))
 
+    # Remove any characters outside the BMP range (emojis, etc)
+    description = description.encode('ascii', 'ignore').decode('ascii')
+
     saved_description = description # save the description in case it fails
 
     desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
@@ -241,9 +250,6 @@ def _set_description(driver, description: str) -> None:
 
             if nearest_mention == 0 or nearest_hash == 0:
                 desc.send_keys('@' if nearest_mention == 0 else '#')
-
-                # wait for the frames to load
-                time.sleep(config['implicit_wait'])
 
                 name = description[1:].split(' ')[0]
                 if nearest_mention == 0: # @ case
@@ -263,7 +269,13 @@ def _set_description(driver, description: str) -> None:
                     hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
                     condition = EC.presence_of_element_located((By.XPATH, hashtag_xpath))
 
-                elem = WebDriverWait(driver, config['explicit_wait']).until(condition)
+                # if the element never appears (timeout exception) remove the tag and continue
+                try:
+                    elem = WebDriverWait(driver, config['implicit_wait']).until(condition)
+                except:
+                    desc.send_keys(Keys.BACKSPACE * (len(name) + 1))
+                    description = description[len(name) + 2:]
+                    continue
 
                 ActionChains(driver).move_to_element(elem).click(elem).perform()
 
@@ -519,8 +531,12 @@ def _post_video(driver) -> None:
     """
     logger.debug(green('Clicking the post button'))
 
-    post = driver.find_element(By.XPATH, config['selectors']['upload']['post'])
-    post.click()
+    try:
+        post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
+        post.click()
+    except ElementClickInterceptedException:
+        logger.debug(green("Trying to click on the button again"))
+        driver.execute_script('document.querySelector(".btn-post > button").click()')
 
     # waits for the video to upload
     post_confirmation = EC.presence_of_element_located(
@@ -680,6 +696,20 @@ def __get_driver_timezone(driver) -> pytz.timezone:
     """
     timezone_str = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
     return pytz.timezone(timezone_str)
+
+def _refresh_with_alert(driver) -> None:
+    try:
+        # attempt to refresh the page
+        driver.refresh()
+
+        # wait for the alert to appear
+        WebDriverWait(driver, config['explicit_wait']).until(EC.alert_is_present())
+
+        # accept the alert
+        driver.switch_to.alert.accept()
+    except:
+        # if no alert appears, the page is fine
+        pass
 
 class DescriptionTooLong(Exception):
     """
