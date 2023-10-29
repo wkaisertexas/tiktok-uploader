@@ -37,6 +37,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	[selectors.upload]
 	iframe = "//iframe"
 	
+	split_window = "//button[./div[text()='Not now']]"
 	upload_video = "//input[@type='file']"
 	upload_in_progress = "//*[.='Cancel']"
 	upload_confirmation = "//video" 
@@ -73,3 +74,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	time_picker_container = "//div[@class='tiktok-timepicker-time-picker-container']"
 	timepicker_hours = "//span[contains(@class, 'tiktok-timepicker-left')]"
 	timepicker_minutes = "//span[contains(@class, 'tiktok-timepicker-right')]"
+
+	[selectors.upload.cookies_banner]
+		banner = "tiktok-cookie-banner"
+		button = "div.button-wrapper"
