@@ -18,12 +18,12 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader import config, logger
-from tiktok_uploader.utils import bold, green
+from tiktok_uploader.utils import bold, green, red
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
@@ -178,7 +178,9 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
         The path to the video to upload
     """
     _go_to_upload(driver)
+    _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
+    _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
     if schedule:
@@ -204,16 +206,25 @@ def _go_to_upload(driver) -> None:
         _refresh_with_alert(driver)
 
     # changes to the iframe
-    iframe_selector = EC.presence_of_element_located(
-        (By.XPATH, config['selectors']['upload']['iframe'])
-        )
-    iframe = WebDriverWait(driver, config['explicit_wait']).until(iframe_selector)
-    driver.switch_to.frame(iframe)
+    _change_to_upload_iframe(driver)
 
     # waits for the iframe to load
     root_selector = EC.presence_of_element_located((By.ID, 'root'))
     WebDriverWait(driver, config['explicit_wait']).until(root_selector)
 
+def _change_to_upload_iframe(driver) -> None:
+    """
+    Switch to the iframe of the upload page
+
+    Parameters
+    ----------
+    driver : selenium.webdriver
+    """
+    iframe_selector = EC.presence_of_element_located(
+        (By.XPATH, config['selectors']['upload']['iframe'])
+        )
+    iframe = WebDriverWait(driver, config['explicit_wait']).until(iframe_selector)
+    driver.switch_to.frame(iframe)
 
 def _set_description(driver, description: str) -> None:
     """
@@ -231,8 +242,8 @@ def _set_description(driver, description: str) -> None:
 
     logger.debug(green('Setting description'))
 
-    # Remove any characters outside the BMP range (emojis, etc)
-    description = description.encode('ascii', 'ignore').decode('ascii')
+    # Remove any characters outside the BMP range (emojis, etc) & Fix accents
+    description = description.encode('utf-8', 'ignore').decode('utf-8')
 
     saved_description = description # save the description in case it fails
 
@@ -319,6 +330,7 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
 
     for _ in range(num_retries):
         try:
+            _change_to_upload_iframe(driver)
             upload_box = driver.find_element(
                 By.XPATH, config['selectors']['upload']['upload_video']
             )
@@ -350,6 +362,50 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
 
     raise FailedToUpload()
 
+def _remove_cookies_window(driver) -> None:
+    """
+    Removes the cookies window if it is open
+
+    Parameters
+    ----------
+    driver : selenium.webdriver
+    """
+    
+    # Return to default webpage
+    driver.switch_to.default_content()
+        
+    logger.debug(green(f'Removing cookies window'))
+    cookies_banner = WebDriverWait(driver, config['implicit_wait']).until(
+        EC.presence_of_element_located((By.TAG_NAME, config['selectors']['upload']['cookies_banner']['banner'])))
+    
+    item = WebDriverWait(driver, config['implicit_wait']).until(
+        EC.visibility_of(cookies_banner.shadow_root.find_element(By.CSS_SELECTOR, config['selectors']['upload']['cookies_banner']['button'])))
+
+    # Wait that the Decline all button is clickable
+    decline_button = WebDriverWait(driver, config['implicit_wait']).until(
+        EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, 'button')[0]))
+
+    decline_button.click()
+
+def _remove_split_window(driver) -> None:
+    """
+    Remove the split window if it is open
+
+    Parameters
+    ----------
+    driver : selenium.webdriver
+    """
+    logger.debug(green(f'Removing split window'))
+    window_xpath = config['selectors']['upload']['split_window']
+    
+    try:
+        condition = EC.presence_of_element_located((By.XPATH, window_xpath))
+        window = WebDriverWait(driver, config['implicit_wait']).until(condition)
+        window.click()
+            
+    except TimeoutException:
+        logger.debug(red(f"Split window not found or operation timed out"))
+        
 
 def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kwargs) -> None:
     """

@@ -23,3 +23,9 @@ def green(to_green: str) -> str:
     Returns the input green
     """
     return OKGREEN + to_green + ENDC
+
+def red(to_red: str) -> str:
+    """
+    Returns the input red
+    """
+    return FAIL + to_red + ENDC

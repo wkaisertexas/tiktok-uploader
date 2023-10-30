@@ -91,6 +91,9 @@ def chrome_defaults(*args, headless: bool = False, proxy: dict = None, **kwargs)
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
 
+    ## add english language to avoid languages translation error
+    options.add_argument("--lang=en")
+    
     # headless
     if headless:
         options.add_argument('--headless=new')
