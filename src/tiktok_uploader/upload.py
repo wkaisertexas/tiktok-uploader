@@ -27,8 +27,8 @@ from tiktok_uploader.utils import bold, green
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
-def upload_video(filename=None, description='', schedule: datetime.datetime = None, username='',
-                 password='', cookies='', sessionid=None, cookies_list=None, cookies_str=None, proxy=None, *args, **kwargs):
+def upload_video(filename=None, description='', cookies='', schedule: datetime.datetime = None, username='',
+                 password='', sessionid=None, cookies_list=None, cookies_str=None, proxy=None, *args, **kwargs):
     """
     Uploads a single TikTok video.
 
