@@ -178,9 +178,9 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
         The path to the video to upload
     """
     _go_to_upload(driver)
-    _remove_window(driver, "cookies") # remove the cookies banner if it is open
+    _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
-    _remove_window(driver, "split_window") # remove the split window if it is open
+    _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
     if schedule:
@@ -362,51 +362,49 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
 
     raise FailedToUpload()
 
-def _remove_window(driver, name) -> None:
+def _remove_cookies_window(driver) -> None:
     """
-    Remove the window if it is open
+    Removes the cookies window if it is open
 
     Parameters
     ----------
     driver : selenium.webdriver
-    name : str
-        The name of the window to remove
     """
-    logger.debug(green(f'Removing {name} window'))
-    window_xpath = None
     
-    if name == "cookies":
-        # Return to default webpage
-        driver.switch_to.default_content()
-
-        cookies_banner = WebDriverWait(driver, config['implicit_wait']).until(
-            EC.presence_of_element_located((By.TAG_NAME, config['selectors']['upload']['cookies_banner']['banner'])))
+    # Return to default webpage
+    driver.switch_to.default_content()
         
-        item = WebDriverWait(driver, config['implicit_wait']).until(
-            EC.visibility_of(cookies_banner.shadow_root.find_element(By.CSS_SELECTOR, config['selectors']['upload']['cookies_banner']['button'])))
+    logger.debug(green(f'Removing cookies window'))
+    cookies_banner = WebDriverWait(driver, config['implicit_wait']).until(
+        EC.presence_of_element_located((By.TAG_NAME, config['selectors']['upload']['cookies_banner']['banner'])))
+    
+    item = WebDriverWait(driver, config['implicit_wait']).until(
+        EC.visibility_of(cookies_banner.shadow_root.find_element(By.CSS_SELECTOR, config['selectors']['upload']['cookies_banner']['button'])))
 
-        # Wait that the Decline all button is clickable
-        decline_button = WebDriverWait(driver, config['implicit_wait']).until(
-            EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, 'button')[0]))
+    # Wait that the Decline all button is clickable
+    decline_button = WebDriverWait(driver, config['implicit_wait']).until(
+        EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, 'button')[0]))
 
-        decline_button.click()
-        return
-        
-    elif name == "split_window":
-        window_xpath = config['selectors']['upload']['split_window']
-    else:
-        raise Exception("Invalid window name ", name)
+    decline_button.click()
+
+def _remove_split_window(driver) -> None:
+    """
+    Remove the split window if it is open
+
+    Parameters
+    ----------
+    driver : selenium.webdriver
+    """
+    logger.debug(green(f'Removing split window'))
+    window_xpath = config['selectors']['upload']['split_window']
     
     try:
-        if window_xpath:
-            condition = EC.presence_of_element_located((By.XPATH, window_xpath))
-            window = WebDriverWait(driver, config['implicit_wait']).until(condition)
-            window.click()
+        condition = EC.presence_of_element_located((By.XPATH, window_xpath))
+        window = WebDriverWait(driver, config['implicit_wait']).until(condition)
+        window.click()
             
     except TimeoutException:
-        logger.debug(red(f"Window {name} not found or operation timed out"))
-    except Exception as e:
-        logger.debug(red(f"Error occurred while handling {name} window: {e}"))
+        logger.debug(red(f"Split window not found or operation timed out"))
         
 
 def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kwargs) -> None:
