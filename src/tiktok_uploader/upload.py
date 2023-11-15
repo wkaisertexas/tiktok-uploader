@@ -178,7 +178,7 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
         The path to the video to upload
     """
     _go_to_upload(driver)
-    _remove_cookies_window(driver)
+    #  _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
     _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
@@ -211,6 +211,9 @@ def _go_to_upload(driver) -> None:
     # waits for the iframe to load
     root_selector = EC.presence_of_element_located((By.ID, 'root'))
     WebDriverWait(driver, config['explicit_wait']).until(root_selector)
+
+    # Return to default webpage
+    driver.switch_to.default_content()
 
 def _change_to_upload_iframe(driver) -> None:
     """
@@ -370,10 +373,7 @@ def _remove_cookies_window(driver) -> None:
     ----------
     driver : selenium.webdriver
     """
-    
-    # Return to default webpage
-    driver.switch_to.default_content()
-        
+
     logger.debug(green(f'Removing cookies window'))
     cookies_banner = WebDriverWait(driver, config['implicit_wait']).until(
         EC.presence_of_element_located((By.TAG_NAME, config['selectors']['upload']['cookies_banner']['banner'])))
