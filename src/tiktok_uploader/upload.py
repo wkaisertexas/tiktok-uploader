@@ -178,7 +178,7 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
         The path to the video to upload
     """
     _go_to_upload(driver)
-    _remove_cookies_window(driver)
+    #  _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
     _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
