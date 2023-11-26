@@ -39,7 +39,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	
 	split_window = "//button[./div[text()='Not now']]"
 	upload_video = "//input[@type='file']"
-	upload_in_progress = "//*[.='Cancel']"
+	upload_finished = "//div[contains(@class, 'btn-cancel')]"
 	upload_confirmation = "//video" 
 	process_confirmation = "//img[@draggable='false']"
 
@@ -58,7 +58,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
 	post = "//div[contains(@class, 'btn-post')]"
-	post_confirmation = "//div[.='Your videos are being uploaded to TikTok!']"
+	post_confirmation = "//div[contains(@class, 'tiktok-modal__modal-button')]"
 
 	[selectors.schedule]
 	switch = "//*[@id='tux-3']"
