@@ -339,12 +339,11 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
             )
             upload_box.send_keys(path)
             # waits for the upload progress bar to disappear
-            upload_progress = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['upload_in_progress'])
+            upload_finished = EC.presence_of_element_located(
+                (By.XPATH, config['selectors']['upload']['upload_finished'])
                 )
 
-            WebDriverWait(driver, config['explicit_wait']).until(upload_progress)
-            WebDriverWait(driver, config['explicit_wait']).until_not(upload_progress)
+            WebDriverWait(driver, config['explicit_wait']).until(upload_finished)
 
             # waits for the video to upload
             upload_confirmation = EC.presence_of_element_located(
