@@ -352,12 +352,6 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
 
             # An exception throw here means the video failed to upload an a retry is needed
             WebDriverWait(driver, config['explicit_wait']).until(upload_confirmation)
-
-            # wait until a non-draggable image is found
-            process_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['process_confirmation'])
-                )
-            WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             return
         except Exception as exception:
             print(exception)
