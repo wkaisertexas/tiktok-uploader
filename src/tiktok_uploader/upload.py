@@ -52,15 +52,15 @@ def upload_video(filename=None, description='', cookies='', schedule: datetime.d
                        cookies_list=cookies_list, cookies_str=cookies_str, sessionid=sessionid)
 
     return upload_videos(
-        videos=[{'path': filename, 'description': description, 'schedule': schedule}],
-        auth=auth,
-        proxy=proxy,
-        *args, **kwargs
-    )
+            videos=[ { 'path': filename, 'description': description, 'schedule': schedule } ],
+            auth=auth,
+            proxy=proxy,
+            *args, **kwargs
+        )
 
 
 def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='chrome',
-                  browser_agent=None, on_complete=None, headless=False, num_retries: int = 1, *args, **kwargs):
+                  browser_agent=None, on_complete=None, headless=False, num_retires : int = 1, *args, **kwargs):
     """
     Uploads multiple videos to TikTok
 
@@ -97,11 +97,10 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
     if videos and len(videos) > 1:
         logger.debug("Uploading %d videos", len(videos))
 
-    if not browser_agent:  # user-specified browser agent
+    if not browser_agent: # user-specified browser agent
         logger.debug('Create a %s browser instance %s', browser,
-                     'in headless mode' if headless else '')
-        driver = get_browser(name=browser, headless=headless,
-                             proxy=proxy, *args, **kwargs)
+                    'in headless mode' if headless else '')
+        driver = get_browser(name=browser, headless=headless, proxy=proxy, *args, **kwargs)
     else:
         logger.debug('Using user-defined browser agent')
         driver = browser_agent
@@ -123,7 +122,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
             schedule = video.get('schedule', None)
 
             logger.debug('Posting %s%s', bold(video.get('path')),
-                         f'\n{" " * 15}with description: {bold(description)}' if description else '')
+            f'\n{" " * 15}with description: {bold(description)}' if description else '')
 
             # Video must be of supported type
             if not _check_valid_path(path):
@@ -139,29 +138,26 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
                 elif int(schedule.utcoffset().total_seconds()) == 0:  # Equivalent to UTC
                     schedule = timezone.localize(schedule)
                 else:
-                    print(
-                        f'{schedule} is invalid, the schedule datetime must be naive or aware with UTC timezone, skipping')
+                    print(f'{schedule} is invalid, the schedule datetime must be naive or aware with UTC timezone, skipping')
                     failed.append(video)
                     continue
 
                 valid_tiktok_minute_multiple = 5
-                schedule = _get_valid_schedule_minute(
-                    schedule, valid_tiktok_minute_multiple)
+                schedule = _get_valid_schedule_minute(schedule, valid_tiktok_minute_multiple)
                 if not _check_valid_schedule(schedule):
-                    print(
-                        f'{schedule} is invalid, the schedule datetime must be as least 20 minutes in the future, and a maximum of 10 days, skipping')
+                    print(f'{schedule} is invalid, the schedule datetime must be as least 20 minutes in the future, and a maximum of 10 days, skipping')
                     failed.append(video)
                     continue
 
             complete_upload_form(driver, path, description, schedule,
-                                 num_retries=num_retries, headless=headless,
+                                 num_retires=num_retires, headless=headless,
                                  *args, **kwargs)
         except Exception as exception:
             logger.error('Failed to upload %s', path)
             logger.error(exception)
             failed.append(video)
 
-        if on_complete is callable:  # calls the user-specified on-complete function
+        if on_complete is callable: # calls the user-specified on-complete function
             on_complete(video)
 
     if config['quit_on_end']:
@@ -219,7 +215,6 @@ def _go_to_upload(driver) -> None:
     # Return to default webpage
     driver.switch_to.default_content()
 
-
 def _change_to_upload_iframe(driver) -> None:
     """
     Switch to the iframe of the upload page
@@ -230,11 +225,9 @@ def _change_to_upload_iframe(driver) -> None:
     """
     iframe_selector = EC.presence_of_element_located(
         (By.XPATH, config['selectors']['upload']['iframe'])
-    )
-    iframe = WebDriverWait(
-        driver, config['explicit_wait']).until(iframe_selector)
+        )
+    iframe = WebDriverWait(driver, config['explicit_wait']).until(iframe_selector)
     driver.switch_to.frame(iframe)
-
 
 def _set_description(driver, description: str) -> None:
     """
@@ -255,14 +248,12 @@ def _set_description(driver, description: str) -> None:
     # Remove any characters outside the BMP range (emojis, etc) & Fix accents
     description = description.encode('utf-8', 'ignore').decode('utf-8')
 
-    saved_description = description  # save the description in case it fails
+    saved_description = description # save the description in case it fails
 
-    desc = driver.find_element(
-        By.XPATH, config['selectors']['upload']['description'])
+    desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
 
     # desc populates with filename before clearing
-    WebDriverWait(driver, config['explicit_wait']).until(
-        lambda driver: desc.text != '')
+    WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
 
     _clear(desc)
 
@@ -275,52 +266,43 @@ def _set_description(driver, description: str) -> None:
                 desc.send_keys('@' if nearest_mention == 0 else '#')
 
                 name = description[1:].split(' ')[0]
-                if nearest_mention == 0:  # @ case
+                if nearest_mention == 0: # @ case
                     mention_xpath = config['selectors']['upload']['mention_box']
-                    condition = EC.presence_of_element_located(
-                        (By.XPATH, mention_xpath))
-                    mention_box = WebDriverWait(
-                        driver, config['explicit_wait']).until(condition)
+                    condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
+                    mention_box = WebDriverWait(driver, config['explicit_wait']).until(condition)
                     mention_box.send_keys(name)
                 else:
                     desc.send_keys(name)
 
                 time.sleep(config['implicit_wait'])
 
-                if nearest_mention == 0:  # @ case
-                    mention_xpath = config['selectors']['upload']['mentions'].format(
-                        '@' + name)
-                    condition = EC.presence_of_element_located(
-                        (By.XPATH, mention_xpath))
+                if nearest_mention == 0: # @ case
+                    mention_xpath = config['selectors']['upload']['mentions'].format('@' + name)
+                    condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
                 else:
-                    hashtag_xpath = config['selectors']['upload']['hashtags'].format(
-                        name)
-                    condition = EC.presence_of_element_located(
-                        (By.XPATH, hashtag_xpath))
+                    hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
+                    condition = EC.presence_of_element_located((By.XPATH, hashtag_xpath))
 
                 # if the element never appears (timeout exception) remove the tag and continue
                 try:
-                    elem = WebDriverWait(
-                        driver, config['implicit_wait']).until(condition)
+                    elem = WebDriverWait(driver, config['implicit_wait']).until(condition)
                 except:
                     desc.send_keys(Keys.BACKSPACE * (len(name) + 1))
                     description = description[len(name) + 2:]
                     continue
 
-                ActionChains(driver).move_to_element(
-                    elem).click(elem).perform()
+                ActionChains(driver).move_to_element(elem).click(elem).perform()
 
                 description = description[len(name) + 2:]
             else:
-                min_index = _get_splice_index(
-                    nearest_mention, nearest_hash, description)
+                min_index = _get_splice_index(nearest_mention, nearest_hash, description)
 
                 desc.send_keys(description[:min_index])
                 description = description[min_index:]
     except Exception as exception:
         print('Failed to set description: ', exception)
         _clear(desc)
-        desc.send_keys(saved_description)  # if fail, use saved description
+        desc.send_keys(saved_description) # if fail, use saved description
 
 
 def _clear(element) -> None:
@@ -359,34 +341,28 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
             # waits for the upload progress bar to disappear
             upload_finished = EC.presence_of_element_located(
                 (By.XPATH, config['selectors']['upload']['upload_finished'])
-            )
+                )
 
-            WebDriverWait(driver, config['explicit_wait']).until(
-                upload_finished)
+            WebDriverWait(driver, config['explicit_wait']).until(upload_finished)
 
             # waits for the video to upload
             upload_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']
-                 ['upload']['upload_confirmation'])
-            )
+                (By.XPATH, config['selectors']['upload']['upload_confirmation'])
+                )
 
             # An exception throw here means the video failed to upload an a retry is needed
-            WebDriverWait(driver, config['explicit_wait']).until(
-                upload_confirmation)
+            WebDriverWait(driver, config['explicit_wait']).until(upload_confirmation)
 
             # wait until a non-draggable image is found
             process_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']
-                 ['upload']['process_confirmation'])
-            )
-            WebDriverWait(driver, config['explicit_wait']).until(
-                process_confirmation)
+                (By.XPATH, config['selectors']['upload']['process_confirmation'])
+                )
+            WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             return
         except Exception as exception:
             print(exception)
 
     raise FailedToUpload()
-
 
 def _remove_cookies_window(driver) -> None:
     """
@@ -400,7 +376,7 @@ def _remove_cookies_window(driver) -> None:
     logger.debug(green(f'Removing cookies window'))
     cookies_banner = WebDriverWait(driver, config['implicit_wait']).until(
         EC.presence_of_element_located((By.TAG_NAME, config['selectors']['upload']['cookies_banner']['banner'])))
-
+    
     item = WebDriverWait(driver, config['implicit_wait']).until(
         EC.visibility_of(cookies_banner.shadow_root.find_element(By.CSS_SELECTOR, config['selectors']['upload']['cookies_banner']['button'])))
 
@@ -409,7 +385,6 @@ def _remove_cookies_window(driver) -> None:
         EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, 'button')[0]))
 
     decline_button.click()
-
 
 def _remove_split_window(driver) -> None:
     """
@@ -421,16 +396,15 @@ def _remove_split_window(driver) -> None:
     """
     logger.debug(green(f'Removing split window'))
     window_xpath = config['selectors']['upload']['split_window']
-
+    
     try:
         condition = EC.presence_of_element_located((By.XPATH, window_xpath))
-        window = WebDriverWait(
-            driver, config['implicit_wait']).until(condition)
+        window = WebDriverWait(driver, config['implicit_wait']).until(condition)
         window.click()
-
+            
     except TimeoutException:
         logger.debug(red(f"Split window not found or operation timed out"))
-
+        
 
 def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kwargs) -> None:
     """
@@ -449,12 +423,9 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
     try:
         logger.debug(green('Setting interactivity settings'))
 
-        comment_box = driver.find_element(
-            By.XPATH, config['selectors']['upload']['comment'])
-        stitch_box = driver.find_element(
-            By.XPATH, config['selectors']['upload']['stitch'])
-        duet_box = driver.find_element(
-            By.XPATH, config['selectors']['upload']['duet'])
+        comment_box = driver.find_element(By.XPATH, config['selectors']['upload']['comment'])
+        stitch_box = driver.find_element(By.XPATH, config['selectors']['upload']['stitch'])
+        duet_box = driver.find_element(By.XPATH, config['selectors']['upload']['duet'])
 
         # xor the current state with the desired state
         if comment ^ comment_box.is_selected():
@@ -492,8 +463,7 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
     minute = schedule.minute
 
     try:
-        switch = driver.find_element(
-            By.XPATH, config['selectors']['schedule']['switch'])
+        switch = driver.find_element(By.XPATH, config['selectors']['schedule']['switch'])
         switch.click()
         __date_picker(driver, month, day)
         __time_picker(driver, hour, minute)
@@ -504,14 +474,14 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
         raise FailedToUpload()
 
 
+
 def __date_picker(driver, month: int, day: int) -> None:
     logger.debug(green('Picking date'))
 
     condition = EC.presence_of_element_located(
         (By.XPATH, config['selectors']['schedule']['date_picker'])
-    )
-    date_picker = WebDriverWait(
-        driver, config['implicit_wait']).until(condition)
+        )
+    date_picker = WebDriverWait(driver, config['implicit_wait']).until(condition)
     date_picker.click()
 
     condition = EC.presence_of_element_located(
@@ -519,19 +489,15 @@ def __date_picker(driver, month: int, day: int) -> None:
     )
     calendar = WebDriverWait(driver, config['implicit_wait']).until(condition)
 
-    calendar_month = driver.find_element(
-        By.XPATH, config['selectors']['schedule']['calendar_month']).text
+    calendar_month = driver.find_element(By.XPATH, config['selectors']['schedule']['calendar_month']).text
     n_calendar_month = datetime.datetime.strptime(calendar_month, '%B').month
     if n_calendar_month != month:  # Max can be a month before or after
         if n_calendar_month < month:
-            arrow = driver.find_elements(
-                By.XPATH, config['selectors']['schedule']['calendar_arrows'])[-1]
+            arrow = driver.find_elements(By.XPATH, config['selectors']['schedule']['calendar_arrows'])[-1]
         else:
-            arrow = driver.find_elements(
-                By.XPATH, config['selectors']['schedule']['calendar_arrows'])[0]
+            arrow = driver.find_elements(By.XPATH, config['selectors']['schedule']['calendar_arrows'])[0]
         arrow.click()
-    valid_days = driver.find_elements(
-        By.XPATH, config['selectors']['schedule']['calendar_valid_days'])
+    valid_days = driver.find_elements(By.XPATH, config['selectors']['schedule']['calendar_valid_days'])
 
     day_to_click = None
     for day_option in valid_days:
@@ -547,8 +513,7 @@ def __date_picker(driver, month: int, day: int) -> None:
 
 
 def __verify_date_picked_is_correct(driver, month: int, day: int):
-    date_selected = driver.find_element(
-        By.XPATH, config['selectors']['schedule']['date_picker']).text
+    date_selected = driver.find_element(By.XPATH, config['selectors']['schedule']['date_picker']).text
     date_selected_month = int(date_selected.split('-')[1])
     date_selected_day = int(date_selected.split('-')[2])
 
@@ -565,34 +530,28 @@ def __time_picker(driver, hour: int, minute: int) -> None:
 
     condition = EC.presence_of_element_located(
         (By.XPATH, config['selectors']['schedule']['time_picker'])
-    )
-    time_picker = WebDriverWait(
-        driver, config['implicit_wait']).until(condition)
+        )
+    time_picker = WebDriverWait(driver, config['implicit_wait']).until(condition)
     time_picker.click()
 
     condition = EC.presence_of_element_located(
         (By.XPATH, config['selectors']['schedule']['time_picker_container'])
     )
-    time_picker_container = WebDriverWait(
-        driver, config['implicit_wait']).until(condition)
+    time_picker_container = WebDriverWait(driver, config['implicit_wait']).until(condition)
 
     # 00 = 0, 01 = 1, 02 = 2, 03 = 3, 04 = 4, 05 = 5, 06 = 6, 07 = 7, 08 = 8, 09 = 9, 10 = 10, 11 = 11, 12 = 12,
     # 13 = 13, 14 = 14, 15 = 15, 16 = 16, 17 = 17, 18 = 18, 19 = 19, 20 = 20, 21 = 21, 22 = 22, 23 = 23
-    hour_options = driver.find_elements(
-        By.XPATH, config['selectors']['schedule']['timepicker_hours'])
+    hour_options = driver.find_elements(By.XPATH, config['selectors']['schedule']['timepicker_hours'])
     # 00 == 0, 05 == 1, 10 == 2, 15 == 3, 20 == 4, 25 == 5, 30 == 6, 35 == 7, 40 == 8, 45 == 9, 50 == 10, 55 == 11
-    minute_options = driver.find_elements(
-        By.XPATH, config['selectors']['schedule']['timepicker_minutes'])
+    minute_options = driver.find_elements(By.XPATH, config['selectors']['schedule']['timepicker_minutes'])
 
     hour_to_click = hour_options[hour]
     minute_option_correct_index = int(minute / 5)
     minute_to_click = minute_options[minute_option_correct_index]
 
-    driver.execute_script(
-        "arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", hour_to_click)
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", hour_to_click)
     hour_to_click.click()
-    driver.execute_script(
-        "arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", minute_to_click)
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", minute_to_click)
     minute_to_click.click()
 
     # click somewhere else to close the time picker
@@ -603,8 +562,7 @@ def __time_picker(driver, hour: int, minute: int) -> None:
 
 
 def __verify_time_picked_is_correct(driver, hour: int, minute: int):
-    time_selected = driver.find_element(
-        By.XPATH, config['selectors']['schedule']['time_picker_text']).text
+    time_selected = driver.find_element(By.XPATH, config['selectors']['schedule']['time_picker_text']).text
     time_selected_hour = int(time_selected.split(':')[0])
     time_selected_minute = int(time_selected.split(':')[1])
 
@@ -629,18 +587,16 @@ def _post_video(driver) -> None:
     logger.debug(green('Clicking the post button'))
 
     try:
-        post = WebDriverWait(driver, config['implicit_wait']).until(
-            EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
+        post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
         post.click()
     except ElementClickInterceptedException:
         logger.debug(green("Trying to click on the button again"))
-        driver.execute_script(
-            'document.querySelector(".btn-post > button").click()')
+        driver.execute_script('document.querySelector(".btn-post > button").click()')
 
     # waits for the video to upload
     post_confirmation = EC.presence_of_element_located(
         (By.XPATH, config['selectors']['upload']['post_confirmation'])
-    )
+        )
     WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
 
     logger.debug(green('Video posted successfully'))
@@ -690,10 +646,8 @@ def _check_valid_schedule(schedule: datetime.datetime) -> bool:
     margin_to_complete_upload_form = 5
 
     datetime_utc_now = pytz.UTC.localize(datetime.datetime.utcnow())
-    min_datetime_tiktok_valid = datetime_utc_now + \
-        datetime.timedelta(minutes=15)
-    min_datetime_tiktok_valid += datetime.timedelta(
-        minutes=margin_to_complete_upload_form)
+    min_datetime_tiktok_valid = datetime_utc_now + datetime.timedelta(minutes=15)
+    min_datetime_tiktok_valid += datetime.timedelta(minutes=margin_to_complete_upload_form)
     max_datetime_tiktok_valid = datetime_utc_now + datetime.timedelta(days=10)
     if schedule < min_datetime_tiktok_valid \
             or schedule > max_datetime_tiktok_valid:
@@ -728,7 +682,6 @@ def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: s
         return nearest_hashtag
     else:
         return min(nearest_mention, nearest_hashtag)
-
 
 def _convert_videos_dict(videos_list_of_dictionaries) -> List:
     """
@@ -774,8 +727,7 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
                     break
             else:
                 # no valid path found
-                raise RuntimeError(
-                    "Path not found in dictionary: " + str(elem))
+                raise RuntimeError("Path not found in dictionary: " + str(elem))
 
         if description_intersection:
             # we have a description
@@ -787,21 +739,18 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
                     elem[correct_description] = value
                     break
             else:
-                elem[correct_description] = ''  # null description is fine
+                elem[correct_description] = '' # null description is fine
 
         return_list.append(elem)
 
     return return_list
 
-
 def __get_driver_timezone(driver) -> pytz.timezone:
     """
     Returns the timezone of the driver
     """
-    timezone_str = driver.execute_script(
-        "return Intl.DateTimeFormat().resolvedOptions().timeZone")
+    timezone_str = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
     return pytz.timezone(timezone_str)
-
 
 def _refresh_with_alert(driver) -> None:
     try:
@@ -809,15 +758,13 @@ def _refresh_with_alert(driver) -> None:
         driver.refresh()
 
         # wait for the alert to appear
-        WebDriverWait(driver, config['explicit_wait']).until(
-            EC.alert_is_present())
+        WebDriverWait(driver, config['explicit_wait']).until(EC.alert_is_present())
 
         # accept the alert
         driver.switch_to.alert.accept()
     except:
         # if no alert appears, the page is fine
         pass
-
 
 class DescriptionTooLong(Exception):
     """
