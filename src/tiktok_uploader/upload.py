@@ -60,7 +60,7 @@ def upload_video(filename=None, description='', cookies='', schedule: datetime.d
 
 
 def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='chrome',
-                  browser_agent=None, on_complete=None, headless=False, num_retires : int = 1, *args, **kwargs):
+                  browser_agent=None, on_complete=None, headless=False, num_retries : int = 1, *args, **kwargs):
     """
     Uploads multiple videos to TikTok
 
@@ -150,7 +150,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
                     continue
 
             complete_upload_form(driver, path, description, schedule,
-                                 num_retires=num_retires, headless=headless,
+                                 num_retries=num_retries, headless=headless,
                                  *args, **kwargs)
         except Exception as exception:
             logger.error('Failed to upload %s', path)
