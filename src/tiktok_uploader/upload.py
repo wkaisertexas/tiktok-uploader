@@ -594,10 +594,12 @@ def _post_video(driver) -> None:
         driver.execute_script('document.querySelector(".btn-post > button").click()')
 
     # waits for the video to upload
-    post_confirmation = EC.presence_of_element_located(
+    post_confirmation = EC.element_to_be_clickable(
         (By.XPATH, config['selectors']['upload']['post_confirmation'])
         )
-    WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
+    maange_posts = WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
+
+    maange_posts.click()
 
     logger.debug(green('Video posted successfully'))
 
