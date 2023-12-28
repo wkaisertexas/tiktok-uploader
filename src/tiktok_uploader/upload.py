@@ -586,6 +586,8 @@ def _post_video(driver) -> None:
     """
     logger.debug(green('Clicking the post button'))
 
+    driver.set_window_size(1920, 1080)
+
     try:
         post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
         post.click()
@@ -593,7 +595,6 @@ def _post_video(driver) -> None:
         logger.debug(green("Trying to click on the button again"))
         driver.execute_script('document.querySelector(".btn-post > button").click()')
 
-    # waits for the video to upload
     post_confirmation = EC.visibility_of_element_located(
         (By.XPATH, config['selectors']['upload']['post_confirmation'])
         )
