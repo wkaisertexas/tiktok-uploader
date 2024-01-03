@@ -9,7 +9,7 @@ valid_descriptions = ["description", "desc", "caption"]
 
 # Selenium Webdriver Waits
 implicit_wait = 5  # seconds
-explicit_wait = 60 # seconds
+explicit_wait = 300 # seconds
 
 supported_file_types = ["mp4", "mov", "avi", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "3g2", "gif"]
 
@@ -39,7 +39,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	
 	split_window = "//button[./div[text()='Not now']]"
 	upload_video = "//input[@type='file']"
-	upload_finished = "//div[contains(@class, 'btn-cancel')]"
+	upload_finished = "/html/body/div[1]/div/div/div/div/div[2]/div[1]/div[1]/div[1]"
 	upload_confirmation = "//video" 
 	process_confirmation = "//img[@draggable='false']"
 
@@ -57,8 +57,8 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	duet = "//label[.='Duet']/following-sibling::div/input"
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
-	post = "//div[contains(@class, 'btn-post')]"
-	post_confirmation = "//div[contains(@class, 'tiktok-modal__modal-button')]"
+	post = "/html/body/div[1]/div/div/div/div/div[2]/div[2]/div[8]/div[2]/button"
+	post_confirmation = "//div[contains(text(), 'Manage your posts')]"
 
 	[selectors.schedule]
 	switch = "//*[@id='tux-3']"

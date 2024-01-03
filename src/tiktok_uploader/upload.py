@@ -59,7 +59,7 @@ def upload_video(filename=None, description='', cookies='', schedule: datetime.d
         )
 
 
-def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='chrome',
+def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='firefox',
                   browser_agent=None, on_complete=None, headless=False, num_retries : int = 1, *args, **kwargs):
     """
     Uploads multiple videos to TikTok
@@ -180,7 +180,7 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
     _go_to_upload(driver)
     #  _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
-    _remove_split_window(driver)
+    #_remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
     if schedule:
@@ -299,6 +299,7 @@ def _set_description(driver, description: str) -> None:
 
                 desc.send_keys(description[:min_index])
                 description = description[min_index:]
+        logger.debug(green('Setting description'))
     except Exception as exception:
         print('Failed to set description: ', exception)
         _clear(desc)
@@ -344,20 +345,27 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
                 )
 
             WebDriverWait(driver, config['explicit_wait']).until(upload_finished)
+            logger.debug(green("Andrew Isn't Crazy"))
 
             # waits for the video to upload
             upload_confirmation = EC.presence_of_element_located(
                 (By.XPATH, config['selectors']['upload']['upload_confirmation'])
                 )
+            logger.debug(green("Andrew Isn't Crazy: The Squeakuel"))
+            
 
             # An exception throw here means the video failed to upload an a retry is needed
             WebDriverWait(driver, config['explicit_wait']).until(upload_confirmation)
+            logger.debug(green("Upload Confirmed"))
+            """
 
             # wait until a non-draggable image is found
             process_confirmation = EC.presence_of_element_located(
                 (By.XPATH, config['selectors']['upload']['process_confirmation'])
                 )
             WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
+            """
+            logger.debug(green("Final Sanity Check... is the issue even with this function?"))
             return
         except Exception as exception:
             print(exception)
@@ -404,6 +412,7 @@ def _remove_split_window(driver) -> None:
             
     except TimeoutException:
         logger.debug(red(f"Split window not found or operation timed out"))
+    logger.debug('removed split window')
         
 
 def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kwargs) -> None:
@@ -436,6 +445,7 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
 
         if duet ^ duet_box.is_selected():
             duet_box.click()
+        logger.debug(green('Set interactivity settings'))
 
     except Exception as _:
         logger.error('Failed to set interactivity settings')
@@ -586,18 +596,40 @@ def _post_video(driver) -> None:
     """
     logger.debug(green('Clicking the post button'))
 
+    driver.set_window_size(1920, 1080)
+
     try:
-        post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
-        post.click()
+        
+        post_button_xpath = config['selectors']['upload']['post']
+    
+        # Find the button element
+        post_button = WebDriverWait(driver, config['implicit_wait']).until(
+            EC.element_to_be_clickable((By.XPATH, post_button_xpath))
+        )
+        logger.debug(green('Houston, we have a click button (element is clickable)'))
+
+        # Find the form element that contains the button
+        #form = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div[2]')
+        logger.debug(green('Found the form'))
+
+        # Click the button or submit the form, depending on your use case
+        post_button.click()
+
+        logger.debug(green('The click has occurred'))
+        
     except ElementClickInterceptedException:
         logger.debug(green("Trying to click on the button again"))
         driver.execute_script('document.querySelector(".btn-post > button").click()')
+    except Exception as e:
+        logger.debug(red('Unhandled Exception!'))
+        print(e)
 
-    # waits for the video to upload
-    post_confirmation = EC.presence_of_element_located(
+    post_confirmation = EC.visibility_of_element_located(
         (By.XPATH, config['selectors']['upload']['post_confirmation'])
         )
-    WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
+
+    manage_posts = WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
+    manage_posts.click()
 
     logger.debug(green('Video posted successfully'))
 
