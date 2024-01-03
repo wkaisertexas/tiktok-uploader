@@ -119,7 +119,7 @@ def firefox_defaults(*args, headless: bool = False, proxy: dict = None, **kwargs
     # default options
 
     if headless:
-        options.add_argument('--headless')
+        options.add_argument('-headless')
     if proxy:
         raise NotImplementedError('Proxy support is not implemented for this browser')
     return options
