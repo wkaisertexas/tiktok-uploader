@@ -365,7 +365,7 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
                 )
             WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             """
-            logger.debug(green("Final Sanity Check... is the issue even with this function?"))
+           
             return
         except Exception as exception:
             print(exception)
