@@ -608,10 +608,6 @@ def _post_video(driver) -> None:
         )
         logger.debug(green('Houston, we have a click button (element is clickable)'))
 
-        # Find the form element that contains the button
-        #form = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div[2]')
-        logger.debug(green('Found the form'))
-
         # Click the button or submit the form, depending on your use case
         # post_button.click() THIS DOESN'T WORK ANYMORE FOR SOME REASON
         driver.execute_script('document.querySelector(".btn-post > button").click()')
