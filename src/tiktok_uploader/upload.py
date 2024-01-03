@@ -613,8 +613,8 @@ def _post_video(driver) -> None:
         logger.debug(green('Found the form'))
 
         # Click the button or submit the form, depending on your use case
-        post_button.click()
-
+        # post_button.click() THIS DOESN'T WORK ANYMORE FOR SOME REASON
+        driver.execute_script('document.querySelector(".btn-post > button").click()')
         logger.debug(green('The click has occurred'))
         
     except ElementClickInterceptedException:
