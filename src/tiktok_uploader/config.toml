@@ -58,7 +58,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
 	post = "//div[contains(@class, 'btn-post')]"
-	post_confirmation = "//div[contains(text(), 'Manage your posts')]"
+	post_confirmation = "button.css-35jbna:nth-child(3) > div:nth-child(1) > div:nth-child(1)"
 
 	[selectors.schedule]
 	switch = "//*[@id='tux-3']"
