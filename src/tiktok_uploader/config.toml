@@ -39,9 +39,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	
 	split_window = "//button[./div[text()='Not now']]"
 	upload_video = "//input[@type='file']"
-	upload_finished = "//div[contains(@class, 'btn-cancel')]"
-	upload_confirmation = "//video" 
-	process_confirmation = "//img[@draggable='false']"
+	upload_finished = "//div[contains(@class, 'change-video-btn')]"
 
 	description = "//div[@contenteditable='true']"
 
@@ -57,7 +55,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	duet = "//label[.='Duet']/following-sibling::div/input"
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
-	post = "//div[contains(@class, 'btn-post')]"
+	post = "//div[contains(@class, 'btn-post')]/button"
 	post_confirmation = "button.css-35jbna:nth-child(3) > div:nth-child(1) > div:nth-child(1)"
 
 	[selectors.schedule]

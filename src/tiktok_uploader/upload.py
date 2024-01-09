@@ -97,9 +97,9 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
     if videos and len(videos) > 1:
         logger.debug("Uploading %d videos", len(videos))
 
-    if not browser_agent: # user-specified browser agent
+    if not browser_agent:  # user-specified browser agent
         logger.debug('Create a %s browser instance %s', browser,
-                    'in headless mode' if headless else '')
+                     'in headless mode' if headless else '')
         driver = get_browser(name=browser, headless=headless, proxy=proxy, *args, **kwargs)
     else:
         logger.debug('Using user-defined browser agent')
@@ -157,7 +157,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
             logger.error(exception)
             failed.append(video)
 
-        if on_complete is callable: # calls the user-specified on-complete function
+        if on_complete is callable:  # calls the user-specified on-complete function
             on_complete(video)
 
     if config['quit_on_end']:
@@ -215,6 +215,7 @@ def _go_to_upload(driver) -> None:
     # Return to default webpage
     driver.switch_to.default_content()
 
+
 def _change_to_upload_iframe(driver) -> None:
     """
     Switch to the iframe of the upload page
@@ -228,6 +229,7 @@ def _change_to_upload_iframe(driver) -> None:
         )
     iframe = WebDriverWait(driver, config['explicit_wait']).until(iframe_selector)
     driver.switch_to.frame(iframe)
+
 
 def _set_description(driver, description: str) -> None:
     """
@@ -248,16 +250,14 @@ def _set_description(driver, description: str) -> None:
     # Remove any characters outside the BMP range (emojis, etc) & Fix accents
     description = description.encode('utf-8', 'ignore').decode('utf-8')
 
-    saved_description = description # save the description in case it fails
+    saved_description = description  # save the description in case it fails
 
     desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
 
     # desc populates with filename before clearing
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
-
     _clear(desc)
-
-    try:
+    try:  # find bad selectors for chrome in here
         while description:
             nearest_mention = description.find('@')
             nearest_hash = description.find('#')
@@ -266,7 +266,7 @@ def _set_description(driver, description: str) -> None:
                 desc.send_keys('@' if nearest_mention == 0 else '#')
 
                 name = description[1:].split(' ')[0]
-                if nearest_mention == 0: # @ case
+                if nearest_mention == 0:  # @ case
                     mention_xpath = config['selectors']['upload']['mention_box']
                     condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
                     mention_box = WebDriverWait(driver, config['explicit_wait']).until(condition)
@@ -276,7 +276,7 @@ def _set_description(driver, description: str) -> None:
 
                 time.sleep(config['implicit_wait'])
 
-                if nearest_mention == 0: # @ case
+                if nearest_mention == 0:  # @ case
                     mention_xpath = config['selectors']['upload']['mentions'].format('@' + name)
                     condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
                 else:
@@ -286,7 +286,7 @@ def _set_description(driver, description: str) -> None:
                 # if the element never appears (timeout exception) remove the tag and continue
                 try:
                     elem = WebDriverWait(driver, config['implicit_wait']).until(condition)
-                except:
+                except Exception:
                     desc.send_keys(Keys.BACKSPACE * (len(name) + 1))
                     description = description[len(name) + 2:]
                     continue
@@ -302,7 +302,7 @@ def _set_description(driver, description: str) -> None:
     except Exception as exception:
         print('Failed to set description: ', exception)
         _clear(desc)
-        desc.send_keys(saved_description) # if fail, use saved description
+        desc.send_keys(saved_description)  # if fail, use saved description
 
 
 def _clear(element) -> None:
@@ -331,38 +331,30 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     # uploads the element
     logger.debug(green('Uploading video file'))
 
+    driver.set_window_size(1500, 1300)
+
+    _change_to_upload_iframe(driver)
+    upload_box = WebDriverWait(driver, config['explicit_wait']).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config['selectors']['upload']['upload_video']))
+            )
+
     for _ in range(num_retries):
         try:
-            _change_to_upload_iframe(driver)
-            upload_box = driver.find_element(
-                By.XPATH, config['selectors']['upload']['upload_video']
-            )
             upload_box.send_keys(path)
-            # waits for the upload progress bar to disappear
+
             upload_finished = EC.presence_of_element_located(
                 (By.XPATH, config['selectors']['upload']['upload_finished'])
                 )
 
-            WebDriverWait(driver, config['explicit_wait']).until(upload_finished)
+            WebDriverWait(driver, 300).until(upload_finished)
 
-            # waits for the video to upload
-            upload_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['upload_confirmation'])
-                )
-
-            # An exception throw here means the video failed to upload an a retry is needed
-            WebDriverWait(driver, config['explicit_wait']).until(upload_confirmation)
-
-            # wait until a non-draggable image is found
-            process_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['process_confirmation'])
-                )
-            WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             return
         except Exception as exception:
             print(exception)
 
     raise FailedToUpload()
+
 
 def _remove_cookies_window(driver) -> None:
     """
@@ -373,10 +365,10 @@ def _remove_cookies_window(driver) -> None:
     driver : selenium.webdriver
     """
 
-    logger.debug(green(f'Removing cookies window'))
+    logger.debug(green('Removing cookies window'))
     cookies_banner = WebDriverWait(driver, config['implicit_wait']).until(
         EC.presence_of_element_located((By.TAG_NAME, config['selectors']['upload']['cookies_banner']['banner'])))
-    
+
     item = WebDriverWait(driver, config['implicit_wait']).until(
         EC.visibility_of(cookies_banner.shadow_root.find_element(By.CSS_SELECTOR, config['selectors']['upload']['cookies_banner']['button'])))
 
@@ -386,6 +378,7 @@ def _remove_cookies_window(driver) -> None:
 
     decline_button.click()
 
+
 def _remove_split_window(driver) -> None:
     """
     Remove the split window if it is open
@@ -394,17 +387,17 @@ def _remove_split_window(driver) -> None:
     ----------
     driver : selenium.webdriver
     """
-    logger.debug(green(f'Removing split window'))
+    logger.debug(green('Removing split window'))
     window_xpath = config['selectors']['upload']['split_window']
-    
+
     try:
         condition = EC.presence_of_element_located((By.XPATH, window_xpath))
         window = WebDriverWait(driver, config['implicit_wait']).until(condition)
         window.click()
-            
+
     except TimeoutException:
-        logger.debug(red(f"Split window not found or operation timed out"))
-        
+        logger.debug(red("Split window not found or operation timed out"))
+
 
 def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kwargs) -> None:
     """
@@ -472,7 +465,6 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
         print(msg)
         logger.error(msg)
         raise FailedToUpload()
-
 
 
 def __date_picker(driver, month: int, day: int) -> None:
@@ -586,11 +578,16 @@ def _post_video(driver) -> None:
     """
     logger.debug(green('Clicking the post button'))
 
-    driver.set_window_size(1500, 1300)
+    post_button = WebDriverWait(driver, config['implicit_wait']).until(
+            EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post']))
+        )
 
-    try:
-        post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
-        post.click()
+    try:  # this is doesnt always work
+        # post_button.click()
+        time.sleep(1)
+        action = ActionChains(driver)
+        action.move_to_element(post_button).click().perform()
+
     except ElementClickInterceptedException:
         logger.debug(green("Trying to click on the button again"))
         driver.execute_script('document.querySelector(".btn-post > button").click()')
@@ -600,6 +597,7 @@ def _post_video(driver) -> None:
         )
 
     manage_posts = WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
+    time.sleep(3)
     manage_posts.click()
 
     time.sleep(5)
@@ -688,6 +686,7 @@ def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: s
     else:
         return min(nearest_mention, nearest_hashtag)
 
+
 def _convert_videos_dict(videos_list_of_dictionaries) -> List:
     """
     Takes in a videos dictionary and converts it.
@@ -744,11 +743,12 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
                     elem[correct_description] = value
                     break
             else:
-                elem[correct_description] = '' # null description is fine
+                elem[correct_description] = ''  # null description is fine
 
         return_list.append(elem)
 
     return return_list
+
 
 def __get_driver_timezone(driver) -> pytz.timezone:
     """
@@ -756,6 +756,7 @@ def __get_driver_timezone(driver) -> pytz.timezone:
     """
     timezone_str = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
     return pytz.timezone(timezone_str)
+
 
 def _refresh_with_alert(driver) -> None:
     try:
@@ -767,9 +768,10 @@ def _refresh_with_alert(driver) -> None:
 
         # accept the alert
         driver.switch_to.alert.accept()
-    except:
+    except Exception:
         # if no alert appears, the page is fine
         pass
+
 
 class DescriptionTooLong(Exception):
     """

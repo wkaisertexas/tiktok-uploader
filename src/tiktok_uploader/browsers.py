@@ -4,12 +4,8 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.safari.options import Options as SafariOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 
-# Webdriver managers
 from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.firefox.service import Service as FirefoxService
-from webdriver_manager.firefox import GeckoDriverManager
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.edge.service import Service as EdgeService
 
 from selenium import webdriver
@@ -193,7 +189,7 @@ defaults = {
 
 
 services = {
-    'chrome': lambda : ChromeService(ChromeDriverManager().install()),
-    'firefox': lambda : FirefoxService(GeckoDriverManager().install()),
-    'edge': lambda : EdgeService(EdgeChromiumDriverManager().install()),
+    'chrome': lambda: ChromeService(),
+    'firefox': lambda: FirefoxService(),
+    'edge': lambda: EdgeService(),
 }
