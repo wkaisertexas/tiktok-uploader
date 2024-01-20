@@ -274,4 +274,6 @@ This bot is not fool proof. Though I have not gotten an official ban, the video 
 - [@C_Span](https://www.tiktok.com/@c_span?lang=en) - A split-screen channel with mobile games below featuring clips from C-Span's YouTube channel
 - [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A Reddit bot to see which SubReddit is most viral on TikTok
 
+> If you like this project, please ⭐ it on GitHub to show your support! ❤️
+
 [^1]: If interested in Hatch, checkout the [website](https://hatch.pypa.io/latest/build/)
