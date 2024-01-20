@@ -287,4 +287,6 @@ This bot is not fool proof. Though I have not gotten an official ban, the video 
 
 > If you like this project, please ⭐ it on GitHub to show your support! ❤️
 
+![Star History Chart](https://api.star-history.com/svg?repos=wkaisertexas/tiktok-uploader&type=Date)
+
 [^1]: If interested in Hatch, checkout the [website](https://hatch.pypa.io/latest/build/)
