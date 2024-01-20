@@ -6,6 +6,17 @@
 <p align="center">A <strong>Selenium</strong>-based automated <strong>TikTok</strong> video uploader</p>
 
 <p align="center">
+  <a href="https://github.com/wkaisertexas/tiktok-uploader"><strong>English</strong></a> ·
+  <a href="https://github.com/wkaisertexas/tiktok-uploader/blob/main/README.zh-Hans.md"><strong>Chinese (Simplified)</strong></a> ·
+  <a href="https://github.com/wkaisertexas/tiktok-uploader/blob/main/README.fr.md"><strong>French</strong></a> ·
+  <a href="https://github.com/wkaisertexas/tiktok-uploader/blob/main/README.es.md"><strong>Spanish</string></a> ·
+  <a href="https://github.com/wkaisertexas/tiktok-uploader/blob/main/README.de.md"><strong>German</strong></a>
+</p>
+
+> ➡️ [Check out tranzlate on GitHub](https://github.com/wkaisertexas/tranzlate) a tool for translating text using [ChatGPT](https://chat.openai.com)
+
+
+<p align="center">
   <img alt="Forks" src="https://img.shields.io/github/forks/wkaisertexas/tiktok-uploader" />
   <img alt="Stars" src="https://img.shields.io/github/stars/wkaisertexas/tiktok-uploader" />
   <img alt="Watchers" src="https://img.shields.io/github/watchers/wkaisertexas/tiktok-uploader" />
