@@ -13,7 +13,7 @@
   <a href="https://github.com/wkaisertexas/tiktok-uploader/blob/main/README.de.md"><strong>Deutsch</strong></a>
 </p>
 
-> ➡️ [Schauen Sie sich tranzlate auf GitHub an]((https://github.com/wkaisertexas/tranzlate/blob/main/README.de.md), ein Tool zum Übersetzen von Text mit Hilfe von [ChatGPT](https://chat.openai.com)
+> ➡️ [Schauen Sie sich tranzlate auf GitHub an](https://github.com/wkaisertexas/tranzlate/blob/main/README.de.md), ein Tool zum Übersetzen von Text mit Hilfe von [ChatGPT](https://chat.openai.com)
 
 
 <p align="center">
