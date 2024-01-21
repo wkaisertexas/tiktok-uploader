@@ -13,9 +13,6 @@
   <a href="https://github.com/wkaisertexas/tiktok-uploader/blob/main/README.de.md"><strong>German</strong></a>
 </p>
 
-> ➡️ [Check out tranzlate on GitHub](https://github.com/wkaisertexas/tranzlate) a tool for translating text using [ChatGPT](https://chat.openai.com)
-
-
 <p align="center">
   <img alt="Forks" src="https://img.shields.io/github/forks/wkaisertexas/tiktok-uploader" />
   <img alt="Stars" src="https://img.shields.io/github/stars/wkaisertexas/tiktok-uploader" />
