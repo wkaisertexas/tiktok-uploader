@@ -185,6 +185,10 @@ Your `sessionid` is all that is required for authentication and can be passed as
 
 After installing, open the extensions menu on [TikTok.com](https://tiktok.com/) and click `🍪 Get cookies.txt` to reveal your cookies. Select `Export As ⇩` and specify a location and name to save.
 
+```python
+upload_video(..., cookies='cookies.txt')
+```
+
 **Optionally**, `cookies_list` is a list of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` which allow you to pass your own browser cookies.
 
 **Example:**
@@ -197,7 +201,8 @@ cookies_list = [
         'domain': 'https://tiktok.com',
         'path': '/',
         'expiry': '10/8/2023, 12:18:58 PM'
-    }
+    },
+    # the rest of your cookies all in a list
 ]
 
 upload_video(..., cookies_list=cookies_list)
@@ -275,11 +280,11 @@ On initial startup, you **may** be prompted to install the correct driver for yo
 
 <h1 id="notes"> 📝 Notes</h1>
 
-This bot is not fool proof. Though I have not gotten an official ban, the video will fail to upload after too many uploads. In testing, waiting several hours was sufficient to fix this problem. For this reason, please thing of this more as a scheduled uploader for TikTok videos, rather than a spam bot.
+This bot is not fool proof. Though I have not gotten an official ban, the video will fail to upload after too many uploads. In testing, waiting several hours was sufficient to fix this problem. For this reason, please think of this more as a scheduled uploader for TikTok videos, rather than a spam bot.
 
 <h1 id="made-with"> Accounts made with</h1>
 
-- [@C_Span](https://www.tiktok.com/@c_span?lang=en) - A split-screen channel with mobile games below featuring clips from C-Span's YouTube channel
+- [@C_Span](https://www.tiktok.com/@c_span?lang=en) - A split-screen channel with mobile games below-featuring clips from C-Span's YouTube channel
 - [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A Reddit bot to see which SubReddit is most viral on TikTok
 
 > If you like this project, please ⭐ it on GitHub to show your support! ❤️
