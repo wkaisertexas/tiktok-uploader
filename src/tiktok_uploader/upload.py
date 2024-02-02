@@ -23,7 +23,7 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader import config, logger
-from tiktok_uploader.utils import bold, green, red
+from tiktok_uploader.utils import bold, cyan, green, red
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
@@ -60,7 +60,7 @@ def upload_video(filename=None, description='', cookies='', schedule: datetime.d
 
 
 def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='chrome',
-                  browser_agent=None, on_complete=None, headless=False, num_retries : int = 1, *args, **kwargs):
+                  browser_agent=None, on_complete=None, headless=False, num_retries : int = 1, skip_split_window=False, *args, **kwargs):
     """
     Uploads multiple videos to TikTok
 
@@ -150,8 +150,9 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
                     continue
 
             complete_upload_form(driver, path, description, schedule,
-                                 num_retries=num_retries, headless=headless,
-                                 *args, **kwargs)
+                                 num_retries=num_retries, 
+                                 skip_split_window=skip_split_window,
+                                 headless=headless,*args, **kwargs)
         except Exception as exception:
             logger.error('Failed to upload %s', path)
             logger.error(exception)
@@ -166,7 +167,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
     return failed
 
 
-def complete_upload_form(driver, path: str, description: str, schedule: datetime.datetime, headless=False, *args, **kwargs) -> None:
+def complete_upload_form(driver, path: str, description: str, schedule: datetime.datetime, skip_split_window: bool, headless=False,  *args, **kwargs) -> None:
     """
     Actually uploads each video
 
@@ -180,7 +181,8 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
     _go_to_upload(driver)
     #  _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
-    _remove_split_window(driver)
+    if not skip_split_window:
+        _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
     if schedule:
