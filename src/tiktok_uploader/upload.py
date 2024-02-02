@@ -469,8 +469,7 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
         __time_picker(driver, hour, minute)
     except Exception as e:
         msg = f'Failed to set schedule: {e}'
-        print(msg)
-        logger.error(msg)
+        logger.error(red(msg))
         raise FailedToUpload()
 
 
@@ -550,8 +549,11 @@ def __time_picker(driver, hour: int, minute: int) -> None:
     minute_to_click = minute_options[minute_option_correct_index]
 
     driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", hour_to_click)
+    time.sleep(1) # temporay fix => might be better to use an explicit wait
     hour_to_click.click()
+
     driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", minute_to_click)
+    time.sleep(2) # temporary fixed => Might be better to use an explicit wait
     minute_to_click.click()
 
     # click somewhere else to close the time picker
@@ -572,7 +574,6 @@ def __verify_time_picked_is_correct(driver, hour: int, minute: int):
         msg = f'Something went wrong with the time picker, ' \
               f'expected {hour:02d}:{minute:02d} ' \
               f'but got {time_selected_hour:02d}:{time_selected_minute:02d}'
-        logger.error(msg)
         raise Exception(msg)
 
 
