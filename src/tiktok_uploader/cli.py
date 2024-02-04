@@ -10,6 +10,9 @@ import json
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
 
+from get_latest_cookies import get_latest_local_cookies
+
+
 def main():
     """
     Passes arguments into the program
@@ -29,7 +32,7 @@ def main():
         schedule=schedule,
         username=args.username,
         password=args.password,
-        cookies=args.cookies,
+        cookies=get_latest_local_cookies(),
         proxy=proxy,
         sessionid=args.sessionid,
         headless=not args.attach,

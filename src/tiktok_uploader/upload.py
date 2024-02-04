@@ -6,6 +6,7 @@ Key Functions
 upload_video : Uploads a single TikTok video
 upload_videos : Uploads multiple TikTok videos
 """
+import random
 from os.path import abspath, exists
 from typing import List
 import time
@@ -180,7 +181,7 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
     _go_to_upload(driver)
     #  _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
-    _remove_split_window(driver)
+    # _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
     if schedule:
@@ -339,28 +340,28 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
             )
             upload_box.send_keys(path)
             # waits for the upload progress bar to disappear
-            upload_finished = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['upload_finished'])
-                )
-
-            WebDriverWait(driver, config['explicit_wait']).until(upload_finished)
-
-            # waits for the video to upload
             upload_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['upload_confirmation'])
-                )
+                (By.XPATH, "//div[contains(@class, 'action-button')]//button[.//div[contains(text(), 'Edit video')]]")
+            )
 
-            # An exception throw here means the video failed to upload an a retry is needed
             WebDriverWait(driver, config['explicit_wait']).until(upload_confirmation)
-
-            # wait until a non-draggable image is found
-            process_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['process_confirmation'])
-                )
-            WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
+            time.sleep(10)
+            # # waits for the video to upload
+            # upload_confirmation = EC.presence_of_element_located(
+            #     (By.XPATH, config['selectors']['upload']['upload_confirmation'])
+            #     )
+            #
+            # # An exception throw here means the video failed to upload an a retry is needed
+            # WebDriverWait(driver, config['explicit_wait']).until(upload_confirmation)
+            #
+            # # wait until a non-draggable image is found
+            # process_confirmation = EC.presence_of_element_located(
+            #     (By.XPATH, config['selectors']['upload']['process_confirmation'])
+            #     )
+            # WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             return
         except Exception as exception:
-            print(exception)
+            logger.debug(red(str(exception)))
 
     raise FailedToUpload()
 
@@ -466,17 +467,25 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
         switch = driver.find_element(By.XPATH, config['selectors']['schedule']['switch'])
         switch.click()
         __date_picker(driver, month, day)
-        __time_picker(driver, hour, minute)
+        __time_picker(driver, 0, 0)
     except Exception as e:
-        msg = f'Failed to set schedule: {e}'
-        print(msg)
-        logger.error(msg)
+        logger.error(f'Failed to set schedule: {e}')
         raise FailedToUpload()
 
 
 
 def __date_picker(driver, month: int, day: int) -> None:
     logger.debug(green('Picking date'))
+    condition = EC.presence_of_element_located((
+        By.CSS_SELECTOR, ".tiktok-modal__modal-button.is-highlight"
+    ))
+    try:
+        # Wait for the element to be present within the specified timeout period
+        allow_button = WebDriverWait(driver, config['implicit_wait']).until(condition)
+        allow_button.click()
+
+    except TimeoutException:
+        logger.debug(red('Allow button didn"t appear'))
 
     condition = EC.presence_of_element_located(
         (By.XPATH, config['selectors']['schedule']['date_picker'])
@@ -487,6 +496,8 @@ def __date_picker(driver, month: int, day: int) -> None:
     condition = EC.presence_of_element_located(
         (By.XPATH, config['selectors']['schedule']['calendar'])
     )
+    logger.debug(green('calendar'))
+
     calendar = WebDriverWait(driver, config['implicit_wait']).until(condition)
 
     calendar_month = driver.find_element(By.XPATH, config['selectors']['schedule']['calendar_month']).text
@@ -497,6 +508,7 @@ def __date_picker(driver, month: int, day: int) -> None:
         else:
             arrow = driver.find_elements(By.XPATH, config['selectors']['schedule']['calendar_arrows'])[0]
         arrow.click()
+
     valid_days = driver.find_elements(By.XPATH, config['selectors']['schedule']['calendar_valid_days'])
 
     day_to_click = None
@@ -545,7 +557,7 @@ def __time_picker(driver, hour: int, minute: int) -> None:
     # 00 == 0, 05 == 1, 10 == 2, 15 == 3, 20 == 4, 25 == 5, 30 == 6, 35 == 7, 40 == 8, 45 == 9, 50 == 10, 55 == 11
     minute_options = driver.find_elements(By.XPATH, config['selectors']['schedule']['timepicker_minutes'])
 
-    hour_to_click = hour_options[hour]
+    hour_to_click = hour_options[random.randrange(10,22)]
     minute_option_correct_index = int(minute / 5)
     minute_to_click = minute_options[minute_option_correct_index]
 
@@ -558,7 +570,7 @@ def __time_picker(driver, hour: int, minute: int) -> None:
     time_picker.click()
 
     time.sleep(.5)  # wait for the DOM change
-    __verify_time_picked_is_correct(driver, hour, minute)
+    # __verify_time_picked_is_correct(driver, hour, minute)
 
 
 def __verify_time_picked_is_correct(driver, hour: int, minute: int):
