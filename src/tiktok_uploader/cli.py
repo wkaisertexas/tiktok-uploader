@@ -7,10 +7,11 @@ from os.path import exists, join
 import datetime
 import json
 
-from tiktok_uploader.upload import upload_video
-from tiktok_uploader.auth import login_accounts, save_cookies
+from src.tiktok_uploader.upload import upload_video
+from src.tiktok_uploader.auth import login_accounts, save_cookies
+from src.tiktok_uploader.upload_meditations import upload_range
 
-from get_latest_cookies import get_latest_local_cookies
+from src.tiktok_uploader.get_latest_cookies import get_latest_local_cookies
 
 
 def main():
@@ -20,29 +21,19 @@ def main():
     args = get_uploader_args()
 
     args = validate_uploader_args(args=args)
+    if args.tiktok:
+        # Specify your start and finish meditation ids, (e.g: 1, 5 - meanning upload days 1 to 5 including 5)
+        # Make sure the videos exist on the meditations folder
+        upload_range(11, 16)
 
+    if args.cloud_function:
+        pass
     # parse args
-    schedule = parse_schedule(args.schedule)
-    proxy = parse_proxy(args.proxy)
-
-    # runs the program using the arguments provided
-    result = upload_video(
-        filename=args.video,
-        description=args.description,
-        schedule=schedule,
-        username=args.username,
-        password=args.password,
-        cookies=get_latest_local_cookies(),
-        proxy=proxy,
-        sessionid=args.sessionid,
-        headless=not args.attach,
-    )
+    # schedule = parse_schedule(args.schedule)
+    # proxy = parse_proxy(args.proxy)
 
     print('-------------------------')
-    if result:
-        print('Error while uploading video')
-    else:
-        print('Video uploaded successfully')
+    print('Script finished')
     print('-------------------------')
 
 
@@ -55,12 +46,18 @@ def get_uploader_args():
         'video from your computer to the TikTok using selenium automation'
     )
 
+    parser.add_argument('-t', '--tiktok', help='Upload to tiktok', default=False)
+    parser.add_argument('-f', '--cloud-function', help='Run cloud function', default=False)
+
+
+    # These args stay because they should be examined (username & password mainly)
+
     # primary arguments
-    parser.add_argument('-v', '--video', help='Video file', required=True)
+    parser.add_argument('-v', '--video', help='Video file')
     parser.add_argument('-d', '--description', help='Description', default='')
 
     # secondary arguments
-    parser.add_argument('-t', '--schedule', help='Schedule UTC time in %Y-%m-%d %H:%M format ', default=None)
+    # parser.add_argument('-t', '--schedule', help='Schedule UTC time in %Y-%m-%d %H:%M format ', default=None)
     parser.add_argument('--proxy', help='Proxy user:pass@host:port or host:port format', default=None)
 
     # authentication arguments
