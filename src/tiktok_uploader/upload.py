@@ -588,6 +588,7 @@ def _post_video(driver) -> None:
 
     try:
         post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", post)
         post.click()
     except ElementClickInterceptedException:
         logger.debug(green("Trying to click on the button again"))
