@@ -24,6 +24,7 @@ classifiers = [
 ]
 
 dependencies = [
+  "pyperclip",
 	"selenium",
 	"webdriver_manager",
   "toml",

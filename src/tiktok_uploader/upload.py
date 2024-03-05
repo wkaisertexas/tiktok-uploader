@@ -11,6 +11,7 @@ from typing import List
 import time
 import pytz
 import datetime
+import pyperclip
 
 from selenium.webdriver.common.by import By
 
@@ -297,7 +298,8 @@ def _set_description(driver, description: str) -> None:
             else:
                 min_index = _get_splice_index(nearest_mention, nearest_hash, description)
 
-                desc.send_keys(description[:min_index])
+                pyperclip.copy(description[:min_index])
+                desc.send_keys(Keys.CONTROL, 'v')
                 description = description[min_index:]
     except Exception as exception:
         print('Failed to set description: ', exception)
@@ -588,6 +590,7 @@ def _post_video(driver) -> None:
 
     try:
         post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, config['selectors']['upload']['post'])))
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", post)
         post.click()
     except ElementClickInterceptedException:
         logger.debug(green("Trying to click on the button again"))
