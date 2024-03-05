@@ -24,7 +24,7 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader import config, logger
-from tiktok_uploader.utils import bold, green, red
+from tiktok_uploader.utils import bold, cyan, green, red
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 
@@ -61,7 +61,7 @@ def upload_video(filename=None, description='', cookies='', schedule: datetime.d
 
 
 def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='chrome',
-                  browser_agent=None, on_complete=None, headless=False, num_retries : int = 1, *args, **kwargs):
+                  browser_agent=None, on_complete=None, headless=False, num_retries : int = 1, skip_split_window=False, *args, **kwargs):
     """
     Uploads multiple videos to TikTok
 
@@ -151,8 +151,9 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
                     continue
 
             complete_upload_form(driver, path, description, schedule,
-                                 num_retries=num_retries, headless=headless,
-                                 *args, **kwargs)
+                                 num_retries=num_retries, 
+                                 skip_split_window=skip_split_window,
+                                 headless=headless,*args, **kwargs)
         except Exception as exception:
             logger.error('Failed to upload %s', path)
             logger.error(exception)
@@ -167,7 +168,7 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
     return failed
 
 
-def complete_upload_form(driver, path: str, description: str, schedule: datetime.datetime, headless=False, *args, **kwargs) -> None:
+def complete_upload_form(driver, path: str, description: str, schedule: datetime.datetime, skip_split_window: bool, headless=False,  *args, **kwargs) -> None:
     """
     Actually uploads each video
 
@@ -181,7 +182,8 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
     _go_to_upload(driver)
     #  _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
-    _remove_split_window(driver)
+    if not skip_split_window:
+        _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
     if schedule:
@@ -353,7 +355,7 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
                 )
 
             # An exception throw here means the video failed to upload an a retry is needed
-            WebDriverWait(driver, config['explicit_wait']).until(upload_confirmation)
+            WebDriverWait(driver, config['uploading_wait']).until(upload_confirmation)
 
             # wait until a non-draggable image is found
             process_confirmation = EC.presence_of_element_located(
@@ -361,6 +363,8 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
                 )
             WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             return
+        except TimeoutException as exception:
+            print("TimeoutException occurred:\n", exception)
         except Exception as exception:
             print(exception)
 
@@ -471,8 +475,7 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
         __time_picker(driver, hour, minute)
     except Exception as e:
         msg = f'Failed to set schedule: {e}'
-        print(msg)
-        logger.error(msg)
+        logger.error(red(msg))
         raise FailedToUpload()
 
 
@@ -551,9 +554,13 @@ def __time_picker(driver, hour: int, minute: int) -> None:
     minute_option_correct_index = int(minute / 5)
     minute_to_click = minute_options[minute_option_correct_index]
 
+    time.sleep(1) # temporay fix => might be better to use an explicit wait
     driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", hour_to_click)
+    time.sleep(1) # temporay fix => might be better to use an explicit wait
     hour_to_click.click()
+
     driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", minute_to_click)
+    time.sleep(2) # temporary fixed => Might be better to use an explicit wait
     minute_to_click.click()
 
     # click somewhere else to close the time picker
@@ -574,7 +581,6 @@ def __verify_time_picked_is_correct(driver, hour: int, minute: int):
         msg = f'Something went wrong with the time picker, ' \
               f'expected {hour:02d}:{minute:02d} ' \
               f'but got {time_selected_hour:02d}:{time_selected_minute:02d}'
-        logger.error(msg)
         raise Exception(msg)
 
 

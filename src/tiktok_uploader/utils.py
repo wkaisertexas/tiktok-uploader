@@ -29,3 +29,9 @@ def red(to_red: str) -> str:
     Returns the input red
     """
     return FAIL + to_red + ENDC
+
+def cyan(to_cyan: str) -> str:
+    """
+    Returns the cyan green
+    """
+    return OKCYAN + to_cyan + ENDC
