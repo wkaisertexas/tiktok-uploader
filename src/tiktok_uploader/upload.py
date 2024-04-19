@@ -12,6 +12,7 @@ import time
 import pytz
 import datetime
 import pyperclip
+import threading
 
 from selenium.webdriver.common.by import By
 
@@ -181,7 +182,21 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
     """
     _go_to_upload(driver)
     #  _remove_cookies_window(driver)
-    _set_video(driver, path=path, **kwargs)
+    
+    upload_complete_event = threading.Event()
+    
+    # Function to call _set_video and set the event when it's done
+    def upload_video():
+        _set_video(driver, path=path, **kwargs)
+        upload_complete_event.set()
+    
+    # Start the upload_video function in a separate thread
+    upload_thread = threading.Thread(target=upload_video)
+    upload_thread.start()
+    
+    # Wait for the upload to complete before proceeding
+    upload_complete_event.wait()
+    
     if not skip_split_window:
         _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
@@ -342,21 +357,7 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
                 By.XPATH, config['selectors']['upload']['upload_video']
             )
             upload_box.send_keys(path)
-            # waits for the upload progress bar to disappear
-            upload_finished = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['upload_finished'])
-                )
-
-            WebDriverWait(driver, config['explicit_wait']).until(upload_finished)
-
-            # waits for the video to upload
-            upload_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['upload_confirmation'])
-                )
-
-            # An exception throw here means the video failed to upload an a retry is needed
-            WebDriverWait(driver, config['uploading_wait']).until(upload_confirmation)
-
+            
             # wait until a non-draggable image is found
             process_confirmation = EC.presence_of_element_located(
                 (By.XPATH, config['selectors']['upload']['process_confirmation'])
@@ -367,8 +368,8 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
             print("TimeoutException occurred:\n", exception)
         except Exception as exception:
             print(exception)
+            raise FailedToUpload(exception)
 
-    raise FailedToUpload()
 
 def _remove_cookies_window(driver) -> None:
     """
