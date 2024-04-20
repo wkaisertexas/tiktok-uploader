@@ -270,59 +270,39 @@ def _set_description(driver, description: str) -> None:
 
     desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
 
+    desc.click()
+
     # desc populates with filename before clearing
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
 
     _clear(desc)
 
+    WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text == '')
+
+    time.sleep(config['implicit_wait'])
+    
+    desc.click()
+
     try:
-        while description:
-            nearest_mention = description.find('@')
-            nearest_hash = description.find('#')
-
-            if nearest_mention == 0 or nearest_hash == 0:
-                desc.send_keys('@' if nearest_mention == 0 else '#')
-
-                name = description[1:].split(' ')[0]
-                if nearest_mention == 0: # @ case
-                    mention_xpath = config['selectors']['upload']['mention_box']
-                    condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
-                    mention_box = WebDriverWait(driver, config['explicit_wait']).until(condition)
-                    mention_box.send_keys(name)
-                else:
-                    desc.send_keys(name)
-
+        words = description.split(" ")
+        for word in words:
+            if word[0] == "#":
+                desc.send_keys(word)
+                desc.send_keys(' ' + Keys.BACKSPACE)
                 time.sleep(config['implicit_wait'])
-
-                if nearest_mention == 0: # @ case
-                    mention_xpath = config['selectors']['upload']['mentions'].format('@' + name)
-                    condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
-                else:
-                    hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
-                    condition = EC.presence_of_element_located((By.XPATH, hashtag_xpath))
-
-                # if the element never appears (timeout exception) remove the tag and continue
-                try:
-                    elem = WebDriverWait(driver, config['implicit_wait']).until(condition)
-                except:
-                    desc.send_keys(Keys.BACKSPACE * (len(name) + 1))
-                    description = description[len(name) + 2:]
-                    continue
-
-                ActionChains(driver).move_to_element(elem).click(elem).perform()
-
-                description = description[len(name) + 2:]
+                desc.send_keys(Keys.ENTER)
+            elif word[0] == "@":
+                desc.send_keys(word)
+                desc.send_keys(' ' + Keys.BACKSPACE)
+                time.sleep(2*config['implicit_wait'])
+                desc.send_keys(Keys.ENTER)
             else:
-                min_index = _get_splice_index(nearest_mention, nearest_hash, description)
+                desc.send_keys(word + " ")
 
-                pyperclip.copy(description[:min_index])
-                desc.send_keys(Keys.CONTROL, 'v')
-                description = description[min_index:]
     except Exception as exception:
         print('Failed to set description: ', exception)
         _clear(desc)
-        desc.send_keys(saved_description) # if fail, use saved description
-
+        desc.send_keys(saved_description)
 
 def _clear(element) -> None:
     """
