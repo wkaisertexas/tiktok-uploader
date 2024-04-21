@@ -298,7 +298,11 @@ def _set_description(driver, description: str) -> None:
                 desc.send_keys(Keys.ENTER)
             elif word[0] == "@":
                 desc.send_keys(word)
-                desc.send_keys(' ' + Keys.BACKSPACE)
+                time.sleep(1)
+                desc.send_keys(' ')
+                time.sleep(1)
+                desc.send_keys(Keys.BACKSPACE)
+                time.sleep(1)
                 EC.presence_of_element_located(
                     (By.XPATH, config['selectors']['upload']['mention_box'])
                 )
