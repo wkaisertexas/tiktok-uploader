@@ -280,8 +280,6 @@ def _set_description(driver, description: str) -> None:
     _clear(desc)
 
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text == '')
-
-    time.sleep(config['implicit_wait'])
     
     desc.click()
 
