@@ -6,6 +6,7 @@ Key Functions
 upload_video : Uploads a single TikTok video
 upload_videos : Uploads multiple TikTok videos
 """
+
 from os.path import abspath, exists
 from typing import List
 import time
@@ -275,6 +276,7 @@ def _set_description(driver, description: str) -> None:
     # desc populates with filename before clearing
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
 
+    desc.send_keys(Keys.END)
     _clear(desc)
 
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text == '')
@@ -289,12 +291,18 @@ def _set_description(driver, description: str) -> None:
             if word[0] == "#":
                 desc.send_keys(word)
                 desc.send_keys(' ' + Keys.BACKSPACE)
-                time.sleep(config['implicit_wait'])
+                EC.presence_of_element_located(
+                    (By.XPATH, config['selectors']['upload']['mention_box'])
+                )
+                time.sleep(2)
                 desc.send_keys(Keys.ENTER)
             elif word[0] == "@":
                 desc.send_keys(word)
                 desc.send_keys(' ' + Keys.BACKSPACE)
-                time.sleep(2*config['implicit_wait'])
+                EC.presence_of_element_located(
+                    (By.XPATH, config['selectors']['upload']['mention_box'])
+                )
+                time.sleep(2)
                 desc.send_keys(Keys.ENTER)
             else:
                 desc.send_keys(word + " ")
@@ -314,7 +322,6 @@ def _clear(element) -> None:
         The text box to clear
     """
     element.send_keys(2 * len(element.text) * Keys.BACKSPACE)
-
 
 def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     """

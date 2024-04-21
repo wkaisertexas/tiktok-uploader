@@ -13,5 +13,5 @@ if __name__ == "__main__":
 
     # upload video to TikTok
     upload_video(FILENAME,
-                 description="This is a #cool video I just downloaded #wow check it out on @tiktok",
+                 description="This is a #cool video I just downloaded. #wow check it out on @tiktok",
                  cookies="cookies.txt")

@@ -48,7 +48,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	visibility = "//div[@class='tiktok-select-selector']"
 	options = ["Public", "Friends", "Private"]
 
-	mention_box = "//input[contains(concat(' ', normalize-space(@class), ' '), 'search-friends')]"
+	mention_box = "//div[contains(@class, 'mention-list-popover')]"
 
 	comment = "//label[.='Comment']/following-sibling::div/input"
 	duet = "//label[.='Duet']/following-sibling::div/input"
