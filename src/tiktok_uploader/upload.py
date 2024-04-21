@@ -289,22 +289,18 @@ def _set_description(driver, description: str) -> None:
             if word[0] == "#":
                 desc.send_keys(word)
                 desc.send_keys(' ' + Keys.BACKSPACE)
-                EC.presence_of_element_located(
+                WebDriverWait(driver, config['implicit_wait']).until(EC.presence_of_element_located(
                     (By.XPATH, config['selectors']['upload']['mention_box'])
-                )
-                time.sleep(2)
+                ))
                 desc.send_keys(Keys.ENTER)
             elif word[0] == "@":
                 desc.send_keys(word)
-                time.sleep(1)
                 desc.send_keys(' ')
-                time.sleep(1)
                 desc.send_keys(Keys.BACKSPACE)
-                time.sleep(1)
-                EC.presence_of_element_located(
+                WebDriverWait(driver, config['implicit_wait']).until(EC.presence_of_element_located(
                     (By.XPATH, config['selectors']['upload']['mention_box'])
-                )
-                time.sleep(2)
+                ))
+                time.sleep(1)
                 desc.send_keys(Keys.ENTER)
             else:
                 desc.send_keys(word + " ")
@@ -342,6 +338,12 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     for _ in range(num_retries):
         try:
             _change_to_upload_iframe(driver)
+            # Wait For Input File
+            driverWait = WebDriverWait(driver, config['explicit_wait'])
+            upload_boxWait = EC.presence_of_element_located(
+                (By.XPATH, config['selectors']['upload']['upload_video'])
+                )
+            driverWait.until(upload_boxWait)
             upload_box = driver.find_element(
                 By.XPATH, config['selectors']['upload']['upload_video']
             )
