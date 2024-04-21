@@ -12,7 +12,6 @@ from typing import List
 import time
 import pytz
 import datetime
-import pyperclip
 import threading
 
 from selenium.webdriver.common.by import By
@@ -269,6 +268,10 @@ def _set_description(driver, description: str) -> None:
 
     saved_description = description # save the description in case it fails
 
+    WebDriverWait(driver, config['implicit_wait']).until(EC.presence_of_element_located(
+                    (By.XPATH, config['selectors']['upload']['description'])
+                ))
+
     desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
 
     desc.click()
@@ -283,6 +286,8 @@ def _set_description(driver, description: str) -> None:
     
     desc.click()
 
+    time.sleep(1)
+
     try:
         words = description.split(" ")
         for word in words:
@@ -294,16 +299,45 @@ def _set_description(driver, description: str) -> None:
                 ))
                 desc.send_keys(Keys.ENTER)
             elif word[0] == "@":
+                logger.debug(green('- Adding Mention: ' + word))
                 desc.send_keys(word)
                 desc.send_keys(' ')
-                desc.send_keys(Keys.BACKSPACE)
-                WebDriverWait(driver, config['implicit_wait']).until(EC.presence_of_element_located(
-                    (By.XPATH, config['selectors']['upload']['mention_box'])
-                ))
                 time.sleep(1)
-                desc.send_keys(Keys.ENTER)
+                desc.send_keys(Keys.BACKSPACE)
+
+                WebDriverWait(driver, config['explicit_wait']).until(EC.presence_of_element_located(
+                    (By.XPATH, config['selectors']['upload']['mention_box_user_id'])
+                ))
+                
+                found = False
+                waiting_interval = 0.5
+                timeout = 5
+                start_time = time.time()
+                
+                while not found and (time.time() - start_time < timeout):
+                    
+                    user_id_elements = driver.find_elements(By.XPATH, config['selectors']['upload']['mention_box_user_id'])
+                    time.sleep(1)
+                    
+                    for i in range(len(user_id_elements)):
+                        user_id_element = user_id_elements[i]
+                        if user_id_element and user_id_element.is_enabled:
+                            
+                            username = user_id_element.text.split(" ")[0]
+                            if username.lower() == word[1:].lower():
+                                found = True
+                                print("Matching User found : Clicking User")
+                                for j in range(i):
+                                    desc.send_keys(Keys.DOWN)
+                                desc.send_keys(Keys.ENTER)
+                                break
+
+                        if not found:
+                            print(f"No match. Waiting for {waiting_interval} seconds...")
+                            time.sleep(waiting_interval)
+
             else:
-                desc.send_keys(word + " ")
+                desc.send_keys(word + ' ')
 
     except Exception as exception:
         print('Failed to set description: ', exception)

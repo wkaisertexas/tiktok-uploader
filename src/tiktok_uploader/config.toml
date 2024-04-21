@@ -49,6 +49,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	options = ["Public", "Friends", "Private"]
 
 	mention_box = "//div[contains(@class, 'mention-list-popover')]"
+	mention_box_user_id = "//span[contains(@class, 'user-id')]"
 
 	comment = "//label[.='Comment']/following-sibling::div/input"
 	duet = "//label[.='Duet']/following-sibling::div/input"
