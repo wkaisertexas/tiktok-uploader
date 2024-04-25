@@ -1,6 +1,6 @@
 [project]
 name = "tiktok-uploader"
-version = "1.0.15"
+version = "1.0.16"
 authors = [
   { name = "William Kaiser", email = "wkaisertexas@gmail.com" },
 ]
