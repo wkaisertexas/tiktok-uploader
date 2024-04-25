@@ -6,12 +6,12 @@ Key Functions
 upload_video : Uploads a single TikTok video
 upload_videos : Uploads multiple TikTok videos
 """
+
 from os.path import abspath, exists
 from typing import List
 import time
 import pytz
 import datetime
-import pyperclip
 import threading
 
 from selenium.webdriver.common.by import By
@@ -268,61 +268,81 @@ def _set_description(driver, description: str) -> None:
 
     saved_description = description # save the description in case it fails
 
+    WebDriverWait(driver, config['implicit_wait']).until(EC.presence_of_element_located(
+                    (By.XPATH, config['selectors']['upload']['description'])
+                ))
+
     desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
+
+    desc.click()
 
     # desc populates with filename before clearing
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
 
+    desc.send_keys(Keys.END)
     _clear(desc)
 
+    WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text == '')
+    
+    desc.click()
+
+    time.sleep(1)
+
     try:
-        while description:
-            nearest_mention = description.find('@')
-            nearest_hash = description.find('#')
+        words = description.split(" ")
+        for word in words:
+            if word[0] == "#":
+                desc.send_keys(word)
+                desc.send_keys(' ' + Keys.BACKSPACE)
+                WebDriverWait(driver, config['implicit_wait']).until(EC.presence_of_element_located(
+                    (By.XPATH, config['selectors']['upload']['mention_box'])
+                ))
+                desc.send_keys(Keys.ENTER)
+            elif word[0] == "@":
+                logger.debug(green('- Adding Mention: ' + word))
+                desc.send_keys(word)
+                desc.send_keys(' ')
+                time.sleep(1)
+                desc.send_keys(Keys.BACKSPACE)
 
-            if nearest_mention == 0 or nearest_hash == 0:
-                desc.send_keys('@' if nearest_mention == 0 else '#')
+                WebDriverWait(driver, config['explicit_wait']).until(EC.presence_of_element_located(
+                    (By.XPATH, config['selectors']['upload']['mention_box_user_id'])
+                ))
+                
+                found = False
+                waiting_interval = 0.5
+                timeout = 5
+                start_time = time.time()
+                
+                while not found and (time.time() - start_time < timeout):
+                    
+                    user_id_elements = driver.find_elements(By.XPATH, config['selectors']['upload']['mention_box_user_id'])
+                    time.sleep(1)
+                    
+                    for i in range(len(user_id_elements)):
+                        user_id_element = user_id_elements[i]
+                        if user_id_element and user_id_element.is_enabled:
+                            
+                            username = user_id_element.text.split(" ")[0]
+                            if username.lower() == word[1:].lower():
+                                found = True
+                                print("Matching User found : Clicking User")
+                                for j in range(i):
+                                    desc.send_keys(Keys.DOWN)
+                                desc.send_keys(Keys.ENTER)
+                                break
 
-                name = description[1:].split(' ')[0]
-                if nearest_mention == 0: # @ case
-                    mention_xpath = config['selectors']['upload']['mention_box']
-                    condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
-                    mention_box = WebDriverWait(driver, config['explicit_wait']).until(condition)
-                    mention_box.send_keys(name)
-                else:
-                    desc.send_keys(name)
+                        if not found:
+                            print(f"No match. Waiting for {waiting_interval} seconds...")
+                            time.sleep(waiting_interval)
 
-                time.sleep(config['implicit_wait'])
-
-                if nearest_mention == 0: # @ case
-                    mention_xpath = config['selectors']['upload']['mentions'].format('@' + name)
-                    condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
-                else:
-                    hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
-                    condition = EC.presence_of_element_located((By.XPATH, hashtag_xpath))
-
-                # if the element never appears (timeout exception) remove the tag and continue
-                try:
-                    elem = WebDriverWait(driver, config['implicit_wait']).until(condition)
-                except:
-                    desc.send_keys(Keys.BACKSPACE * (len(name) + 1))
-                    description = description[len(name) + 2:]
-                    continue
-
-                ActionChains(driver).move_to_element(elem).click(elem).perform()
-
-                description = description[len(name) + 2:]
             else:
-                min_index = _get_splice_index(nearest_mention, nearest_hash, description)
+                desc.send_keys(word + ' ')
 
-                pyperclip.copy(description[:min_index])
-                desc.send_keys(Keys.CONTROL, 'v')
-                description = description[min_index:]
     except Exception as exception:
         print('Failed to set description: ', exception)
         _clear(desc)
-        desc.send_keys(saved_description) # if fail, use saved description
-
+        desc.send_keys(saved_description)
 
 def _clear(element) -> None:
     """
@@ -334,7 +354,6 @@ def _clear(element) -> None:
         The text box to clear
     """
     element.send_keys(2 * len(element.text) * Keys.BACKSPACE)
-
 
 def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     """
@@ -353,6 +372,12 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
     for _ in range(num_retries):
         try:
             _change_to_upload_iframe(driver)
+            # Wait For Input File
+            driverWait = WebDriverWait(driver, config['explicit_wait'])
+            upload_boxWait = EC.presence_of_element_located(
+                (By.XPATH, config['selectors']['upload']['upload_video'])
+                )
+            driverWait.until(upload_boxWait)
             upload_box = driver.find_element(
                 By.XPATH, config['selectors']['upload']['upload_video']
             )
