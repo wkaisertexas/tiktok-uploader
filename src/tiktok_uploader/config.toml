@@ -56,7 +56,8 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
 	post = "//button[contains(@class, 'TUXButton--primary')]"
-	post_confirmation = "//div[contains(@class, 'tiktok-modal__modal-wrapper')]//div[contains(@class, 'tiktok-modal__modal-title') and contains(text(), 'Your videos are being posted to TikTok!')]"
+	post_confirmation = "//div[contains(text(), 'Your video has been uploaded')]"
+
 
 	[selectors.schedule]
 	switch = "//*[@id='tux-1']"

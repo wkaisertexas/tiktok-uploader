@@ -322,7 +322,7 @@ def _set_description(driver, description: str) -> None:
                     for i in range(len(user_id_elements)):
                         user_id_element = user_id_elements[i]
                         if user_id_element and user_id_element.is_enabled:
-                            
+
                             username = user_id_element.text.split(" ")[0]
                             if username.lower() == word[1:].lower():
                                 found = True
@@ -626,7 +626,7 @@ def _post_video(driver) -> None:
         post.click()
     except ElementClickInterceptedException:
         logger.debug(green("Trying to click on the button again"))
-        driver.execute_script('document.querySelector(".btn-post > button").click()')
+        driver.execute_script('document.querySelector(".TUXButton--primary").click()')
 
     # waits for the video to upload
     post_confirmation = EC.presence_of_element_located(
