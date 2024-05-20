@@ -41,7 +41,7 @@
 
 # Installation
 
-A perquisite to using this program is the installation of a [Selenium-compatible](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
+A prequisite to using this program is the installation of a [Selenium-compatible](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
 
 <h2 id="macos-windows-and-linux">MacOS, Windows and Linux</h2>
 
@@ -134,7 +134,7 @@ for video in failed_videos: # each input video object which failed
 
 <h2 id="mentions-and-hashtags"> 🫵 Mentions and Hashtags</h2>
 
-Mentions and Hashtags now work so long as they are followed by a space. However, you as the user are responsible for verifying a mention or hashtag exists before posting
+Mentions and Hashtags now work so long as they are followed by a space. However, **you** as the user **are responsible** for verifying a mention or hashtag exists before posting
 
 **Example:**
 
@@ -280,12 +280,7 @@ On initial startup, you **may** be prompted to install the correct driver for yo
 
 <h1 id="notes"> 📝 Notes</h1>
 
-This bot is not fool proof. Though I have not gotten an official ban, the video will fail to upload after too many uploads. In testing, waiting several hours was sufficient to fix this problem. For this reason, please think of this more as a scheduled uploader for TikTok videos, rather than a spam bot.
-
-<h1 id="made-with"> Accounts made with</h1>
-
-- [@C_Span](https://www.tiktok.com/@c_span?lang=en) - A split-screen channel with mobile games below-featuring clips from C-Span's YouTube channel
-- [@habit_track](https://www.tiktok.com/@habit_track?lang=en) - A Reddit bot to see which SubReddit is most viral on TikTok
+This bot is **not fool proof**. Though I have not gotten an official ban, the video will fail to upload after too many uploads. In testing, waiting several hours was sufficient to fix this problem. For this reason, please think of this more as a scheduled uploader for TikTok videos, rather than a **spam bot.**
 
 > If you like this project, please ⭐ it on GitHub to show your support! ❤️
 
