@@ -466,11 +466,12 @@ def _set_video(driver, path: str = "", num_retries: int = 3, **kwargs) -> None:
             )
             upload_box.send_keys(path)
 
+            # TODO: tmpfix: somewhy this fails. i suppose due to incorrect xpath
             # wait until a non-draggable image is found
-            process_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config["selectors"]["upload"]["process_confirmation"])
-            )
-            WebDriverWait(driver, config["explicit_wait"]).until(process_confirmation)
+            # process_confirmation = EC.presence_of_element_located(
+            #     (By.XPATH, config["selectors"]["upload"]["process_confirmation"])
+            # )
+            # WebDriverWait(driver, config["explicit_wait"]).until(process_confirmation)
             return
         except TimeoutException as exception:
             print("TimeoutException occurred:\n", exception)
@@ -748,9 +749,10 @@ def _post_video(driver) -> None:
     logger.debug(green("Clicking the post button"))
 
     try:
+        tmp = "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[10]/button[1]"
         post = WebDriverWait(driver, config["implicit_wait"]).until(
             EC.element_to_be_clickable(
-                (By.XPATH, config["selectors"]["upload"]["post"])
+                (By.XPATH, tmp) # config["selectors"]["upload"]["post"] was instead of tmp
             )
         )
         driver.execute_script(
@@ -762,8 +764,9 @@ def _post_video(driver) -> None:
         driver.execute_script('document.querySelector(".TUXButton--primary").click()')
 
     # waits for the video to upload
+    tmp1 = "/html/body/div[6]/div/div/div[3]/button[2]"
     post_confirmation = EC.presence_of_element_located(
-        (By.XPATH, config["selectors"]["upload"]["post_confirmation"])
+        (By.XPATH, tmp1) # config["selectors"]["upload"]["post_confirmation"] was instead of tmp1
     )
     WebDriverWait(driver, config["explicit_wait"]).until(post_confirmation)
 
