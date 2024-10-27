@@ -55,8 +55,8 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	duet = "//label[.='Duet']/following-sibling::div/input"
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
-	post = "//button[contains(@class, 'TUXButton--primary')]"
-	post_confirmation = "//div[contains(text(), 'Your video has been uploaded')]"
+	post = "//*[@id=\"root\"]/div/div[2]/div[2]/div/div/div/div/div[3]/div/div[2]/div[10]/button[1]"
+	post_confirmation = "//*[@id=\":r2k:\"]/div[3]/button[2]"
 
 
 	[selectors.schedule]
