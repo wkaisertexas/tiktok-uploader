@@ -136,8 +136,6 @@ for video in failed_videos: # each input video object which failed
 
 Mentions and Hashtags now work so long as they are followed by a space. However, **you** as the user **are responsible** for verifying a mention or hashtag exists before posting
 
-**Example:**
-
 ```python
 from tiktok_uploader.upload import upload_video
 
@@ -190,8 +188,6 @@ upload_video(..., cookies='cookies.txt')
 ```
 
 **Optionally**, `cookies_list` is a list of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` which allow you to pass your own browser cookies.
-
-**Example:**
 
 ```python
 cookies_list = [
@@ -253,7 +249,9 @@ options.add_argument('start-maximized')
 upload_videos(..., options=options)
 ```
 
-> Note: Make sure to use the right selenium options for your browser
+
+> [!NOTE]
+> Make sure to use the right selenium options for your browser
 
 <h2 id="headless"> 🤯 Headless Browsers </h2>
 
