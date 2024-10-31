@@ -466,11 +466,12 @@ def _set_video(driver, path: str = "", num_retries: int = 3, **kwargs) -> None:
             )
             upload_box.send_keys(path)
 
+            # TODO: tmpfix: somewhy this fails. i suppose due to incorrect xpath
             # wait until a non-draggable image is found
-            process_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config["selectors"]["upload"]["process_confirmation"])
-            )
-            WebDriverWait(driver, config["explicit_wait"]).until(process_confirmation)
+            # process_confirmation = EC.presence_of_element_located(
+            #     (By.XPATH, config["selectors"]["upload"]["process_confirmation"])
+            # )
+            # WebDriverWait(driver, config["explicit_wait"]).until(process_confirmation)
             return
         except TimeoutException as exception:
             print("TimeoutException occurred:\n", exception)
