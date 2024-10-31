@@ -280,7 +280,7 @@ On initial startup, you **may** be prompted to install the correct driver for yo
 
 This bot is **not fool proof**. Though I have not gotten an official ban, the video will fail to upload after too many uploads. In testing, waiting several hours was sufficient to fix this problem. For this reason, please think of this more as a scheduled uploader for TikTok videos, rather than a **spam bot.**
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 > If you like this project, please ⭐ it on GitHub to show your support! ❤️
 
 ![Star History Chart](https://api.star-history.com/svg?repos=wkaisertexas/tiktok-uploader&type=Date)
