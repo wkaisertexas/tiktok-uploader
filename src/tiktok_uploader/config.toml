@@ -12,6 +12,9 @@ implicit_wait = 5  # seconds
 explicit_wait = 60 # seconds
 uploading_wait = 180 # seconds
 
+# Wait time between adding hashtags
+add_hashtag_wait = 1 # seconds
+
 supported_file_types = ["mp4", "mov", "avi", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "3g2", "gif"]
 
 max_description_length = 150 # characters
