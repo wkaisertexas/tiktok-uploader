@@ -372,6 +372,7 @@ def _set_description(driver, description: str) -> None:
                         (By.XPATH, config["selectors"]["upload"]["mention_box"])
                     )
                 )
+                time.sleep(config["add_hashtag_wait"])
                 desc.send_keys(Keys.ENTER)
             elif word[0] == "@":
                 logger.debug(green("- Adding Mention: " + word))
