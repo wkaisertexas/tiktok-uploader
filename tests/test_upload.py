@@ -2,7 +2,11 @@
 Tests uploader
 """
 
-from tiktok_uploader.upload import _convert_videos_dict, _get_valid_schedule_minute, _check_valid_schedule
+from tiktok_uploader.upload import (
+    _convert_videos_dict,
+    _get_valid_schedule_minute,
+    _check_valid_schedule,
+)
 import os
 import datetime
 from freezegun import freeze_time
@@ -10,15 +14,17 @@ from pytest import raises, fixture
 import pytz
 
 # before each create a file called test.mp4 and test.jpg
-FILENAME = 'test.mp4'
+FILENAME = "test.mp4"
 timezone = pytz.UTC
+
 
 def setup_function():
     """
     Creates a dummy file
     """
-    with open(FILENAME, 'w', encoding='utf-8') as file:
-        file.write('test')
+    with open(FILENAME, "w", encoding="utf-8") as file:
+        file.write("test")
+
 
 # delete the file after each test
 def teardown_function():
@@ -26,6 +32,7 @@ def teardown_function():
     Deletes the dummy file
     """
     os.remove(FILENAME)
+
 
 def test_convert_videos_dict_good():
     """Tests the videos dictionary with the good names"""
@@ -36,45 +43,49 @@ def test_convert_videos_dict_good():
 
     array = _convert_videos_dict([good_dict])
 
-    assert array[0]['path'] == FILENAME
-    assert array[0]['description'] == "this is my description"
+    assert array[0]["path"] == FILENAME
+    assert array[0]["description"] == "this is my description"
+
 
 def test_convert_videos_dict_wrong_names():
     """
     Tests the videos dictionary with the wrong names
     """
     wrong_dict = {
-        'video': FILENAME,
-        'desc': 'this is my description',
+        "video": FILENAME,
+        "desc": "this is my description",
     }
 
     array = _convert_videos_dict([wrong_dict])
 
-    assert array[0]['path'] == FILENAME
-    assert array[0]['description'] == "this is my description"
+    assert array[0]["path"] == FILENAME
+    assert array[0]["description"] == "this is my description"
+
 
 def test_convert_videos_bad():
     """
     Tests the videos dictionary with the wrong dictionaries
     """
     bad_dict = {
-        'nothing': 'asfs',
-        'wrong': 'wrong',
+        "nothing": "asfs",
+        "wrong": "wrong",
     }
     with raises(RuntimeError):
         _convert_videos_dict([bad_dict])
+
 
 def test_convert_videos_filename():
     """
     Tests the videos dictionary with the wrong dictionaries
     """
     bad_dict = {
-        'nothing': FILENAME,
+        "nothing": FILENAME,
     }
     array = _convert_videos_dict([bad_dict])
 
-    assert array[0]['path'] == FILENAME
-    assert array[0]['description'] == ""
+    assert array[0]["path"] == FILENAME
+    assert array[0]["description"] == ""
+
 
 def test_get_valid_schedule_minute():
     """
@@ -102,6 +113,7 @@ def test_get_valid_schedule_minute():
     schedule = timezone.localize(schedule)
     assert _get_valid_schedule_minute(schedule, valid_tiktok_multiple).minute == 30
 
+
 @freeze_time("2020-01-01 12:00")
 def test_check_valid_schedule_min_limit():
     """
@@ -123,6 +135,7 @@ def test_check_valid_schedule_min_limit():
     schedule = datetime.datetime(2019, 1, 1, 12, 00)
     schedule = timezone.localize(schedule)
     assert _check_valid_schedule(schedule) == False
+
 
 @freeze_time("2020-01-01 12:00")
 def test_check_valid_schedule_max_limit():
@@ -149,6 +162,7 @@ def test_check_valid_schedule_max_limit():
     schedule = datetime.datetime(2021, 1, 11, 12, 5)
     schedule = timezone.localize(schedule)
     assert _check_valid_schedule(schedule) == False
+
 
 @freeze_time("2020-01-01 12:00")
 def test_check_valid_schedule_minute_valid():

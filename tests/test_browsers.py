@@ -5,8 +5,9 @@ import pytest
 
 import tiktok_uploader.browsers as browsers
 
-SUPPORTED_BROWSERS = ['chrome', 'firefox', 'safari', 'edge']
-SERVICES = ['chrome', 'firefox', 'edge']
+SUPPORTED_BROWSERS = ["chrome", "firefox", "safari", "edge"]
+SERVICES = ["chrome", "firefox", "edge"]
+
 
 # Default behavior testing
 def test_get_browser():
@@ -28,7 +29,7 @@ def test_get_driver():
 
     # pytest throws exception test
     with pytest.raises(browsers.UnsupportedBrowserException):
-        browsers.get_driver('invalid')
+        browsers.get_driver("invalid")
 
 
 def test_get_service():

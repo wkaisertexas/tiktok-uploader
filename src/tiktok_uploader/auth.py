@@ -11,16 +11,25 @@ from tiktok_uploader import config, logger
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.utils import green
 
+
 class AuthBackend:
     """
     Handles authentication for TikTokUploader
     """
+
     username: str
     password: str
     cookies: list
 
-    def __init__(self, username: str = '', password: str = '',
-                 cookies_list: list = None, cookies=None, cookies_str=None, sessionid: str = None):
+    def __init__(
+        self,
+        username: str = "",
+        password: str = "",
+        cookies_list: list = None,
+        cookies=None,
+        cookies_str=None,
+        sessionid: str = None,
+    ):
         """
         Creates the authentication backend
 
@@ -36,7 +45,7 @@ class AuthBackend:
         self.cookies = self.get_cookies(path=cookies) if cookies else []
         self.cookies += self.get_cookies(cookies_str=cookies_str) if cookies_str else []
         self.cookies += cookies_list if cookies_list else []
-        self.cookies += [{'name': 'sessionid', 'value': sessionid}] if sessionid else []
+        self.cookies += [{"name": "sessionid", "value": sessionid}] if sessionid else []
 
         if not (self.cookies or (username and password)):
             raise InsufficientAuth()
@@ -53,7 +62,6 @@ class AuthBackend:
         elif cookies_list:
             logger.debug(green("Authenticating browser with cookies_list"))
 
-
     def authenticate_agent(self, driver):
         """
         Authenticates the agent using the browser backend
@@ -64,18 +72,19 @@ class AuthBackend:
 
         logger.debug(green("Authenticating browser with cookies"))
 
-        driver.get(config['paths']['main'])
+        driver.get(config["paths"]["main"])
 
-        WebDriverWait(driver, config['explicit_wait']).until(EC.title_contains("TikTok"))
+        WebDriverWait(driver, config["explicit_wait"]).until(
+            EC.title_contains("TikTok")
+        )
 
         for cookie in self.cookies:
             try:
                 driver.add_cookie(cookie)
             except Exception as _:
-                logger.error('Failed to add cookie %s', cookie)
+                logger.error("Failed to add cookie %s", cookie)
 
         return driver
-
 
     def get_cookies(self, path: str = None, cookies_str: str = None) -> dict:
         """
@@ -89,7 +98,7 @@ class AuthBackend:
 
         return_cookies = []
         for line in lines:
-            split = line.split('\t')
+            split = line.split("\t")
             if len(split) < 6:
                 continue
 
@@ -100,15 +109,17 @@ class AuthBackend:
             except ValueError:
                 split[4] = None
 
-            return_cookies.append({
-                'name': split[5],
-                'value': split[6],
-                'domain': split[0],
-                'path': split[2],
-            })
+            return_cookies.append(
+                {
+                    "name": split[5],
+                    "value": split[6],
+                    "domain": split[0],
+                    "path": split[2],
+                }
+            )
 
             if split[4]:
-                return_cookies[-1]['expiry'] = split[4]
+                return_cookies[-1]["expiry"] = split[4]
         return return_cookies
 
 
@@ -138,43 +149,49 @@ def login(driver, username: str, password: str):
     assert username and password, "Username and password are required"
 
     # checks if the browser is on TikTok
-    if not config['paths']['main'] in driver.current_url:
-        driver.get(config['paths']['main'])
+    if not config["paths"]["main"] in driver.current_url:
+        driver.get(config["paths"]["main"])
 
     # checks if the user is already logged in
-    if driver.get_cookie(config['selectors']['login']['cookie_of_interest']):
+    if driver.get_cookie(config["selectors"]["login"]["cookie_of_interest"]):
         # clears the existing cookies
         driver.delete_all_cookies()
 
     # goes to the login site
-    driver.get(config['paths']['login'])
+    driver.get(config["paths"]["login"])
 
     # selects and fills the login and the password
-    username_field = WebDriverWait(driver, config['explicit_wait']).until(
-        EC.presence_of_element_located((By.XPATH, config['selectors']['login']['username_field']))
+    username_field = WebDriverWait(driver, config["explicit_wait"]).until(
+        EC.presence_of_element_located(
+            (By.XPATH, config["selectors"]["login"]["username_field"])
         )
+    )
     username_field.clear()
     username_field.send_keys(username)
 
-    password_field = driver.find_element(By.XPATH, config['selectors']['login']['password_field'])
+    password_field = driver.find_element(
+        By.XPATH, config["selectors"]["login"]["password_field"]
+    )
     password_field.clear()
     password_field.send_keys(password)
 
     # submits the form
-    submit = driver.find_element(By.XPATH, config['selectors']['login']['login_button'])
+    submit = driver.find_element(By.XPATH, config["selectors"]["login"]["login_button"])
     submit.click()
 
-    print(f'Complete the captcha for {username}')
+    print(f"Complete the captcha for {username}")
 
     # Wait until the session id cookie is set
     start_time = time()
-    while not driver.get_cookie(config['selectors']['login']['cookie_of_interest']):
+    while not driver.get_cookie(config["selectors"]["login"]["cookie_of_interest"]):
         sleep(0.5)
-        if time() - start_time > config['explicit_wait']:
-            raise InsufficientAuth() # TODO: Make this something more real
+        if time() - start_time > config["explicit_wait"]:
+            raise InsufficientAuth()  # TODO: Make this something more real
 
     # wait until the url changes
-    WebDriverWait(driver, config['explicit_wait']).until(EC.url_changes(config['paths']['login']))
+    WebDriverWait(driver, config["explicit_wait"]).until(
+        EC.url_changes(config["paths"]["login"])
+    )
 
     return driver.get_cookies()
 
@@ -187,10 +204,10 @@ def get_username_and_password(login_info: tuple or dict):
         return login_info[0], login_info[1]
 
     # checks if they used email or username
-    if 'email' in login_info:
-        return login_info['email'], login_info['password']
-    elif 'username' in login_info:
-        return login_info['username'], login_info['password']
+    if "email" in login_info:
+        return login_info["email"], login_info["password"]
+    elif "username" in login_info:
+        return login_info["username"], login_info["password"]
 
     raise InsufficientAuth()
 
