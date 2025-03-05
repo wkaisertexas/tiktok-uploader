@@ -44,7 +44,7 @@ def upload_video(
     cookies_str=None,
     proxy=None,
     *args,
-    **kwargs
+    **kwargs,
 ):
     """
     Uploads a single TikTok video.
@@ -79,7 +79,7 @@ def upload_video(
         auth=auth,
         proxy=proxy,
         *args,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -94,7 +94,7 @@ def upload_videos(
     num_retries: int = 1,
     skip_split_window=False,
     *args,
-    **kwargs
+    **kwargs,
 ):
     """
     Uploads multiple videos to TikTok
@@ -213,7 +213,7 @@ def upload_videos(
                 skip_split_window=skip_split_window,
                 headless=headless,
                 *args,
-                **kwargs
+                **kwargs,
             )
         except Exception as exception:
             logger.error("Failed to upload %s", path)
@@ -237,7 +237,7 @@ def complete_upload_form(
     skip_split_window: bool,
     headless=False,
     *args,
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Actually uploads each video
@@ -393,7 +393,6 @@ def _set_description(driver, description: str) -> None:
                 start_time = time.time()
 
                 while not found and (time.time() - start_time < timeout):
-
                     user_id_elements = driver.find_elements(
                         By.XPATH, config["selectors"]["upload"]["mention_box_user_id"]
                     )
@@ -402,7 +401,6 @@ def _set_description(driver, description: str) -> None:
                     for i in range(len(user_id_elements)):
                         user_id_element = user_id_elements[i]
                         if user_id_element and user_id_element.is_enabled:
-
                             username = user_id_element.text.split(" ")[0]
                             if username.lower() == word[1:].lower():
                                 found = True

@@ -12,6 +12,8 @@ if __name__ == "__main__":
     urllib.request.urlretrieve(URL, FILENAME)
 
     # upload video to TikTok
-    upload_video(FILENAME,
-                 description="This is a #cool video I just downloaded. #wow #cool check it out on @tiktok",
-                 cookies="cookies.txt")
+    upload_video(
+        FILENAME,
+        description="This is a #cool video I just downloaded. #wow #cool check it out on @tiktok",
+        cookies="cookies.txt",
+    )
