@@ -61,8 +61,8 @@ Installing from source allows greater flexibility to modify the module's code to
 
 First, `clone` and move into the repository. Next, install `hatch`, the build tool used for this project [^1]. Then, `build` the project. Finally, `install` the project with the `-e` or editable flag.
 
-```console
-git clone https://github.com/wkaisertexas/tiktok-uploader.git
+```bash
+git clone https://github.com/wkaisertexas/tiktok-uploader
 cd tiktok-uploader
 pip install hatch
 hatch build
