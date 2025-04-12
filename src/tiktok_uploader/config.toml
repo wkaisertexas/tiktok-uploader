@@ -45,7 +45,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	upload_video = "//input[@type='file']"
 	upload_finished = "//div[contains(@class, 'btn-cancel')]"
  	upload_confirmation = "//div[@title]"
- 	process_confirmation = "//div[contains(@class, 'cover-selector-image-container')]/img[contains(@class, 'cover-selector-image')]"
+ 	process_confirmation = "//div[contains(@class, 'resolution-label-text')]"
 	description = "//div[@contenteditable='true']"
 
 	visibility = "//div[@class='tiktok-select-selector']"
@@ -58,8 +58,8 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	duet = "//label[.='Duet']/following-sibling::div/input"
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
-	post = "//button[contains(@class, 'TUXButton--primary')]"
-	post_confirmation = "//div[contains(text(), 'Your video has been uploaded')]"
+	post = "//button[@data-e2e='post_video_button']"
+	post_confirmation = "//div[contains(text(), 'Your video has been uploaded') or contains(text(), '视频已发布')]"
 
 
 	[selectors.schedule]
