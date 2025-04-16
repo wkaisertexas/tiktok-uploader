@@ -67,10 +67,14 @@ pip install -e .
 
 <h2 id="cli"> 💻 Command Line Interface (CLI)</h2>
 
-Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d) and `cookies` (-c)
+Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d), `cookies` (-c), and optionally `product_id` (--product-id).
 
 ```bash
+# Basic usage
 tiktok-uploader -v video.mp4 -d "this is my escaped \"description\"" -c cookies.txt
+
+# Usage with Product ID
+tiktok-uploader -v video.mp4 -d "this is my description" -c cookies.txt --product-id YOUR_PRODUCT_ID
 ```
 
 ```python
@@ -80,17 +84,20 @@ from tiktok_uploader.auth import AuthBackend
 # single video
 upload_video('video.mp4',
             description='this is my description',
-            cookies='cookies.txt')
+            cookies='cookies.txt',
+            product_id='YOUR_PRODUCT_ID')
 
 # Multiple Videos
 videos = [
     {
         'path': 'video.mp4',
-        'description': 'this is my description'
+        'description': 'this is my description',
+        'product_id': 'YOUR_PRODUCT_ID_1'
     },
     {
         'path': 'video2.mp4',
-        'description': 'this is also my description'
+        'description': 'this is also my description',
+        'product_id': 'YOUR_PRODUCT_ID_2'
     }
 ]
 
@@ -100,7 +107,7 @@ upload_videos(videos=videos, auth=auth)
 
 <h2 id="uploading-videos"> ⬆ Uploading Videos</h2>
 
-This library revolves around the `upload_videos` function which takes in a list of videos which have **filenames** and **descriptions** and are passed as follows:
+This library revolves around the `upload_videos` function which takes in a list of videos which have **filenames**, **descriptions**, and optionally **product IDs** and are passed as follows:
 
 ```python
 from tiktok_uploader.upload import upload_videos
@@ -109,11 +116,13 @@ from tiktok_uploader.auth import AuthBackend
 videos = [
     {
         'video': 'video0.mp4',
-        'description': 'Video 1 is about ...'
+        'description': 'Video 1 is about ...',
+        'product_id': 'YOUR_PRODUCT_ID_1'
     },
     {
         'video': 'video1.mp4',
-        'description': 'Video 2 is about ...'
+        'description': 'Video 2 is about ...',
+        'product_id': 'YOUR_PRODUCT_ID_2'
     }
 ]
 
