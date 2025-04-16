@@ -2,6 +2,7 @@
 Uploads multiple videos downloaded from the internet
 """
 from tiktok_uploader.upload import upload_videos
+from tiktok_uploader.auth import AuthBackend
 
 import urllib.request
 
@@ -9,8 +10,8 @@ URL = "https://raw.githubusercontent.com/wkaisertexas/wkaisertexas.github.io/mai
 FILENAME = "upload.mp4"
 
 videos = [
-    {"path": "upload.mp4", "description": "This is the first upload"},
-    {"filename": "upload.mp4", "desc": "This is my description"},
+    {"path": "upload.mp4", "description": "This is the first upload", "product_id": "YOUR_PRODUCT_ID_1"},
+    {"filename": "upload.mp4", "desc": "This is my description", "product_id": "YOUR_PRODUCT_ID_2"},
 ]
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ def main():
     # parse args
     schedule = parse_schedule(args.schedule)
     proxy = parse_proxy(args.proxy)
+    product_id = args.product_id
 
     # runs the program using the arguments provided
     result = upload_video(
@@ -32,6 +33,7 @@ def main():
         password=args.password,
         cookies=args.cookies,
         proxy=proxy,
+        product_id=product_id,
         sessionid=args.sessionid,
         headless=not args.attach,
     )
@@ -66,6 +68,11 @@ def get_uploader_args():
     )
     parser.add_argument(
         "--proxy", help="Proxy user:pass@host:port or host:port format", default=None
+    )
+    parser.add_argument(
+        "--product-id",
+        help="ID of the product to link in the video (if applicable)",
+        default=None
     )
 
     # authentication arguments

@@ -16,4 +16,5 @@ if __name__ == "__main__":
         FILENAME,
         description="This is a #cool video I just downloaded. #wow #cool check it out on @tiktok",
         cookies="cookies.txt",
+        product_id="YOUR_PRODUCT_ID_HERE",
     )
