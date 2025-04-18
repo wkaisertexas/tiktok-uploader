@@ -22,6 +22,9 @@
   - [⬆ Uploading Videos](#uploading-videos)
   - [🫵 Mentions and Hashtags](#mentions-and-hashtags)
   - [🪡 Stitches, Duets and Comments](#stitches-duets-and-comments)
+  - [🌐 Proxy](#proxy)
+  - [📆 Schedule](#schedule)
+  - [🛍️ Product Link](#product-link)
   - [🔐 Authentication](#authentication)
   - [👀 Browser Selection](#browser-selection)
   - [🚲 Custom WebDriver Options](#custom-webdriver)
@@ -67,37 +70,28 @@ pip install -e .
 
 <h2 id="cli"> 💻 Command Line Interface (CLI)</h2>
 
-Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d), `cookies` (-c), and optionally `product_id` (--product-id).
+Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d), and `cookies` (-c).
 
 ```bash
 # Basic usage
 tiktok-uploader -v video.mp4 -d "this is my escaped \"description\"" -c cookies.txt
-
-# Usage with Product ID
-tiktok-uploader -v video.mp4 -d "this is my description" -c cookies.txt --product-id YOUR_PRODUCT_ID
-```
 
 ```python
 from tiktok_uploader.upload import upload_video, upload_videos
 from tiktok_uploader.auth import AuthBackend
 
 # single video
-upload_video('video.mp4',
-            description='this is my description',
-            cookies='cookies.txt',
-            product_id='YOUR_PRODUCT_ID')
+upload_video('video.mp4', description='this is my description', cookies='cookies.txt')
 
 # Multiple Videos
 videos = [
     {
         'path': 'video.mp4',
-        'description': 'this is my description',
-        'product_id': 'YOUR_PRODUCT_ID_1'
+        'description': 'this is my description'
     },
     {
         'path': 'video2.mp4',
-        'description': 'this is also my description',
-        'product_id': 'YOUR_PRODUCT_ID_2'
+        'description': 'this is also my description'
     }
 ]
 
@@ -107,7 +101,7 @@ upload_videos(videos=videos, auth=auth)
 
 <h2 id="uploading-videos"> ⬆ Uploading Videos</h2>
 
-This library revolves around the `upload_videos` function which takes in a list of videos which have **filenames**, **descriptions**, and optionally **product IDs** and are passed as follows:
+This library revolves around the `upload_videos` function which takes in a list of videos which have **filenames** and **descriptions** and are passed as follows:
 
 ```python
 from tiktok_uploader.upload import upload_videos
@@ -116,13 +110,11 @@ from tiktok_uploader.auth import AuthBackend
 videos = [
     {
         'video': 'video0.mp4',
-        'description': 'Video 1 is about ...',
-        'product_id': 'YOUR_PRODUCT_ID_1'
+        'description': 'Video 1 is about ...'
     },
     {
         'video': 'video1.mp4',
-        'description': 'Video 2 is about ...',
-        'product_id': 'YOUR_PRODUCT_ID_2'
+        'description': 'Video 2 is about ...'
     }
 ]
 
@@ -172,6 +164,58 @@ The scheduled datetime must be at least 20 minutes in the future and a maximum o
 import datetime
 schedule = datetime.datetime(2020, 12, 20, 13, 00)
 upload_video(..., schedule=schedule)
+```
+
+<h2 id="product-link"> 🛍️ Product Link</h2>
+
+You can automatically add a product link to your uploaded video.
+
+**Prerequisites:**
+
+*   Your TikTok account must be eligible to add showcase products to your videos.
+*   You need to obtain the product ID beforehand. To do this:
+    1. Go to the TikTok upload page in your browser.
+    2. Click the "Add link" button and select "Product".
+    3. A modal will appear showing your available showcase products along with their IDs.
+    4. Copy the ID of the product you want to link.
+
+**Usage:**
+
+Provide the `product_id` when calling the uploader.
+
+**Command Line:**
+
+```bash
+tiktok-uploader -v video.mp4 -d "this is my description" -c cookies.txt --product-id YOUR_PRODUCT_ID
+```
+
+**Python:**
+
+```python
+from tiktok_uploader.upload import upload_video, upload_videos
+from tiktok_uploader.auth import AuthBackend
+
+# Single video
+upload_video('video.mp4',
+            description='this is my description',
+            cookies='cookies.txt',
+            product_id='YOUR_PRODUCT_ID')
+
+# Multiple videos
+videos = [
+    {
+        'path': 'video.mp4',
+        'description': 'this is my description',
+        'product_id': 'YOUR_PRODUCT_ID_1' # Add product link to this video
+    },
+    {
+        'path': 'video2.mp4',
+        'description': 'this is also my description' # No product link for this video
+    }
+]
+
+auth = AuthBackend(cookies='cookies.txt')
+upload_videos(videos=videos, auth=auth)
 ```
 
 <h2 id="authentication"> 🔐 Authentication</h2>
@@ -277,7 +321,7 @@ On initial startup, you **may** be prompted to install the correct driver for yo
 
 - **[Series Upload Example](examples/series_upload.py):** Videos are read from a CSV file using [Pandas](https://pandas.pydata.org). A video upload attempt is made and **if and only if** it is successful will the video be marked as uploaded.
 
-<h1 id="notes"> 📝 Notes</h1>
+<h2 id="notes"> 📝 Notes</h2>
 
 This bot is **not fool proof**. Though I have not gotten an official ban, the video will fail to upload after too many uploads. In testing, waiting several hours was sufficient to fix this problem. For this reason, please think of this more as a scheduled uploader for TikTok videos, rather than a **spam bot.**
 
