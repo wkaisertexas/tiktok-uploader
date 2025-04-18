@@ -8,7 +8,7 @@ upload_videos : Uploads multiple TikTok videos
 """
 
 from os.path import abspath, exists
-from typing import List
+from typing import List, Optional
 import time
 import pytz
 import datetime
@@ -23,6 +23,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
     TimeoutException,
+    NoSuchElementException
 )
 
 from tiktok_uploader.browsers import get_browser
@@ -43,6 +44,7 @@ def upload_video(
     cookies_list=None,
     cookies_str=None,
     proxy=None,
+    product_id: Optional[str] = None,
     *args,
     **kwargs,
 ):
@@ -75,7 +77,7 @@ def upload_video(
     )
 
     return upload_videos(
-        videos=[{"path": filename, "description": description, "schedule": schedule}],
+        videos=[{"path": filename, "description": description, "schedule": schedule, "product_id": product_id}],
         auth=auth,
         proxy=proxy,
         *args,
@@ -160,6 +162,7 @@ def upload_videos(
             path = abspath(video.get("path"))
             description = video.get("description", "")
             schedule = video.get("schedule", None)
+            product_id = video.get("product_id", None)
 
             logger.debug(
                 "Posting %s%s",
@@ -209,8 +212,9 @@ def upload_videos(
                 path,
                 description,
                 schedule,
+                skip_split_window,
+                product_id=product_id,
                 num_retries=num_retries,
-                skip_split_window=skip_split_window,
                 headless=headless,
                 *args,
                 **kwargs,
@@ -235,6 +239,8 @@ def complete_upload_form(
     description: str,
     schedule: datetime.datetime,
     skip_split_window: bool,
+    product_id: Optional[str] = None,
+    num_retries: int = 1,
     headless=False,
     *args,
     **kwargs,
@@ -272,6 +278,8 @@ def complete_upload_form(
     _set_description(driver, description)
     if schedule:
         _set_schedule_video(driver, schedule)
+    if product_id:
+        _add_product_link(driver, product_id)
     _post_video(driver)
 
 
@@ -959,3 +967,87 @@ class FailedToUpload(Exception):
 
     def __init__(self, message=None):
         super().__init__(message or self.__doc__)
+
+
+def _add_product_link(driver, product_id: str) -> None:
+    """
+    Adds the product link to the video using the provided product ID.
+    """
+    logger.debug(green(f"Attempting to add product link for ID: {product_id}..."))
+    try:
+        wait = WebDriverWait(driver, 20) # Wait up to 20 seconds
+
+        # -- Step 1: Find and click the 'Add Product Link' button --
+        add_link_button_xpath = "//button[contains(@class, 'Button__root') and contains(., 'Add')]"
+        add_link_button = wait.until(EC.element_to_be_clickable((By.XPATH, add_link_button_xpath)))
+        # Optional: Scroll to the button if it might be off-screen
+        # driver.execute_script("arguments[0].scrollIntoView(true);", add_link_button)
+        # time.sleep(0.5) # Short pause after scrolling
+        add_link_button.click()
+        logger.debug(green("Clicked 'Add Product Link' button."))
+        time.sleep(1) # Wait for modal animation
+
+        # -- Step 2: Click the 'Next' button in the first modal (if it exists) --
+        try:
+             first_next_button_xpath = "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]"
+             # Ensure this button belongs to the correct modal context if multiple exist
+             first_next_button = wait.until(EC.element_to_be_clickable((By.XPATH, first_next_button_xpath)))
+             first_next_button.click()
+             logger.debug(green("Clicked first 'Next' button in modal."))
+             time.sleep(1) # Wait for the next part of the modal to load
+        except TimeoutException:
+             logger.debug("First 'Next' button not found or not needed, proceeding...")
+
+
+        # -- Step 3: Find search input, enter product ID, and press Enter --
+        search_input_xpath = "//input[@placeholder='Search products']"
+        search_input = wait.until(EC.visibility_of_element_located((By.XPATH, search_input_xpath)))
+        search_input.clear()
+        search_input.send_keys(product_id)
+        search_input.send_keys(Keys.RETURN) # Press Enter to search
+        logger.debug(green(f"Entered product ID '{product_id}' and pressed Enter."))
+        # Wait for search results - Replace sleep with explicit wait if possible
+        # e.g., wait for a specific element in the results table to appear
+        time.sleep(3) # Increased wait time slightly
+
+        # -- Step 4: Find and select the radio button for the product --
+        # !!! CRITICAL: Verify and adjust this XPath based on actual HTML structure !!!
+        # It assumes the product ID is visible within a span or div in the same table row (tr)
+        product_radio_xpath = f"//tr[.//span[contains(text(), '{product_id}')] or .//div[contains(text(), '{product_id}')]]//input[@type='radio' and contains(@class, 'TUXRadioStandalone-input')]"
+        logger.debug(f"Looking for radio button with XPath: {product_radio_xpath}")
+        product_radio = wait.until(EC.element_to_be_clickable((By.XPATH, product_radio_xpath)))
+        # Use JavaScript click for potentially troublesome radio buttons
+        driver.execute_script("arguments[0].click();", product_radio)
+        logger.debug(green(f"Selected product radio for ID: {product_id}"))
+        time.sleep(1) # Pause after selection
+
+        # -- Step 5: Find and click the 'Next' button (after selecting radio) --
+        second_next_button_xpath = "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]"
+        # Add more context if needed to distinguish this 'Next' button
+        second_next_button = wait.until(EC.element_to_be_clickable((By.XPATH, second_next_button_xpath)))
+        second_next_button.click()
+        logger.debug(green("Clicked second 'Next' button."))
+        time.sleep(1) # Wait for the next modal/confirmation step
+
+        # -- Step 6: Find and click the final 'Add' button --
+        final_add_button_xpath = "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Add']]"
+        final_add_button = wait.until(EC.element_to_be_clickable((By.XPATH, final_add_button_xpath)))
+        final_add_button.click()
+        logger.debug(green("Clicked final 'Add' button. Product link should be added."))
+
+        # Wait for the modal to close (e.g., wait for the final 'Add' button to disappear)
+        wait.until(EC.invisibility_of_element_located((By.XPATH, final_add_button_xpath)))
+        logger.debug(green("Product link modal closed."))
+
+    except TimeoutException as e:
+        logger.error(red(f"Error: Timed out waiting for element during product link addition. XPath might be wrong or element didn't appear."))
+        # logger.error(f"Timeout details: {e}")
+        # Decide whether to raise error or continue upload without link
+        print(f"Warning: Failed to add product link {product_id} due to timeout. Continuing upload without link.")
+    except NoSuchElementException as e:
+        logger.error(red(f"Error: Could not find element during product link addition. XPath might be wrong."))
+        # logger.error(f"NoSuchElement details: {e}")
+        print(f"Warning: Failed to add product link {product_id} because an element was not found. Continuing upload without link.")
+    except Exception as e:
+        logger.error(red(f"An unexpected error occurred while adding product link: {e}"))
+        print(f"Warning: An unexpected error occurred while adding product link {product_id}. Continuing upload without link.")

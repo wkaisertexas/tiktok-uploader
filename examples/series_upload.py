@@ -25,7 +25,10 @@ def main():
     video_info = frame.iloc[index]
 
     failed = upload_video(
-        video_info["file_path"], video_info["description"], cookies=COOKIES
+        video_info["file_path"],
+        video_info["description"],
+        cookies=COOKIES,
+        product_id=video_info.get("product_id", None)
     )
 
     if not failed:
