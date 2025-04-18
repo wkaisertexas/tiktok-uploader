@@ -8,7 +8,7 @@ upload_videos : Uploads multiple TikTok videos
 """
 
 from os.path import abspath, exists
-from typing import List
+from typing import List, Optional
 import time
 import pytz
 import datetime
@@ -44,7 +44,7 @@ def upload_video(
     cookies_list=None,
     cookies_str=None,
     proxy=None,
-    product_id: str | None = None,
+    product_id: Optional[str] = None,
     *args,
     **kwargs,
 ):
@@ -239,7 +239,7 @@ def complete_upload_form(
     description: str,
     schedule: datetime.datetime,
     skip_split_window: bool,
-    product_id: str | None = None,
+    product_id: Optional[str] = None,
     num_retries: int = 1,
     headless=False,
     *args,
