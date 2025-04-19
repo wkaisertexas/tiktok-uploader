@@ -73,8 +73,8 @@ pip install -e .
 Using the CLI is as simple as calling `tiktok-uploader` with your videos: `path` (-v), `description`(-d), and `cookies` (-c).
 
 ```bash
-# Basic usage
 tiktok-uploader -v video.mp4 -d "this is my escaped \"description\"" -c cookies.txt
+```
 
 ```python
 from tiktok_uploader.upload import upload_video, upload_videos
