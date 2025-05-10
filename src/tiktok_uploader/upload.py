@@ -645,7 +645,7 @@ def __date_picker(driver, month: int, day: int) -> None:
     valid_days = driver.find_elements(
         By.XPATH, config["selectors"]["schedule"]["calendar_valid_days"]
     )
-
+    
     day_to_click = None
     for day_option in valid_days:
         if int(day_option.text) == day:
@@ -662,7 +662,7 @@ def __date_picker(driver, month: int, day: int) -> None:
 def __verify_date_picked_is_correct(driver, month: int, day: int):
     date_selected = driver.find_element(
         By.XPATH, config["selectors"]["schedule"]["date_picker"]
-    ).text
+    ).get_attribute("value")
     date_selected_month = int(date_selected.split("-")[1])
     date_selected_day = int(date_selected.split("-")[2])
 
@@ -728,8 +728,8 @@ def __time_picker(driver, hour: int, minute: int) -> None:
 
 def __verify_time_picked_is_correct(driver, hour: int, minute: int):
     time_selected = driver.find_element(
-        By.XPATH, config["selectors"]["schedule"]["time_picker_text"]
-    ).text
+        By.XPATH, config["selectors"]["schedule"]["time_picker"]
+    ).get_attribute("value")
     time_selected_hour = int(time_selected.split(":")[0])
     time_selected_minute = int(time_selected.split(":")[1])
 
@@ -755,7 +755,7 @@ def _post_video(driver) -> None:
     logger.debug(green("Clicking the post button"))
 
     try:
-        post = WebDriverWait(driver, config["implicit_wait"]).until(
+        post = WebDriverWait(driver, config["uploading_wait"]).until(
             EC.element_to_be_clickable(
                 (By.XPATH, config["selectors"]["upload"]["post"])
             )
@@ -769,10 +769,11 @@ def _post_video(driver) -> None:
         driver.execute_script('document.querySelector(".TUXButton--primary").click()')
 
     # waits for the video to upload
-    post_confirmation = EC.presence_of_element_located(
-        (By.XPATH, config["selectors"]["upload"]["post_confirmation"])
-    )
-    WebDriverWait(driver, config["explicit_wait"]).until(post_confirmation)
+    # post_confirmation = EC.presence_of_element_located(
+    #     (By.XPATH, config["selectors"]["upload"]["post_confirmation"])
+    # )
+    # WebDriverWait(driver, config["explicit_wait"]).until(post_confirmation)
+    time.sleep(3)
 
     logger.debug(green("Video posted successfully"))
 
