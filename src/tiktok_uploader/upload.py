@@ -755,10 +755,9 @@ def _post_video(driver) -> None:
     logger.debug(green("Clicking the post button"))
 
     try:
-        post = WebDriverWait(driver, config["implicit_wait"]).until(
-            EC.element_to_be_clickable(
-                (By.XPATH, config["selectors"]["upload"]["post"])
-            )
+        post = WebDriverWait(driver, config["uploading_wait"]).until(
+            lambda d: (el := d.find_element(By.XPATH, config["selectors"]["upload"]["post"])) and
+                      el.get_attribute("data-disabled") == "false" and el
         )
         driver.execute_script(
             "arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", post
