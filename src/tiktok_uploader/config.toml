@@ -80,3 +80,6 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	[selectors.upload.cookies_banner]
 		banner = "tiktok-cookie-banner"
 		button = "div.button-wrapper"
+
+	[selectors.upload.edit_cover]
+		button = "div.edit-container"
