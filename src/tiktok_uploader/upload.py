@@ -276,12 +276,12 @@ def complete_upload_form(
     # Wait for the upload to complete before proceeding
     upload_complete_event.wait()
 
+    if custom_cover_path:
+        _set_cover(driver, custom_cover_path)
     if not skip_split_window:
         _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
-    if custom_cover_path:
-        _set_cover(driver, custom_cover_path)
     if schedule:
         _set_schedule_video(driver, schedule)
     if product_id:
