@@ -45,6 +45,7 @@ def upload_video(
     cookies_str=None,
     proxy=None,
     product_id: Optional[str] = None,
+    custom_cover: Optional[str] = None,
     *args,
     **kwargs,
 ):
@@ -77,7 +78,7 @@ def upload_video(
     )
 
     return upload_videos(
-        videos=[{"path": filename, "description": description, "schedule": schedule, "product_id": product_id}],
+        videos=[{"path": filename, "description": description, "schedule": schedule, "product_id": product_id, "custom_cover": custom_cover}],
         auth=auth,
         proxy=proxy,
         *args,
@@ -163,6 +164,7 @@ def upload_videos(
             description = video.get("description", "")
             schedule = video.get("schedule", None)
             product_id = video.get("product_id", None)
+            custom_cover_path = abspath(video.get("custom_cover", None))
 
             logger.debug(
                 "Posting %s%s",
@@ -214,6 +216,7 @@ def upload_videos(
                 schedule,
                 skip_split_window,
                 product_id=product_id,
+                custom_cover_path=custom_cover_path,
                 num_retries=num_retries,
                 headless=headless,
                 *args,
@@ -240,6 +243,7 @@ def complete_upload_form(
     schedule: datetime.datetime,
     skip_split_window: bool,
     product_id: Optional[str] = None,
+    custom_cover_path: Optional[str] = None,
     num_retries: int = 1,
     headless=False,
     *args,
@@ -276,6 +280,8 @@ def complete_upload_form(
         _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
+    if custom_cover_path:
+        _set_cover(driver, custom_cover_path)
     if schedule:
         _set_schedule_video(driver, schedule)
     if product_id:
@@ -1051,3 +1057,74 @@ def _add_product_link(driver, product_id: str) -> None:
     except Exception as e:
         logger.error(red(f"An unexpected error occurred while adding product link: {e}"))
         print(f"Warning: An unexpected error occurred while adding product link {product_id}. Continuing upload without link.")
+
+def _set_cover(driver, custom_cover_path: str) -> None:
+    """
+    Adds a custom cover to the video using the provided cover image path.
+    """
+    logger.debug(green(f"Attempting to add custom cover: {custom_cover_path}..."))
+    try:
+        # Click the "Edit Cover" button
+        WebDriverWait(driver, config["implicit_wait"]).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["edit_cover_button"])
+            )
+        )
+        edit_cover_button = driver.find_element(
+            By.XPATH, config["selectors"]["upload"]["custom_cover"]["edit_cover_button"]
+        )
+        edit_cover_button.click()
+
+        # Enter the Custom Cover tab
+        WebDriverWait(driver, config["implicit_wait"]).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["custom_cover_tab"])
+            )
+        )
+        upload_cover_tab = driver.find_element(
+            By.XPATH, config["selectors"]["upload"]["custom_cover"]["custom_cover_tab"]
+        )
+        upload_cover_tab.click()
+
+        # Wait For Input File
+        driverWait = WebDriverWait(driver, config["explicit_wait"])
+        upload_boxWait = EC.presence_of_element_located(
+            (By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_cover"])
+        )
+        driverWait.until(upload_boxWait)
+        upload_box = driver.find_element(
+            By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_cover"]
+        )
+        upload_box.send_keys(custom_cover_path)
+
+        # Wait until confirm button is found, and click
+        WebDriverWait(driver, config["implicit_wait"]).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_confirmation"])
+            )
+        )
+        upload_confirmation = driver.find_element(
+            By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_confirmation"]
+        )
+        upload_confirmation.click()
+
+    except:
+        logger.error(red(f"An unexpected error occurred while uploading custom cover: {custom_cover_path}. Using default cover instead."))
+        
+        try:
+            # If the edit cover container is open, close it
+            cover_container = driver.find_element(
+                By.XPATH, config["selectors"]["upload"]["custom_cover"]["edit_cover_container"]
+            )
+            if cover_container.is_displayed():
+                exit_icon = WebDriverWait(driver, config["implicit_wait"]).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, config["selectors"]["upload"]["custom_cover"]["exit_cover_container"])
+                    )
+                )
+                exit_icon.click()
+        except:
+            pass
+        return
+
+    logger.debug(green("Custom cover posted successfully"))
