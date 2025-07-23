@@ -3,6 +3,7 @@ test.py
 *.txt
 *.mp4
 *.jpg
+*.jpeg
 *.png
 .DS_Store
 
