@@ -82,7 +82,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 		banner = "tiktok-cookie-banner"
 		button = "div.button-wrapper"
 
-	[selectors.upload.custom_cover]
+	[selectors.upload.cover]
 		cover_preview = "//img[contains(@class, 'cover-image')]"
 		edit_cover_button = "//div[contains(@class, 'edit-container')]"
 		edit_cover_container = "//div[contains(@class, 'cover-edit-container')]"

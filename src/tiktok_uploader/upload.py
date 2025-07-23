@@ -45,7 +45,7 @@ def upload_video(
     cookies_str=None,
     proxy=None,
     product_id: Optional[str] = None,
-    custom_cover: Optional[str] = None,
+    cover: Optional[str] = None,
     *args,
     **kwargs,
 ):
@@ -78,7 +78,7 @@ def upload_video(
     )
 
     return upload_videos(
-        videos=[{"path": filename, "description": description, "schedule": schedule, "product_id": product_id, "custom_cover": custom_cover}],
+        videos=[{"path": filename, "description": description, "schedule": schedule, "product_id": product_id, "cover": cover}],
         auth=auth,
         proxy=proxy,
         *args,
@@ -164,7 +164,7 @@ def upload_videos(
             description = video.get("description", "")
             schedule = video.get("schedule", None)
             product_id = video.get("product_id", None)
-            custom_cover_path = abspath(video.get("custom_cover", None))
+            cover_path = abspath(video.get("cover", None))
 
             logger.debug(
                 "Posting %s%s",
@@ -216,7 +216,7 @@ def upload_videos(
                 schedule,
                 skip_split_window,
                 product_id=product_id,
-                custom_cover_path=custom_cover_path,
+                cover_path=cover_path,
                 num_retries=num_retries,
                 headless=headless,
                 *args,
@@ -243,7 +243,7 @@ def complete_upload_form(
     schedule: datetime.datetime,
     skip_split_window: bool,
     product_id: Optional[str] = None,
-    custom_cover_path: Optional[str] = None,
+    cover_path: Optional[str] = None,
     num_retries: int = 1,
     headless=False,
     *args,
@@ -276,8 +276,8 @@ def complete_upload_form(
     # Wait for the upload to complete before proceeding
     upload_complete_event.wait()
 
-    if custom_cover_path:
-        _set_cover(driver, custom_cover_path)
+    if cover_path:
+        _set_cover(driver, cover_path)
     if not skip_split_window:
         _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
@@ -1064,73 +1064,73 @@ def _add_product_link(driver, product_id: str) -> None:
         logger.error(red(f"An unexpected error occurred while adding product link: {e}"))
         print(f"Warning: An unexpected error occurred while adding product link {product_id}. Continuing upload without link.")
 
-def _set_cover(driver, custom_cover_path: str) -> None:
+def _set_cover(driver, cover_path: str) -> None:
     """
     Adds a custom cover to the video using the provided cover image path.
     """
-    logger.debug(green(f"Attempting to add custom cover: {custom_cover_path}..."))
+    logger.debug(green(f"Attempting to add custom cover: {cover_path}..."))
     try:
-        if not _check_valid_cover_path(custom_cover_path):
+        if not _check_valid_cover_path(cover_path):
             raise Exception("Invalid cover image file path")
         
         # First, get the current cover image blob source
         WebDriverWait(driver, config["implicit_wait"]).until(
             EC.presence_of_element_located(
-                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["edit_cover_button"])
+                (By.XPATH, config["selectors"]["upload"]["cover"]["edit_cover_button"])
             )
         )
         current_cover_preview = driver.find_element(
-            By.XPATH, config["selectors"]["upload"]["custom_cover"]["cover_preview"]
+            By.XPATH, config["selectors"]["upload"]["cover"]["cover_preview"]
         ).get_attribute("src")
 
         # Click the "Edit Cover" button
         WebDriverWait(driver, config["implicit_wait"]).until(
             EC.presence_of_element_located(
-                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["edit_cover_button"])
+                (By.XPATH, config["selectors"]["upload"]["cover"]["edit_cover_button"])
             )
         )
         edit_cover_button = driver.find_element(
-            By.XPATH, config["selectors"]["upload"]["custom_cover"]["edit_cover_button"]
+            By.XPATH, config["selectors"]["upload"]["cover"]["edit_cover_button"]
         )
         edit_cover_button.click()
 
         # Enter the Custom Cover tab
         WebDriverWait(driver, config["implicit_wait"]).until(
             EC.presence_of_element_located(
-                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["custom_cover_tab"])
+                (By.XPATH, config["selectors"]["upload"]["cover"]["cover_tab"])
             )
         )
         upload_cover_tab = driver.find_element(
-            By.XPATH, config["selectors"]["upload"]["custom_cover"]["custom_cover_tab"]
+            By.XPATH, config["selectors"]["upload"]["cover"]["cover_tab"]
         )
         upload_cover_tab.click()
 
         # Wait For Input File
         driverWait = WebDriverWait(driver, config["explicit_wait"])
         upload_boxWait = EC.presence_of_element_located(
-            (By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_cover"])
+            (By.XPATH, config["selectors"]["upload"]["cover"]["upload_cover"])
         )
         driverWait.until(upload_boxWait)
         upload_box = driver.find_element(
-            By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_cover"]
+            By.XPATH, config["selectors"]["upload"]["cover"]["upload_cover"]
         )
-        upload_box.send_keys(custom_cover_path)
+        upload_box.send_keys(cover_path)
 
         # Wait until image is loaded and click confirmation button
         WebDriverWait(driver, config["implicit_wait"]).until(
             EC.presence_of_element_located(
-                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_confirmation"])
+                (By.XPATH, config["selectors"]["upload"]["cover"]["upload_confirmation"])
             )
         )
         upload_confirmation = driver.find_element(
-            By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_confirmation"]
+            By.XPATH, config["selectors"]["upload"]["cover"]["upload_confirmation"]
         )
         upload_confirmation.click()
 
         # At last, wait until the cover image preview changes blob source
         WebDriverWait(driver, config["implicit_wait"]).until_not(
             EC.text_to_be_present_in_element_attribute(
-                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["cover_preview"]),
+                (By.XPATH, config["selectors"]["upload"]["cover"]["cover_preview"]),
                 "src", current_cover_preview
             )
         )
@@ -1141,12 +1141,12 @@ def _set_cover(driver, custom_cover_path: str) -> None:
         try:
             # If the edit cover container is open, close it
             cover_container = driver.find_element(
-                By.XPATH, config["selectors"]["upload"]["custom_cover"]["edit_cover_container"]
+                By.XPATH, config["selectors"]["upload"]["cover"]["edit_cover_container"]
             )
             if cover_container.is_displayed():
                 exit_icon = WebDriverWait(driver, config["implicit_wait"]).until(
                     EC.presence_of_element_located(
-                        (By.XPATH, config["selectors"]["upload"]["custom_cover"]["exit_cover_container"])
+                        (By.XPATH, config["selectors"]["upload"]["cover"]["exit_cover_container"])
                     )
                 )
                 exit_icon.click()
