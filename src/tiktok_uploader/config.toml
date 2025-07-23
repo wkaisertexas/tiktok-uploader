@@ -16,6 +16,7 @@ uploading_wait = 180 # seconds
 add_hashtag_wait = 5 # seconds
 
 supported_file_types = ["mp4", "mov", "avi", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "3g2", "gif"]
+supported_image_file_types = ["png", "jpg", "jpeg"]
 
 max_description_length = 150 # characters
 
@@ -82,6 +83,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 		button = "div.button-wrapper"
 
 	[selectors.upload.custom_cover]
+		cover_preview = "//img[contains(@class, 'cover-image')]"
 		edit_cover_button = "//div[contains(@class, 'edit-container')]"
 		edit_cover_container = "//div[contains(@class, 'cover-edit-container')]"
 		custom_cover_tab = "//div[contains(text(), 'Upload cover')]"

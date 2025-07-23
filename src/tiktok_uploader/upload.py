@@ -792,6 +792,12 @@ def _check_valid_path(path: str) -> bool:
     """
     return exists(path) and path.split(".")[-1] in config["supported_file_types"]
 
+def _check_valid_cover_path(path: str) -> bool:
+    """
+    Returns whether or not the cover image filetype is supported by TikTok
+    """
+    return exists(path) and path.split(".")[-1] in config["supported_image_file_types"]
+
 
 def _get_valid_schedule_minute(schedule, valid_multiple) -> datetime.datetime:
     """
@@ -1064,6 +1070,19 @@ def _set_cover(driver, custom_cover_path: str) -> None:
     """
     logger.debug(green(f"Attempting to add custom cover: {custom_cover_path}..."))
     try:
+        if not _check_valid_cover_path(custom_cover_path):
+            raise Exception("Invalid cover image file path")
+        
+        # First, get the current cover image blob source
+        WebDriverWait(driver, config["implicit_wait"]).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["edit_cover_button"])
+            )
+        )
+        current_cover_preview = driver.find_element(
+            By.XPATH, config["selectors"]["upload"]["custom_cover"]["cover_preview"]
+        ).get_attribute("src")
+
         # Click the "Edit Cover" button
         WebDriverWait(driver, config["implicit_wait"]).until(
             EC.presence_of_element_located(
@@ -1097,7 +1116,7 @@ def _set_cover(driver, custom_cover_path: str) -> None:
         )
         upload_box.send_keys(custom_cover_path)
 
-        # Wait until confirm button is found, and click
+        # Wait until image is loaded and click confirmation button
         WebDriverWait(driver, config["implicit_wait"]).until(
             EC.presence_of_element_located(
                 (By.XPATH, config["selectors"]["upload"]["custom_cover"]["upload_confirmation"])
@@ -1108,8 +1127,16 @@ def _set_cover(driver, custom_cover_path: str) -> None:
         )
         upload_confirmation.click()
 
-    except:
-        logger.error(red(f"An unexpected error occurred while uploading custom cover: {custom_cover_path}. Using default cover instead."))
+        # At last, wait until the cover image preview changes blob source
+        WebDriverWait(driver, config["implicit_wait"]).until_not(
+            EC.text_to_be_present_in_element_attribute(
+                (By.XPATH, config["selectors"]["upload"]["custom_cover"]["cover_preview"]),
+                "src", current_cover_preview
+            )
+        )
+
+    except Exception as e:
+        logger.error(red(f"Error: {e}. Using default cover instead."))
         
         try:
             # If the edit cover container is open, close it
