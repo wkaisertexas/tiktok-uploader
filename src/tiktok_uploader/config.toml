@@ -83,5 +83,8 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 	[selectors.upload.custom_cover]
 		edit_cover_button = "//div[contains(@class, 'edit-container')]"
+		edit_cover_container = "//div[contains(@class, 'cover-edit-container')]"
 		custom_cover_tab = "//div[contains(text(), 'Upload cover')]"
-		
+		upload_cover = "//input[@type='file' and @accept='image/png, image/jpeg, image/jpg']"
+ 		upload_confirmation = "//div[contains(text(), 'Confirm')]"
+		exit_cover_container = "//div[@class='jsx-3186560874']"
