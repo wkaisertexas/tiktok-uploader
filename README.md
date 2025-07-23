@@ -166,6 +166,16 @@ schedule = datetime.datetime(2020, 12, 20, 13, 00)
 upload_video(..., schedule=schedule)
 ```
 
+<h2 id="covers"> 🖼️ Covers</h2>
+
+You can add a custom cover image when uploading a video. <br>
+TikTok supports ".png", ".jpeg" and ".jpg".
+
+```python
+my_cover = "crazy_cover.jpg"
+upload_video(..., cover=my_cover)
+```
+
 <h2 id="product-link"> 🛍️ Product Link</h2>
 
 You can automatically add a product link to your uploaded video.
