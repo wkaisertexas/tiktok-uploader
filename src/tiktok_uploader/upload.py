@@ -164,7 +164,9 @@ def upload_videos(
             description = video.get("description", "")
             schedule = video.get("schedule", None)
             product_id = video.get("product_id", None)
-            cover_path = abspath(video.get("cover", None))
+            cover_path = video.get("cover", None)
+            if cover_path:
+                cover_path = abspath(cover_path)
 
             logger.debug(
                 "Posting %s%s",
@@ -1097,11 +1099,11 @@ def _set_cover(driver, cover_path: str) -> None:
         # Enter the Custom Cover tab
         WebDriverWait(driver, config["implicit_wait"]).until(
             EC.presence_of_element_located(
-                (By.XPATH, config["selectors"]["upload"]["cover"]["cover_tab"])
+                (By.XPATH, config["selectors"]["upload"]["cover"]["upload_cover_tab"])
             )
         )
         upload_cover_tab = driver.find_element(
-            By.XPATH, config["selectors"]["upload"]["cover"]["cover_tab"]
+            By.XPATH, config["selectors"]["upload"]["cover"]["upload_cover_tab"]
         )
         upload_cover_tab.click()
 
