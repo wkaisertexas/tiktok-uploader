@@ -10,7 +10,7 @@ URL = "https://raw.githubusercontent.com/wkaisertexas/wkaisertexas.github.io/mai
 FILENAME = "upload.mp4"
 
 videos = [
-    {"path": "upload.mp4", "description": "This is the first upload", "product_id": "YOUR_PRODUCT_ID_1"},
+    {"path": "upload.mp4", "description": "This is the first upload", "product_id": "YOUR_PRODUCT_ID_1", "cover": "cover.jpg"},
     {"filename": "upload.mp4", "desc": "This is my description", "product_id": "YOUR_PRODUCT_ID_2"},
 ]
 
