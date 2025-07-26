@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    name: Type Check and Test
+    name: Type Check, Lint, Format, and Test
     runs-on: ubuntu-latest
 
     steps:
@@ -20,6 +20,14 @@ jobs:
     - name: Install dev dependencies with uv
       run: |
         uv pip install -e .[dev]
+
+    - name: Linter
+      run: |
+        uv run ruff check .
+
+    - name: Format Check
+      run: |
+        uv run ruff format --check .
 
     - name: Run mypy
       run: |
