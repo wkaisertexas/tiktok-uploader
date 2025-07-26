@@ -1,6 +1,6 @@
 [project]
 name = "tiktok-uploader"
-version = "1.1.1"
+version = "1.1.2"
 authors = [
   { name = "William Kaiser", email = "wkaisertexas@gmail.com" },
 ]
@@ -24,20 +24,32 @@ classifiers = [
 ]
 
 dependencies = [
-  "pyperclip",
-	"selenium",
-	"webdriver_manager",
-  "toml",
-  "pytz"
+	"pytz>=2025.2",
+	"selenium>=3.141.0",
+	"toml>=0.10.2",
+	"webdriver-manager>=2.4.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build" 
 
-[project.optional-dependencies]
-test = [
-  "pytest",
+[dependency-groups]
+dev = [
+    "freezegun>=0.3.15",
+    "mypy>=0.720",
+    "pytest>=4.6.11",
+    "ruff>=0.0.17",
+]
+types = [
+    "pandas-stubs>=1.2.0.62",
+    "types-pexpect>=4.8.0.1",
+    "types-pygments>=2.16.0.0",
+    "types-pymysql>=1.1.0.1",
+    "types-python-dateutil>=2.8.19.14",
+    "types-pytz>=2023.3.1.1",
+    "types-requests>=2.31.0.5",
+    "types-toml>=0.10.8.7",
 ]
 
 [project.scripts]

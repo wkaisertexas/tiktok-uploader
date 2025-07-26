@@ -8,7 +8,6 @@ upload_videos : Uploads multiple TikTok videos
 """
 
 from os.path import abspath, exists
-from typing import List, Optional
 import time
 import pytz
 import datetime
@@ -16,38 +15,41 @@ import threading
 
 from selenium.webdriver.common.by import By
 
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
     TimeoutException,
-    NoSuchElementException
+    NoSuchElementException,
 )
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader import config, logger
-from tiktok_uploader.utils import bold, cyan, green, red
+from tiktok_uploader.utils import bold, green, red
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
+
+from tiktok_uploader.types import VideoDict, ProxyDict, Cookie
+from typing import Any, Callable, Literal
 
 
 def upload_video(
-    filename=None,
-    description="",
-    cookies="",
-    schedule: datetime.datetime = None,
-    username="",
-    password="",
-    sessionid=None,
-    cookies_list=None,
-    cookies_str=None,
-    proxy=None,
-    product_id: Optional[str] = None,
+    filename: str,
+    description: str | None = None,
+    cookies: str = "",
+    schedule: datetime.datetime | None = None,
+    username: str = "",
+    password: str = "",
+    sessionid: str | None = None,
+    cookies_list: list[Cookie] = [],
+    cookies_str: str | None = None,
+    proxy: ProxyDict | None = None,
+    product_id: str | None = None,
     *args,
     **kwargs,
-):
+) -> list[VideoDict]:
     """
     Uploads a single TikTok video.
 
@@ -76,28 +78,36 @@ def upload_video(
         sessionid=sessionid,
     )
 
+    video_dict: VideoDict = {"path": filename}
+    if description:
+        video_dict["description"] = description
+    if schedule:
+        video_dict["schedule"] = schedule
+    if product_id:
+        video_dict["product_id"] = product_id
+
     return upload_videos(
-        videos=[{"path": filename, "description": description, "schedule": schedule, "product_id": product_id}],
-        auth=auth,
-        proxy=proxy,
+        [video_dict],
+        auth,
+        proxy,
         *args,
         **kwargs,
     )
 
 
 def upload_videos(
-    videos: list = None,
-    auth: AuthBackend = None,
-    proxy: dict = None,
-    browser="chrome",
-    browser_agent=None,
-    on_complete=None,
-    headless=False,
+    videos: list[VideoDict],
+    auth: AuthBackend,
+    proxy: ProxyDict | None = None,
+    browser: Literal["chrome", "safari", "chromium", "edge", "firefox"] = "chrome",
+    browser_agent: WebDriver | None = None,
+    on_complete: Callable[[VideoDict], None] | None = None,
+    headless: bool = False,
     num_retries: int = 1,
-    skip_split_window=False,
+    skip_split_window: bool = False,
     *args,
     **kwargs,
-):
+) -> list[VideoDict]:
     """
     Uploads multiple videos to TikTok
 
@@ -129,7 +139,7 @@ def upload_videos(
     failed : list
         A list of videos which failed to upload
     """
-    videos = _convert_videos_dict(videos)
+    videos = _convert_videos_dict(videos)  # type: ignore
 
     if videos and len(videos) > 1:
         logger.debug("Uploading %d videos", len(videos))
@@ -140,9 +150,7 @@ def upload_videos(
             browser,
             "in headless mode" if headless else "",
         )
-        driver = get_browser(
-            name=browser, headless=headless, proxy=proxy, *args, **kwargs
-        )
+        driver = get_browser(browser, headless=headless, proxy=proxy, *args, **kwargs)
     else:
         logger.debug("Using user-defined browser agent")
         driver = browser_agent
@@ -159,16 +167,16 @@ def upload_videos(
     # uploads each video
     for video in videos:
         try:
-            path = abspath(video.get("path"))
+            path = abspath(video.get("path", "."))
             description = video.get("description", "")
             schedule = video.get("schedule", None)
             product_id = video.get("product_id", None)
 
             logger.debug(
                 "Posting %s%s",
-                bold(video.get("path")),
+                bold(video.get("path", "")),
                 (
-                    f'\n{" " * 15}with description: {bold(description)}'
+                    f"\n{' ' * 15}with description: {bold(description)}"
                     if description
                     else ""
                 ),
@@ -185,9 +193,9 @@ def upload_videos(
                 timezone = pytz.UTC
                 if schedule.tzinfo is None:
                     schedule = schedule.astimezone(timezone)
-                elif (
-                    int(schedule.utcoffset().total_seconds()) == 0
-                ):  # Equivalent to UTC
+                elif (utc_offset := schedule.utcoffset()) is not None and int(
+                    utc_offset.total_seconds()
+                ) == 0:  # Equivalent to UTC
                     schedule = timezone.localize(schedule)
                 else:
                     print(
@@ -213,9 +221,8 @@ def upload_videos(
                 description,
                 schedule,
                 skip_split_window,
-                product_id=product_id,
-                num_retries=num_retries,
-                headless=headless,
+                product_id,
+                num_retries,
                 *args,
                 **kwargs,
             )
@@ -234,14 +241,14 @@ def upload_videos(
 
 
 def complete_upload_form(
-    driver,
+    driver: WebDriver,
     path: str,
     description: str,
-    schedule: datetime.datetime,
+    schedule: datetime.datetime | None,
     skip_split_window: bool,
-    product_id: Optional[str] = None,
+    product_id: str | None = None,
     num_retries: int = 1,
-    headless=False,
+    headless: bool = False,
     *args,
     **kwargs,
 ) -> None:
@@ -283,7 +290,7 @@ def complete_upload_form(
     _post_video(driver)
 
 
-def _go_to_upload(driver) -> None:
+def _go_to_upload(driver: WebDriver) -> None:
     """
     Navigates to the upload page, switches to the iframe and waits for it to load
 
@@ -311,7 +318,7 @@ def _go_to_upload(driver) -> None:
     driver.switch_to.default_content()
 
 
-def _change_to_upload_iframe(driver) -> None:
+def _change_to_upload_iframe(driver: WebDriver) -> None:
     """
     Switch to the iframe of the upload page
 
@@ -326,7 +333,7 @@ def _change_to_upload_iframe(driver) -> None:
     driver.switch_to.frame(iframe)
 
 
-def _set_description(driver, description: str) -> None:
+def _set_description(driver: WebDriver, description: str) -> None:
     """
     Sets the description of the video
 
@@ -408,7 +415,7 @@ def _set_description(driver, description: str) -> None:
 
                     for i in range(len(user_id_elements)):
                         user_id_element = user_id_elements[i]
-                        if user_id_element and user_id_element.is_enabled:
+                        if user_id_element and user_id_element.is_enabled():
                             username = user_id_element.text.split(" ")[0]
                             if username.lower() == word[1:].lower():
                                 found = True
@@ -445,7 +452,9 @@ def _clear(element) -> None:
     element.send_keys(2 * len(element.text) * Keys.BACKSPACE)
 
 
-def _set_video(driver, path: str = "", num_retries: int = 3, **kwargs) -> None:
+def _set_video(
+    driver: WebDriver, path: str = "", num_retries: int = 3, **kwargs
+) -> None:
     """
     Sets the video to upload
 
@@ -495,7 +504,7 @@ def _remove_cookies_window(driver) -> None:
     driver : selenium.webdriver
     """
 
-    logger.debug(green(f"Removing cookies window"))
+    logger.debug(green("Removing cookies window"))
     cookies_banner = WebDriverWait(driver, config["implicit_wait"]).until(
         EC.presence_of_element_located(
             (By.TAG_NAME, config["selectors"]["upload"]["cookies_banner"]["banner"])
@@ -519,7 +528,7 @@ def _remove_cookies_window(driver) -> None:
     decline_button.click()
 
 
-def _remove_split_window(driver) -> None:
+def _remove_split_window(driver: WebDriver) -> None:
     """
     Remove the split window if it is open
 
@@ -527,7 +536,7 @@ def _remove_split_window(driver) -> None:
     ----------
     driver : selenium.webdriver
     """
-    logger.debug(green(f"Removing split window"))
+    logger.debug(green("Removing split window"))
     window_xpath = config["selectors"]["upload"]["split_window"]
 
     try:
@@ -536,11 +545,16 @@ def _remove_split_window(driver) -> None:
         window.click()
 
     except TimeoutException:
-        logger.debug(red(f"Split window not found or operation timed out"))
+        logger.debug(red("Split window not found or operation timed out"))
 
 
 def _set_interactivity(
-    driver, comment=True, stitch=True, duet=True, *args, **kwargs
+    driver: WebDriver,
+    comment: bool = True,
+    stitch: bool = True,
+    duet: bool = True,
+    *args,
+    **kwargs,
 ) -> None:
     """
     Sets the interactivity settings of the video
@@ -580,7 +594,7 @@ def _set_interactivity(
         logger.error("Failed to set interactivity settings")
 
 
-def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
+def _set_schedule_video(driver: WebDriver, schedule: datetime.datetime) -> None:
     """
     Sets the schedule of the video
 
@@ -614,7 +628,7 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
         raise FailedToUpload()
 
 
-def __date_picker(driver, month: int, day: int) -> None:
+def __date_picker(driver: WebDriver, month: int, day: int) -> None:
     logger.debug(green("Picking date"))
 
     condition = EC.presence_of_element_located(
@@ -626,7 +640,7 @@ def __date_picker(driver, month: int, day: int) -> None:
     condition = EC.presence_of_element_located(
         (By.XPATH, config["selectors"]["schedule"]["calendar"])
     )
-    calendar = WebDriverWait(driver, config["implicit_wait"]).until(condition)
+    WebDriverWait(driver, config["implicit_wait"]).until(condition)
 
     calendar_month = driver.find_element(
         By.XPATH, config["selectors"]["schedule"]["calendar_month"]
@@ -659,7 +673,7 @@ def __date_picker(driver, month: int, day: int) -> None:
     __verify_date_picked_is_correct(driver, month, day)
 
 
-def __verify_date_picked_is_correct(driver, month: int, day: int):
+def __verify_date_picked_is_correct(driver: WebDriver, month: int, day: int) -> None:
     date_selected = driver.find_element(
         By.XPATH, config["selectors"]["schedule"]["date_picker"]
     ).text
@@ -674,7 +688,7 @@ def __verify_date_picked_is_correct(driver, month: int, day: int):
         raise Exception(msg)
 
 
-def __time_picker(driver, hour: int, minute: int) -> None:
+def __time_picker(driver: WebDriver, hour: int, minute: int) -> None:
     logger.debug(green("Picking time"))
 
     condition = EC.presence_of_element_located(
@@ -686,9 +700,7 @@ def __time_picker(driver, hour: int, minute: int) -> None:
     condition = EC.presence_of_element_located(
         (By.XPATH, config["selectors"]["schedule"]["time_picker_container"])
     )
-    time_picker_container = WebDriverWait(driver, config["implicit_wait"]).until(
-        condition
-    )
+    WebDriverWait(driver, config["implicit_wait"]).until(condition)
 
     # 00 = 0, 01 = 1, 02 = 2, 03 = 3, 04 = 4, 05 = 5, 06 = 6, 07 = 7, 08 = 8, 09 = 9, 10 = 10, 11 = 11, 12 = 12,
     # 13 = 13, 14 = 14, 15 = 15, 16 = 16, 17 = 17, 18 = 18, 19 = 19, 20 = 20, 21 = 21, 22 = 22, 23 = 23
@@ -726,7 +738,7 @@ def __time_picker(driver, hour: int, minute: int) -> None:
     __verify_time_picked_is_correct(driver, hour, minute)
 
 
-def __verify_time_picked_is_correct(driver, hour: int, minute: int):
+def __verify_time_picked_is_correct(driver: WebDriver, hour: int, minute: int) -> None:
     time_selected = driver.find_element(
         By.XPATH, config["selectors"]["schedule"]["time_picker_text"]
     ).text
@@ -744,7 +756,7 @@ def __verify_time_picked_is_correct(driver, hour: int, minute: int):
         raise Exception(msg)
 
 
-def _post_video(driver) -> None:
+def _post_video(driver: WebDriver) -> None:
     """
     Posts the video by clicking the post button
 
@@ -787,7 +799,9 @@ def _check_valid_path(path: str) -> bool:
     return exists(path) and path.split(".")[-1] in config["supported_file_types"]
 
 
-def _get_valid_schedule_minute(schedule, valid_multiple) -> datetime.datetime:
+def _get_valid_schedule_minute(
+    schedule: datetime.datetime, valid_multiple
+) -> datetime.datetime:
     """
     Returns a datetime.datetime with valid minute for TikTok
     """
@@ -797,14 +811,16 @@ def _get_valid_schedule_minute(schedule, valid_multiple) -> datetime.datetime:
         return _set_valid_schedule_minute(schedule, valid_multiple)
 
 
-def _is_valid_schedule_minute(minute, valid_multiple) -> bool:
+def _is_valid_schedule_minute(minute: int, valid_multiple) -> bool:
     if minute % valid_multiple != 0:
         return False
     else:
         return True
 
 
-def _set_valid_schedule_minute(schedule, valid_multiple) -> datetime.datetime:
+def _set_valid_schedule_minute(
+    schedule: datetime.datetime, valid_multiple: int
+) -> datetime.datetime:
     minute = schedule.minute
 
     remainder = minute % valid_multiple
@@ -863,7 +879,9 @@ def _get_splice_index(
         return min(nearest_mention, nearest_hashtag)
 
 
-def _convert_videos_dict(videos_list_of_dictionaries) -> List:
+def _convert_videos_dict(
+    videos_list_of_dictionaries: list[dict[str, Any]],
+) -> list[VideoDict]:
     """
     Takes in a videos dictionary and converts it.
 
@@ -882,7 +900,7 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
         """return the intersection of two lists"""
         return list(set(lst1) & set(lst2))
 
-    return_list = []
+    return_list: list[VideoDict] = []
     for elem in videos_list_of_dictionaries:
         # preprocess the dictionary
         elem = {k.strip().lower(): v for k, v in elem.items()}
@@ -921,12 +939,12 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
             else:
                 elem[correct_description] = ""  # null description is fine
 
-        return_list.append(elem)
+        return_list.append(elem)  # type: ignore
 
     return return_list
 
 
-def __get_driver_timezone(driver) -> pytz.timezone:
+def __get_driver_timezone(driver: WebDriver) -> Any:
     """
     Returns the timezone of the driver
     """
@@ -936,7 +954,7 @@ def __get_driver_timezone(driver) -> pytz.timezone:
     return pytz.timezone(timezone_str)
 
 
-def _refresh_with_alert(driver) -> None:
+def _refresh_with_alert(driver: WebDriver) -> None:
     try:
         # attempt to refresh the page
         driver.refresh()
@@ -946,9 +964,8 @@ def _refresh_with_alert(driver) -> None:
 
         # accept the alert
         driver.switch_to.alert.accept()
-    except:
-        # if no alert appears, the page is fine
-        pass
+    except Exception as e:
+        print(f"Exception when refreshing alert {e}")
 
 
 class DescriptionTooLong(Exception):
@@ -956,7 +973,7 @@ class DescriptionTooLong(Exception):
     A video description longer than the maximum allowed by TikTok's website (not app) uploader
     """
 
-    def __init__(self, message=None):
+    def __init__(self, message: str | None = None):
         super().__init__(message or self.__doc__)
 
 
@@ -969,85 +986,120 @@ class FailedToUpload(Exception):
         super().__init__(message or self.__doc__)
 
 
-def _add_product_link(driver, product_id: str) -> None:
+def _add_product_link(driver: WebDriver, product_id: str) -> None:
     """
     Adds the product link to the video using the provided product ID.
     """
     logger.debug(green(f"Attempting to add product link for ID: {product_id}..."))
     try:
-        wait = WebDriverWait(driver, 20) # Wait up to 20 seconds
+        wait = WebDriverWait(driver, 20)  # Wait up to 20 seconds
 
         # -- Step 1: Find and click the 'Add Product Link' button --
-        add_link_button_xpath = "//button[contains(@class, 'Button__root') and contains(., 'Add')]"
-        add_link_button = wait.until(EC.element_to_be_clickable((By.XPATH, add_link_button_xpath)))
+        add_link_button_xpath = (
+            "//button[contains(@class, 'Button__root') and contains(., 'Add')]"
+        )
+        add_link_button = wait.until(
+            EC.element_to_be_clickable((By.XPATH, add_link_button_xpath))
+        )
         # Optional: Scroll to the button if it might be off-screen
         # driver.execute_script("arguments[0].scrollIntoView(true);", add_link_button)
         # time.sleep(0.5) # Short pause after scrolling
         add_link_button.click()
         logger.debug(green("Clicked 'Add Product Link' button."))
-        time.sleep(1) # Wait for modal animation
+        time.sleep(1)  # Wait for modal animation
 
         # -- Step 2: Click the 'Next' button in the first modal (if it exists) --
         try:
-             first_next_button_xpath = "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]"
-             # Ensure this button belongs to the correct modal context if multiple exist
-             first_next_button = wait.until(EC.element_to_be_clickable((By.XPATH, first_next_button_xpath)))
-             first_next_button.click()
-             logger.debug(green("Clicked first 'Next' button in modal."))
-             time.sleep(1) # Wait for the next part of the modal to load
+            first_next_button_xpath = "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]"
+            # Ensure this button belongs to the correct modal context if multiple exist
+            first_next_button = wait.until(
+                EC.element_to_be_clickable((By.XPATH, first_next_button_xpath))
+            )
+            first_next_button.click()
+            logger.debug(green("Clicked first 'Next' button in modal."))
+            time.sleep(1)  # Wait for the next part of the modal to load
         except TimeoutException:
-             logger.debug("First 'Next' button not found or not needed, proceeding...")
-
+            logger.debug("First 'Next' button not found or not needed, proceeding...")
 
         # -- Step 3: Find search input, enter product ID, and press Enter --
         search_input_xpath = "//input[@placeholder='Search products']"
-        search_input = wait.until(EC.visibility_of_element_located((By.XPATH, search_input_xpath)))
+        search_input = wait.until(
+            EC.visibility_of_element_located((By.XPATH, search_input_xpath))
+        )
         search_input.clear()
         search_input.send_keys(product_id)
-        search_input.send_keys(Keys.RETURN) # Press Enter to search
+        search_input.send_keys(Keys.RETURN)  # Press Enter to search
         logger.debug(green(f"Entered product ID '{product_id}' and pressed Enter."))
         # Wait for search results - Replace sleep with explicit wait if possible
         # e.g., wait for a specific element in the results table to appear
-        time.sleep(3) # Increased wait time slightly
+        time.sleep(3)  # Increased wait time slightly
 
         # -- Step 4: Find and select the radio button for the product --
         # !!! CRITICAL: Verify and adjust this XPath based on actual HTML structure !!!
         # It assumes the product ID is visible within a span or div in the same table row (tr)
         product_radio_xpath = f"//tr[.//span[contains(text(), '{product_id}')] or .//div[contains(text(), '{product_id}')]]//input[@type='radio' and contains(@class, 'TUXRadioStandalone-input')]"
         logger.debug(f"Looking for radio button with XPath: {product_radio_xpath}")
-        product_radio = wait.until(EC.element_to_be_clickable((By.XPATH, product_radio_xpath)))
+        product_radio = wait.until(
+            EC.element_to_be_clickable((By.XPATH, product_radio_xpath))
+        )
         # Use JavaScript click for potentially troublesome radio buttons
         driver.execute_script("arguments[0].click();", product_radio)
         logger.debug(green(f"Selected product radio for ID: {product_id}"))
-        time.sleep(1) # Pause after selection
+        time.sleep(1)  # Pause after selection
 
         # -- Step 5: Find and click the 'Next' button (after selecting radio) --
-        second_next_button_xpath = "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]"
+        second_next_button_xpath = (
+            "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]"
+        )
         # Add more context if needed to distinguish this 'Next' button
-        second_next_button = wait.until(EC.element_to_be_clickable((By.XPATH, second_next_button_xpath)))
+        second_next_button = wait.until(
+            EC.element_to_be_clickable((By.XPATH, second_next_button_xpath))
+        )
         second_next_button.click()
         logger.debug(green("Clicked second 'Next' button."))
-        time.sleep(1) # Wait for the next modal/confirmation step
+        time.sleep(1)  # Wait for the next modal/confirmation step
 
         # -- Step 6: Find and click the final 'Add' button --
-        final_add_button_xpath = "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Add']]"
-        final_add_button = wait.until(EC.element_to_be_clickable((By.XPATH, final_add_button_xpath)))
+        final_add_button_xpath = (
+            "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Add']]"
+        )
+        final_add_button = wait.until(
+            EC.element_to_be_clickable((By.XPATH, final_add_button_xpath))
+        )
         final_add_button.click()
         logger.debug(green("Clicked final 'Add' button. Product link should be added."))
 
         # Wait for the modal to close (e.g., wait for the final 'Add' button to disappear)
-        wait.until(EC.invisibility_of_element_located((By.XPATH, final_add_button_xpath)))
+        wait.until(
+            EC.invisibility_of_element_located((By.XPATH, final_add_button_xpath))
+        )
         logger.debug(green("Product link modal closed."))
 
-    except TimeoutException as e:
-        logger.error(red(f"Error: Timed out waiting for element during product link addition. XPath might be wrong or element didn't appear."))
+    except TimeoutException:
+        logger.error(
+            red(
+                "Error: Timed out waiting for element during product link addition. XPath might be wrong or element didn't appear."
+            )
+        )
         # logger.error(f"Timeout details: {e}")
         # Decide whether to raise error or continue upload without link
-        print(f"Warning: Failed to add product link {product_id} due to timeout. Continuing upload without link.")
-    except NoSuchElementException as e:
-        logger.error(red(f"Error: Could not find element during product link addition. XPath might be wrong."))
+        print(
+            f"Warning: Failed to add product link {product_id} due to timeout. Continuing upload without link."
+        )
+    except NoSuchElementException:
+        logger.error(
+            red(
+                "Error: Could not find element during product link addition. XPath might be wrong."
+            )
+        )
         # logger.error(f"NoSuchElement details: {e}")
-        print(f"Warning: Failed to add product link {product_id} because an element was not found. Continuing upload without link.")
+        print(
+            f"Warning: Failed to add product link {product_id} because an element was not found. Continuing upload without link."
+        )
     except Exception as e:
-        logger.error(red(f"An unexpected error occurred while adding product link: {e}"))
-        print(f"Warning: An unexpected error occurred while adding product link {product_id}. Continuing upload without link.")
+        logger.error(
+            red(f"An unexpected error occurred while adding product link: {e}")
+        )
+        print(
+            f"Warning: An unexpected error occurred while adding product link {product_id}. Continuing upload without link."
+        )

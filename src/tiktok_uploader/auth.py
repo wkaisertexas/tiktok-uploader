@@ -1,4 +1,5 @@
 """Handles authentication for TikTokUploader"""
+
 from http import cookiejar
 from time import time, sleep
 
@@ -6,10 +7,12 @@ from selenium.webdriver.common.by import By
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from tiktok_uploader import config, logger
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.utils import green
+from tiktok_uploader.types import Cookie, cookie_from_dict
 
 
 class AuthBackend:
@@ -19,16 +22,16 @@ class AuthBackend:
 
     username: str
     password: str
-    cookies: list
+    cookies: list[Cookie]
 
     def __init__(
         self,
         username: str = "",
         password: str = "",
-        cookies_list: list = None,
-        cookies=None,
-        cookies_str=None,
-        sessionid: str = None,
+        cookies_list: list[Cookie] = [],
+        cookies: str | None = None,
+        cookies_str: str | None = None,
+        sessionid: str | None = None,
     ):
         """
         Creates the authentication backend
@@ -44,7 +47,7 @@ class AuthBackend:
 
         self.cookies = self.get_cookies(path=cookies) if cookies else []
         self.cookies += self.get_cookies(cookies_str=cookies_str) if cookies_str else []
-        self.cookies += cookies_list if cookies_list else []
+        self.cookies += cookies_list
         self.cookies += [{"name": "sessionid", "value": sessionid}] if sessionid else []
 
         if not (self.cookies or (username and password)):
@@ -62,7 +65,7 @@ class AuthBackend:
         elif cookies_list:
             logger.debug(green("Authenticating browser with cookies_list"))
 
-    def authenticate_agent(self, driver):
+    def authenticate_agent(self, driver: WebDriver) -> WebDriver:
         """
         Authenticates the agent using the browser backend
         """
@@ -86,17 +89,21 @@ class AuthBackend:
 
         return driver
 
-    def get_cookies(self, path: str = None, cookies_str: str = None) -> dict:
+    def get_cookies(
+        self, path: str | None = None, cookies_str: str | None = None
+    ) -> list[Cookie]:
         """
         Gets cookies from the passed file using the netscape standard
         """
         if path:
             with open(path, "r", encoding="utf-8") as file:
                 lines = file.read().split("\n")
-        else:
+        elif cookies_str is not None:
             lines = cookies_str.split("\n")
+        else:
+            raise ValueError("Must have either a path or a cookies_str")
 
-        return_cookies = []
+        return_cookies: list[Cookie] = []
         for line in lines:
             split = line.split("\t")
             if len(split) < 6:
@@ -104,26 +111,30 @@ class AuthBackend:
 
             split = [x.strip() for x in split]
 
-            try:
-                split[4] = int(split[4])
-            except ValueError:
-                split[4] = None
+            name = split[5]
+            value = split[6]
+            domain = split[0]
+            path = split[2]
 
             return_cookies.append(
                 {
-                    "name": split[5],
-                    "value": split[6],
-                    "domain": split[0],
-                    "path": split[2],
+                    "name": name,
+                    "value": value,
+                    "domain": domain,
+                    "path": path,
                 }
             )
 
-            if split[4]:
-                return_cookies[-1]["expiry"] = split[4]
+            try:
+                return_cookies[-1]["expiry"] = int(split[4])
+            except ValueError:
+                continue
         return return_cookies
 
 
-def login_accounts(driver=None, accounts=[(None, None)], *args, **kwargs) -> list:
+def login_accounts(
+    driver: WebDriver | None = None, accounts=[(None, None)], *args, **kwargs
+) -> dict[str, list[Cookie]]:
     """
     Authenticates the accounts using the browser backend and saves the required credentials
 
@@ -142,14 +153,14 @@ def login_accounts(driver=None, accounts=[(None, None)], *args, **kwargs) -> lis
     return cookies
 
 
-def login(driver, username: str, password: str):
+def login(driver: WebDriver, username: str, password: str) -> list[Cookie]:
     """
     Logs in the user using the email and password
     """
     assert username and password, "Username and password are required"
 
     # checks if the browser is on TikTok
-    if not config["paths"]["main"] in driver.current_url:
+    if config["paths"]["main"] not in driver.current_url:
         driver.get(config["paths"]["main"])
 
     # checks if the user is already logged in
@@ -193,10 +204,10 @@ def login(driver, username: str, password: str):
         EC.url_changes(config["paths"]["login"])
     )
 
-    return driver.get_cookies()
+    return driver.get_cookies()  # type: ignore
 
 
-def get_username_and_password(login_info: tuple or dict):
+def get_username_and_password(login_info: tuple | dict):
     """
     Parses the input into a username and password
     """
@@ -212,7 +223,7 @@ def get_username_and_password(login_info: tuple or dict):
     raise InsufficientAuth()
 
 
-def save_cookies(path, cookies: list):
+def save_cookies(path: str, cookies: list[Cookie]) -> None:
     """
     Saves the cookies to a netscape file
     """
@@ -221,7 +232,7 @@ def save_cookies(path, cookies: list):
     cookie_jar.load()
 
     for cookie in cookies:
-        cookie_jar.set_cookie(cookie)
+        cookie_jar.set_cookie(cookie_from_dict(cookie))
 
     cookie_jar.save()
 
@@ -240,5 +251,5 @@ class InsufficientAuth(Exception):
             - only the `sessionid` cookie is required
     """
 
-    def __init__(self, message=None):
+    def __init__(self, message: str | None = None):
         super().__init__(message or self.__doc__)

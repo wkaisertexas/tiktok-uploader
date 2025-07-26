@@ -54,14 +54,25 @@ pip install tiktok-uploader
 
 Installing from source allows greater flexibility to modify the module's code to extend default behavior.
 
-First, `clone` and move into the repository. Next, install `hatch`, the build tool used for this project [^1]. Then, `build` the project. Finally, `install` the project with the `-e` or editable flag.
+First, install [`uv`](https://docs.astral.sh/uv/getting-started/installation/) a really fast python package manager.
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Next, clone the repository using `git`. Then change directories and run the project with `uv run tiktok-uploader`.
 
 ```bash
 git clone https://github.com/wkaisertexas/tiktok-uploader
 cd tiktok-uploader
-pip install hatch
-hatch build
-pip install -e .
+uv run tiktok-uploader
+```
+
+After `uv` installs the required packages, you should see something like the following:
+
+```console
+usage: tiktok-uploader [-h] -v VIDEO [-d DESCRIPTION] [-t SCHEDULE] [--proxy PROXY] [--product-id PRODUCT_ID]
+                       [-c COOKIES] [-s SESSIONID] [-u USERNAME] [-p PASSWORD] [--attach]
 ```
 
 <h1 id="usage">Usage</h1>
@@ -329,5 +340,3 @@ This bot is **not fool proof**. Though I have not gotten an official ban, the vi
 > If you like this project, please ⭐ it on GitHub to show your support! ❤️
 
 ![Star History Chart](https://api.star-history.com/svg?repos=wkaisertexas/tiktok-uploader&type=Date)
-
-[^1]: If interested in Hatch, checkout the [website](https://hatch.pypa.io/latest/build/)
