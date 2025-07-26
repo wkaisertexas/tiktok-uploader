@@ -31,7 +31,7 @@ jobs:
 
     - name: Run mypy
       run: |
-        uv run mypy tiktok_uploader
+        uv run mypy .
 
     - name: Run pytest with JUnit XML output
       run: |
