@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    name: Type Check and Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+
+    - name: Install dev dependencies with uv
+      run: |
+        uv pip install -e .[dev]
+
+    - name: Run mypy
+      run: |
+        uv run mypy tiktok_uploader
+
+    - name: Run pytest with JUnit XML output
+      run: |
+        uv run pytest --junitxml=test-results.xml
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: junit-test-results
+        path: test-results.xml
