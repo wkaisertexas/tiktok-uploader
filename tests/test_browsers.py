@@ -1,7 +1,6 @@
 """
 Test the browsers module.
 """
-import pytest
 
 import tiktok_uploader.browsers as browsers
 
@@ -10,7 +9,7 @@ SERVICES = ["chrome", "firefox", "edge"]
 
 
 # Default behavior testing
-def test_get_browser():
+def test_get_browser() -> None:
     """
     Tests the get_browser function.
 
@@ -20,7 +19,7 @@ def test_get_browser():
     assert browser is not None
 
 
-def test_get_driver():
+def test_get_driver() -> None:
     """
     Tests the get_driver function.
     """
@@ -32,7 +31,7 @@ def test_get_driver():
         browsers.get_driver("invalid")
 
 
-def test_get_service():
+def test_get_service() -> None:
     """
     Tests the get_service function.
     """

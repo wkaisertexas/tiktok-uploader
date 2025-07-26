@@ -10,7 +10,7 @@ from tiktok_uploader.upload import (
 import os
 import datetime
 from freezegun import freeze_time
-from pytest import raises, fixture
+from pytest import raises
 import pytz
 
 # before each create a file called test.mp4 and test.jpg
@@ -18,7 +18,7 @@ FILENAME = "test.mp4"
 timezone = pytz.UTC
 
 
-def setup_function():
+def setup_function() -> None:
     """
     Creates a dummy file
     """
@@ -27,14 +27,14 @@ def setup_function():
 
 
 # delete the file after each test
-def teardown_function():
+def teardown_function() -> None:
     """
     Deletes the dummy file
     """
     os.remove(FILENAME)
 
 
-def test_convert_videos_dict_good():
+def test_convert_videos_dict_good() -> None:
     """Tests the videos dictionary with the good names"""
     good_dict = {
         "path": FILENAME,
@@ -47,7 +47,7 @@ def test_convert_videos_dict_good():
     assert array[0]["description"] == "this is my description"
 
 
-def test_convert_videos_dict_wrong_names():
+def test_convert_videos_dict_wrong_names() -> None:
     """
     Tests the videos dictionary with the wrong names
     """
@@ -62,7 +62,7 @@ def test_convert_videos_dict_wrong_names():
     assert array[0]["description"] == "this is my description"
 
 
-def test_convert_videos_bad():
+def test_convert_videos_bad() -> None:
     """
     Tests the videos dictionary with the wrong dictionaries
     """
@@ -74,7 +74,7 @@ def test_convert_videos_bad():
         _convert_videos_dict([bad_dict])
 
 
-def test_convert_videos_filename():
+def test_convert_videos_filename() -> None:
     """
     Tests the videos dictionary with the wrong dictionaries
     """
@@ -87,7 +87,7 @@ def test_convert_videos_filename():
     assert array[0]["description"] == ""
 
 
-def test_get_valid_schedule_minute():
+def test_get_valid_schedule_minute() -> None:
     """
     Tests the get valid schedule minute
     """
@@ -115,81 +115,81 @@ def test_get_valid_schedule_minute():
 
 
 @freeze_time("2020-01-01 12:00")
-def test_check_valid_schedule_min_limit():
+def test_check_valid_schedule_min_limit() -> None:
     """
     Tests the min limit of check_valid_schedule
     """
 
     schedule = datetime.datetime(2020, 1, 1, 12, 25)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == True
+    assert _check_valid_schedule(schedule) is True
 
     schedule = datetime.datetime(2020, 1, 1, 12, 20)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == True
+    assert _check_valid_schedule(schedule) is True
 
     schedule = datetime.datetime(2020, 1, 1, 12, 15)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == False
+    assert _check_valid_schedule(schedule) is False
 
     schedule = datetime.datetime(2019, 1, 1, 12, 00)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == False
+    assert _check_valid_schedule(schedule) is False
 
 
 @freeze_time("2020-01-01 12:00")
-def test_check_valid_schedule_max_limit():
+def test_check_valid_schedule_max_limit() -> None:
     """
     Tests the max limit of check_valid_schedule
     """
 
     schedule = datetime.datetime(2020, 1, 9, 12, 00)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == True
+    assert _check_valid_schedule(schedule) is True
 
     schedule = datetime.datetime(2020, 1, 10, 11, 55)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == True
+    assert _check_valid_schedule(schedule) is True
 
     schedule = datetime.datetime(2020, 1, 11, 12, 00)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == True
+    assert _check_valid_schedule(schedule) is True
 
     schedule = datetime.datetime(2020, 1, 11, 12, 5)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == False
+    assert _check_valid_schedule(schedule) is False
 
     schedule = datetime.datetime(2021, 1, 11, 12, 5)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == False
+    assert _check_valid_schedule(schedule) is False
 
 
 @freeze_time("2020-01-01 12:00")
-def test_check_valid_schedule_minute_valid():
+def test_check_valid_schedule_minute_valid() -> None:
     """
     Tests the minutes valid multiple
     """
 
     schedule = datetime.datetime(2020, 1, 2, 12, 00)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == True
+    assert _check_valid_schedule(schedule) is True
 
     schedule = datetime.datetime(2020, 1, 2, 12, 1)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == False
+    assert _check_valid_schedule(schedule) is False
 
     schedule = datetime.datetime(2020, 1, 2, 12, 2)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == False
+    assert _check_valid_schedule(schedule) is False
 
     schedule = datetime.datetime(2020, 1, 2, 12, 3)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == False
+    assert _check_valid_schedule(schedule) is False
 
     schedule = datetime.datetime(2020, 1, 2, 12, 4)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == False
+    assert _check_valid_schedule(schedule) is False
 
     schedule = datetime.datetime(2020, 1, 2, 12, 5)
     schedule = timezone.localize(schedule)
-    assert _check_valid_schedule(schedule) == True
+    assert _check_valid_schedule(schedule) is True

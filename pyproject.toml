@@ -24,20 +24,21 @@ classifiers = [
 ]
 
 dependencies = [
-  "pyperclip",
-	"selenium",
-	"webdriver_manager",
-  "toml",
-  "pytz"
+	"pytz>=2025.2",
+	"selenium>=3.141.0",
+	"toml>=0.10.2",
+	"webdriver-manager>=2.4.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build" 
 
-[project.optional-dependencies]
-test = [
-  "pytest",
+[dependency-groups]
+dev = [
+    "freezegun>=0.3.15",
+    "mypy>=0.720",
+    "pytest>=4.6.11",
 ]
 
 [project.scripts]

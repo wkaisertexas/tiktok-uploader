@@ -19,8 +19,12 @@ from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import (
     generate_proxy_auth_extension,
 )
 
+from typing import Literal
 
-def get_browser(name: str = "chrome", options=None, *args, **kwargs) -> webdriver:
+browser_t = Literal["chrome", "safari", "chromium", "edge", "firefox"]
+
+
+def get_browser(name: browser_t = "chrome", options=None, *args, **kwargs) -> webdriver:
     """
     Gets a browser based on the name with the ability to pass in additional arguments
     """
@@ -66,7 +70,7 @@ def get_service(name: str = "chrome"):
     return None  # Safari doesn't need a service
 
 
-def get_default_options(name: str, *args, **kwargs):
+def get_default_options(name: browser_t, *args, **kwargs):
     """
     Gets the default options for each browser to help remain undetected
     """
@@ -79,7 +83,7 @@ def get_default_options(name: str, *args, **kwargs):
 
 
 def chrome_defaults(
-    *args, headless: bool = False, proxy: dict = None, **kwargs
+    *args, headless: bool = False, proxy: dict | None = None, **kwargs
 ) -> ChromeOptions:
     """
     Creates Chrome with Options
@@ -120,7 +124,7 @@ def chrome_defaults(
 
 
 def firefox_defaults(
-    *args, headless: bool = False, proxy: dict = None, **kwargs
+    *args, headless: bool = False, proxy: dict | None = None, **kwargs
 ) -> FirefoxOptions:
     """
     Creates Firefox with default options
@@ -138,7 +142,7 @@ def firefox_defaults(
 
 
 def safari_defaults(
-    *args, headless: bool = False, proxy: dict = None, **kwargs
+    *args, headless: bool = False, proxy: dict | None = None, **kwargs
 ) -> SafariOptions:
     """
     Creates Safari with default options
@@ -155,7 +159,7 @@ def safari_defaults(
 
 
 def edge_defaults(
-    *args, headless: bool = False, proxy: dict = None, **kwargs
+    *args, headless: bool = False, proxy: dict | None = None, **kwargs
 ) -> EdgeOptions:
     """
     Creates Edge with default options
@@ -183,7 +187,7 @@ class UnsupportedBrowserException(Exception):
         - Edge
     """
 
-    def __init__(self, message=None):
+    def __init__(self, message: str | None = None):
         super().__init__(message or self.__doc__)
 
 

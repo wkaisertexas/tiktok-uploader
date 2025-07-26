@@ -4,6 +4,7 @@ Uploads a series of videos to TikTok
 from sys import argv
 
 import pandas as pd
+import toml
 
 from tiktok_uploader.upload import upload_video
 
@@ -14,7 +15,7 @@ INFO = "/Desktop/info.xslx"
 KEY = "uploaded"
 
 
-def main():
+def main() -> None:
     """
     Posts a vdeo to TikTok from INFO, a spreadsheet containing: file_path, description, and uploaded
     """
@@ -28,7 +29,7 @@ def main():
         video_info["file_path"],
         video_info["description"],
         cookies=COOKIES,
-        product_id=video_info.get("product_id", None)
+        product_id=video_info.get("product_id", None),
     )
 
     if not failed:
@@ -37,15 +38,13 @@ def main():
 
 
 # checks if the user passed in a file path
-def set_config() -> dict:
+def set_config() -> None:
     """
     Gets the optional file path from the command line
     """
     if len(argv) < 2 or not argv[1].endswith(".toml"):
         print("No file path was provided")
         return
-
-    import toml
 
     dictionary = toml.load(argv[1])
 

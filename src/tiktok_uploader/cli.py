@@ -2,22 +2,20 @@
 CLI is a controller for the command line use of this library
 """
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from os.path import exists, join
 import datetime
-import json
 
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
 
 
-def main():
+def main() -> None:
     """
     Passes arguments into the program
     """
     args = get_uploader_args()
-
-    args = validate_uploader_args(args=args)
+    validate_uploader_args(args)
 
     # parse args
     schedule = parse_schedule(args.schedule)
@@ -46,7 +44,7 @@ def main():
     print("-------------------------")
 
 
-def get_uploader_args():
+def get_uploader_args() -> Namespace:
     """
     Generates a parser which is used to get all of the video's information
     """
@@ -72,7 +70,7 @@ def get_uploader_args():
     parser.add_argument(
         "--product-id",
         help="ID of the product to link in the video (if applicable)",
-        default=None
+        default=None,
     )
 
     # authentication arguments
@@ -94,7 +92,7 @@ def get_uploader_args():
     return parser.parse_args()
 
 
-def validate_uploader_args(args: dict):
+def validate_uploader_args(args: Namespace) -> None:
     """
     Preforms validation on each input given
     """
@@ -107,15 +105,13 @@ def validate_uploader_args(args: dict):
     if args.cookies and (args.username or args.password):
         raise ValueError("You can not pass in both cookies and username / password")
 
-    return args
 
-
-def auth():
+def auth() -> None:
     """
     Authenticates the user
     """
     args = get_auth_args()
-    args = validate_auth_args(args=args)
+    validate_auth_args(args=args)
 
     # runs the program using the arguments provided
     if args.input:
@@ -129,7 +125,7 @@ def auth():
         save_cookies(path=join(args.output, username + ".txt"), cookies=cookies)
 
 
-def get_auth_args():
+def get_auth_args() -> Namespace:
     """
     Generates a parser which is used to get all of the authentication information
     """
@@ -150,7 +146,7 @@ def get_auth_args():
     return parser.parse_args()
 
 
-def validate_auth_args(args):
+def validate_auth_args(args: Namespace) -> None:
     """
     Preforms validation on each input given
     """
@@ -158,10 +154,8 @@ def validate_auth_args(args):
     if (args["username"] and args["password"]) and args["input"]:
         raise ValueError("You can not pass in both username / password and input file")
 
-    return args
 
-
-def get_login_info(path: str, header=True) -> list:
+def get_login_info(path: str, header: bool = True) -> list[tuple[str, str]]:
     """
     Parses the input file into a list of usernames and passwords
     """
@@ -172,15 +166,10 @@ def get_login_info(path: str, header=True) -> list:
         return [line.split(",")[:2] for line in file]
 
 
-def parse_schedule(schedule_raw):
-    if schedule_raw:
-        schedule = datetime.datetime.strptime(schedule_raw, "%Y-%m-%d %H:%M")
-    else:
-        schedule = None
-    return schedule
+def parse_schedule(schedule_raw: str | None) -> datetime.datetime:
+    return datetime.datetime.strptime(schedule_raw, "%Y-%m-%d %H:%M") if schedule_raw else None
 
-
-def parse_proxy(proxy_raw):
+def parse_proxy(proxy_raw: str | None) -> dict:
     proxy = {}
     if proxy_raw:
         if "@" in proxy_raw:
