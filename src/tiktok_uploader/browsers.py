@@ -84,7 +84,7 @@ def get_default_options(name: browser_t, *args, **kwargs) -> BaseOptions:
     """
     cleaned_name = _clean_name(name)
 
-    if cleaned_name not in defaults:
+    if cleaned_name in defaults:
         return defaults[cleaned_name](*args, **kwargs)
 
     raise UnsupportedBrowserException()
