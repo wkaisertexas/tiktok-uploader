@@ -31,6 +31,7 @@ def test_get_driver() -> None:
     with pytest.raises(browsers.UnsupportedBrowserException):
         browsers.get_driver("invalid")
 
+
 # Test each default
 def test_chrome_defaults():
     """

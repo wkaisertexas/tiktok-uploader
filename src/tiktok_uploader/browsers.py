@@ -1,5 +1,5 @@
 """Gets the browser's given the user's input"""
-from selenium.webdriver.remote.webdriver import WebDriver 
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
@@ -17,7 +17,7 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.edge.service import Service as EdgeService
 
-from selenium.webdriver.remote.webdriver import WebDriver 
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium import webdriver
 
 from tiktok_uploader import config
@@ -30,7 +30,9 @@ from typing import Literal, Any, Type, Callable
 browser_t = Literal["chrome", "safari", "chromium", "edge", "firefox"]
 
 
-def get_browser(name: browser_t = "chrome", options: Any | None = None, *args, **kwargs) -> WebDriver:
+def get_browser(
+    name: browser_t = "chrome", options: Any | None = None, *args, **kwargs
+) -> WebDriver:
     """
     Gets a browser based on the name with the ability to pass in additional arguments
     """
@@ -45,7 +47,7 @@ def get_browser(name: browser_t = "chrome", options: Any | None = None, *args, *
     # combines them together into a completed driver
     service = get_service(name=name)
     if service:
-        driver = driver_to_use(service=service, options=options) # type: ignore
+        driver = driver_to_use(service=service, options=options)  # type: ignore
     else:
         driver = driver_to_use(options=options)
 
@@ -87,6 +89,7 @@ def get_default_options(name: browser_t, *args, **kwargs) -> BaseOptions:
         return defaults[cleaned_name](*args, **kwargs)
 
     raise UnsupportedBrowserException()
+
 
 def chrome_defaults(
     *args, headless: bool = False, proxy: dict | None = None, **kwargs
@@ -204,14 +207,14 @@ def _clean_name(name: str) -> str:
     return name.strip().lower()
 
 
-drivers : dict[str, Type[WebDriver]] = {
+drivers: dict[str, Type[WebDriver]] = {
     "chrome": webdriver.Chrome,
     "firefox": webdriver.Firefox,
     "safari": webdriver.Safari,
     "edge": webdriver.ChromiumEdge,
 }
 
-defaults : dict[str, Callable[..., BaseOptions]] = {
+defaults: dict[str, Callable[..., BaseOptions]] = {
     "chrome": chrome_defaults,
     "firefox": firefox_defaults,
     "safari": safari_defaults,
@@ -219,7 +222,7 @@ defaults : dict[str, Callable[..., BaseOptions]] = {
 }
 
 
-services : dict[str, Callable[[], Service]] = {
+services: dict[str, Callable[[], Service]] = {
     "chrome": lambda: ChromeService(ChromeDriverManager().install()),
     "firefox": lambda: FirefoxService(GeckoDriverManager().install()),
     "edge": lambda: EdgeService(EdgeChromiumDriverManager().install()),

@@ -3,6 +3,7 @@ from typing import TypedDict
 from datetime import datetime
 from http.cookiejar import Cookie as HttpCookie
 
+
 class ProxyDict(TypedDict, total=False):
     user: str
     password: str
@@ -19,12 +20,14 @@ class VideoDict(TypedDict, total=False):
     schedule: datetime
     product_id: str
 
+
 class Cookie(TypedDict, total=False):
     name: str
     value: str
     domain: str
     path: str
     expiry: int
+
 
 def cookie_from_dict(data: Cookie) -> HttpCookie:
     return HttpCookie(
@@ -44,5 +47,5 @@ def cookie_from_dict(data: Cookie) -> HttpCookie:
         None,
         None,
         {},
-        False
+        False,
     )

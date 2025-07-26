@@ -23,7 +23,7 @@ from selenium.common.exceptions import (
     TimeoutException,
     NoSuchElementException,
 )
-from selenium.webdriver.remote.webdriver import WebDriver 
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
@@ -33,6 +33,7 @@ from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_w
 
 from tiktok_uploader.types import VideoDict, ProxyDict, Cookie
 from typing import Any, Callable, Literal
+
 
 def upload_video(
     filename: str,
@@ -77,18 +78,16 @@ def upload_video(
         sessionid=sessionid,
     )
 
-    video_dict : VideoDict = {"path": filename}
+    video_dict: VideoDict = {"path": filename}
     if description:
         video_dict["description"] = description
     if schedule:
-        video_dict['schedule'] = schedule
+        video_dict["schedule"] = schedule
     if product_id:
-        video_dict['product_id'] = product_id
+        video_dict["product_id"] = product_id
 
     return upload_videos(
-        [
-            video_dict
-        ],
+        [video_dict],
         auth,
         proxy,
         *args,
@@ -140,7 +139,7 @@ def upload_videos(
     failed : list
         A list of videos which failed to upload
     """
-    videos = _convert_videos_dict(videos) # type: ignore
+    videos = _convert_videos_dict(videos)  # type: ignore
 
     if videos and len(videos) > 1:
         logger.debug("Uploading %d videos", len(videos))
@@ -151,9 +150,7 @@ def upload_videos(
             browser,
             "in headless mode" if headless else "",
         )
-        driver = get_browser(
-            browser, headless=headless, proxy=proxy, *args, **kwargs
-        )
+        driver = get_browser(browser, headless=headless, proxy=proxy, *args, **kwargs)
     else:
         logger.debug("Using user-defined browser agent")
         driver = browser_agent
@@ -196,7 +193,9 @@ def upload_videos(
                 timezone = pytz.UTC
                 if schedule.tzinfo is None:
                     schedule = schedule.astimezone(timezone)
-                elif (utc_offset := schedule.utcoffset()) is not None and int(utc_offset.total_seconds()) == 0:  # Equivalent to UTC
+                elif (utc_offset := schedule.utcoffset()) is not None and int(
+                    utc_offset.total_seconds()
+                ) == 0:  # Equivalent to UTC
                     schedule = timezone.localize(schedule)
                 else:
                     print(
@@ -701,9 +700,7 @@ def __time_picker(driver: WebDriver, hour: int, minute: int) -> None:
     condition = EC.presence_of_element_located(
         (By.XPATH, config["selectors"]["schedule"]["time_picker_container"])
     )
-    WebDriverWait(driver, config["implicit_wait"]).until(
-        condition
-    )
+    WebDriverWait(driver, config["implicit_wait"]).until(condition)
 
     # 00 = 0, 01 = 1, 02 = 2, 03 = 3, 04 = 4, 05 = 5, 06 = 6, 07 = 7, 08 = 8, 09 = 9, 10 = 10, 11 = 11, 12 = 12,
     # 13 = 13, 14 = 14, 15 = 15, 16 = 16, 17 = 17, 18 = 18, 19 = 19, 20 = 20, 21 = 21, 22 = 22, 23 = 23
@@ -802,7 +799,9 @@ def _check_valid_path(path: str) -> bool:
     return exists(path) and path.split(".")[-1] in config["supported_file_types"]
 
 
-def _get_valid_schedule_minute(schedule: datetime.datetime, valid_multiple) -> datetime.datetime:
+def _get_valid_schedule_minute(
+    schedule: datetime.datetime, valid_multiple
+) -> datetime.datetime:
     """
     Returns a datetime.datetime with valid minute for TikTok
     """
@@ -819,7 +818,9 @@ def _is_valid_schedule_minute(minute: int, valid_multiple) -> bool:
         return True
 
 
-def _set_valid_schedule_minute(schedule: datetime.datetime, valid_multiple: int) -> datetime.datetime:
+def _set_valid_schedule_minute(
+    schedule: datetime.datetime, valid_multiple: int
+) -> datetime.datetime:
     minute = schedule.minute
 
     remainder = minute % valid_multiple
@@ -878,7 +879,9 @@ def _get_splice_index(
         return min(nearest_mention, nearest_hashtag)
 
 
-def _convert_videos_dict(videos_list_of_dictionaries: list[dict[str, Any]]) -> list[VideoDict]:
+def _convert_videos_dict(
+    videos_list_of_dictionaries: list[dict[str, Any]]
+) -> list[VideoDict]:
     """
     Takes in a videos dictionary and converts it.
 
@@ -897,7 +900,7 @@ def _convert_videos_dict(videos_list_of_dictionaries: list[dict[str, Any]]) -> l
         """return the intersection of two lists"""
         return list(set(lst1) & set(lst2))
 
-    return_list : list[VideoDict] = []
+    return_list: list[VideoDict] = []
     for elem in videos_list_of_dictionaries:
         # preprocess the dictionary
         elem = {k.strip().lower(): v for k, v in elem.items()}
@@ -936,7 +939,7 @@ def _convert_videos_dict(videos_list_of_dictionaries: list[dict[str, Any]]) -> l
             else:
                 elem[correct_description] = ""  # null description is fine
 
-        return_list.append(elem) # type: ignore
+        return_list.append(elem)  # type: ignore
 
     return return_list
 

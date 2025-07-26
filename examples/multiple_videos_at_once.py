@@ -10,7 +10,7 @@ import urllib.request
 URL = "https://raw.githubusercontent.com/wkaisertexas/wkaisertexas.github.io/main/upload.mp4"
 FILENAME = "upload.mp4"
 
-videos : list[VideoDict] = [
+videos: list[VideoDict] = [
     {
         "path": "upload.mp4",
         "description": "This is the first upload",

@@ -8,7 +8,8 @@ import datetime
 
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
-from tiktok_uploader.types import VideoDict, ProxyDict
+from tiktok_uploader.types import ProxyDict
+
 
 def main() -> None:
     """
@@ -99,7 +100,7 @@ def validate_uploader_args(args: Namespace) -> None:
 
     # Makes sure the video file exists
     if not exists(args.video):
-        raise FileNotFoundError(f'Could not find the video file at {args.video}')
+        raise FileNotFoundError(f"Could not find the video file at {args.video}")
 
     # User can not pass in both cookies and username / password
     if args.cookies and (args.username or args.password):
@@ -159,11 +160,12 @@ def get_login_info(path: str, header: bool = True) -> list[tuple[str, str]]:
     """
     Parses the input file into a list of usernames and passwords
     """
+
     def extract_username_and_pass(input_str: str) -> tuple[str, str]:
         split_string = input_str.strip().split(",")
         if len(split_string) != 2:
             raise ValueError(f"{input_str} not valid")
-        
+
         user, password = split_string
 
         return user, password
@@ -172,15 +174,20 @@ def get_login_info(path: str, header: bool = True) -> list[tuple[str, str]]:
         parsed_file = file.readlines()
         if header:
             parsed_file = parsed_file[1:]
-        
+
         return [extract_username_and_pass(line) for line in parsed_file]
 
 
 def parse_schedule(schedule_raw: str | None) -> datetime.datetime | None:
-    return datetime.datetime.strptime(schedule_raw, "%Y-%m-%d %H:%M") if schedule_raw else None
+    return (
+        datetime.datetime.strptime(schedule_raw, "%Y-%m-%d %H:%M")
+        if schedule_raw
+        else None
+    )
+
 
 def parse_proxy(proxy_raw: str | None) -> ProxyDict:
-    proxy : ProxyDict = {}
+    proxy: ProxyDict = {}
     if proxy_raw:
         if "@" in proxy_raw:
             proxy["user"] = proxy_raw.split("@")[0].split(":")[0]
