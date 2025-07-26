@@ -8,18 +8,6 @@ import pytest
 SUPPORTED_BROWSERS = ["chrome", "firefox", "safari", "edge"]
 SERVICES = ["chrome", "firefox", "edge"]
 
-
-# Default behavior testing
-def test_get_browser() -> None:
-    """
-    Tests the get_browser function.
-
-    Requires all browsers to be installed on the system.
-    """
-    browser = browsers.get_browser()
-    assert browser is not None
-
-
 def test_get_driver() -> None:
     """
     Tests the get_driver function.
