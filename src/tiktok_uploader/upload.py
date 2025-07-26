@@ -23,7 +23,7 @@ from selenium.common.exceptions import (
     TimeoutException,
     NoSuchElementException,
 )
-from selenium import webdriver
+from selenium.webdriver.remote.webdriver import WebDriver 
 
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
@@ -31,33 +31,18 @@ from tiktok_uploader import config, logger
 from tiktok_uploader.utils import bold, green, red
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
-from typing import TypedDict, Literal, Callable
-
-
-class ProxyDict(TypedDict, total=False):
-    user: str
-    pass_: str
-    host: str
-    port: str
-
-
-class VideoDict(TypedDict, total=False):
-    path: str
-    video: str
-    stitch: bool
-    duel: bool
-    schedule: datetime.datetime
-
+from tiktok_uploader.types import VideoDict, ProxyDict, Cookie
+from typing import Any, Callable, Literal
 
 def upload_video(
     filename: str,
     description: str | None = None,
     cookies: str = "",
-    schedule: datetime.datetime = None,
+    schedule: datetime.datetime | None = None,
     username: str = "",
     password: str = "",
     sessionid: str | None = None,
-    cookies_list: str | None = None,
+    cookies_list: list[Cookie] = [],
     cookies_str: str | None = None,
     proxy: ProxyDict | None = None,
     product_id: str | None = None,
@@ -92,29 +77,32 @@ def upload_video(
         sessionid=sessionid,
     )
 
+    video_dict : VideoDict = {"path": filename}
+    if description:
+        video_dict["description"] = description
+    if schedule:
+        video_dict['schedule'] = schedule
+    if product_id:
+        video_dict['product_id'] = product_id
+
     return upload_videos(
-        videos=[
-            {
-                "path": filename,
-                "description": description,
-                "schedule": schedule,
-                "product_id": product_id,
-            }
+        [
+            video_dict
         ],
-        auth=auth,
-        proxy=proxy,
+        auth,
+        proxy,
         *args,
         **kwargs,
     )
 
 
 def upload_videos(
-    videos: list[VideoDict] = None,
-    auth: AuthBackend = None,
-    proxy: ProxyDict = None,
+    videos: list[VideoDict],
+    auth: AuthBackend,
+    proxy: ProxyDict | None = None,
     browser: Literal["chrome", "safari", "chromium", "edge", "firefox"] = "chrome",
-    browser_agent: webdriver = None,
-    on_complete: Callable[[VideoDict], None] = None,
+    browser_agent: WebDriver | None = None,
+    on_complete: Callable[[VideoDict], None] | None = None,
     headless: bool = False,
     num_retries: int = 1,
     skip_split_window: bool = False,
@@ -152,7 +140,7 @@ def upload_videos(
     failed : list
         A list of videos which failed to upload
     """
-    videos = _convert_videos_dict(videos)
+    videos = _convert_videos_dict(videos) # type: ignore
 
     if videos and len(videos) > 1:
         logger.debug("Uploading %d videos", len(videos))
@@ -164,7 +152,7 @@ def upload_videos(
             "in headless mode" if headless else "",
         )
         driver = get_browser(
-            name=browser, headless=headless, proxy=proxy, *args, **kwargs
+            browser, headless=headless, proxy=proxy, *args, **kwargs
         )
     else:
         logger.debug("Using user-defined browser agent")
@@ -182,14 +170,14 @@ def upload_videos(
     # uploads each video
     for video in videos:
         try:
-            path = abspath(video.get("path"))
+            path = abspath(video.get("path", "."))
             description = video.get("description", "")
             schedule = video.get("schedule", None)
             product_id = video.get("product_id", None)
 
             logger.debug(
                 "Posting %s%s",
-                bold(video.get("path")),
+                bold(video.get("path", "")),
                 (
                     f'\n{" " * 15}with description: {bold(description)}'
                     if description
@@ -208,9 +196,7 @@ def upload_videos(
                 timezone = pytz.UTC
                 if schedule.tzinfo is None:
                     schedule = schedule.astimezone(timezone)
-                elif (
-                    int(schedule.utcoffset().total_seconds()) == 0
-                ):  # Equivalent to UTC
+                elif (utc_offset := schedule.utcoffset()) is not None and int(utc_offset.total_seconds()) == 0:  # Equivalent to UTC
                     schedule = timezone.localize(schedule)
                 else:
                     print(
@@ -236,9 +222,8 @@ def upload_videos(
                 description,
                 schedule,
                 skip_split_window,
-                product_id=product_id,
-                num_retries=num_retries,
-                headless=headless,
+                product_id,
+                num_retries,
                 *args,
                 **kwargs,
             )
@@ -257,10 +242,10 @@ def upload_videos(
 
 
 def complete_upload_form(
-    driver: webdriver,
+    driver: WebDriver,
     path: str,
     description: str,
-    schedule: datetime.datetime,
+    schedule: datetime.datetime | None,
     skip_split_window: bool,
     product_id: str | None = None,
     num_retries: int = 1,
@@ -306,7 +291,7 @@ def complete_upload_form(
     _post_video(driver)
 
 
-def _go_to_upload(driver: webdriver) -> None:
+def _go_to_upload(driver: WebDriver) -> None:
     """
     Navigates to the upload page, switches to the iframe and waits for it to load
 
@@ -334,7 +319,7 @@ def _go_to_upload(driver: webdriver) -> None:
     driver.switch_to.default_content()
 
 
-def _change_to_upload_iframe(driver: webdriver) -> None:
+def _change_to_upload_iframe(driver: WebDriver) -> None:
     """
     Switch to the iframe of the upload page
 
@@ -349,7 +334,7 @@ def _change_to_upload_iframe(driver: webdriver) -> None:
     driver.switch_to.frame(iframe)
 
 
-def _set_description(driver: webdriver, description: str) -> None:
+def _set_description(driver: WebDriver, description: str) -> None:
     """
     Sets the description of the video
 
@@ -431,7 +416,7 @@ def _set_description(driver: webdriver, description: str) -> None:
 
                     for i in range(len(user_id_elements)):
                         user_id_element = user_id_elements[i]
-                        if user_id_element and user_id_element.is_enabled:
+                        if user_id_element and user_id_element.is_enabled():
                             username = user_id_element.text.split(" ")[0]
                             if username.lower() == word[1:].lower():
                                 found = True
@@ -469,7 +454,7 @@ def _clear(element) -> None:
 
 
 def _set_video(
-    driver: webdriver, path: str = "", num_retries: int = 3, **kwargs
+    driver: WebDriver, path: str = "", num_retries: int = 3, **kwargs
 ) -> None:
     """
     Sets the video to upload
@@ -544,7 +529,7 @@ def _remove_cookies_window(driver) -> None:
     decline_button.click()
 
 
-def _remove_split_window(driver: webdriver) -> None:
+def _remove_split_window(driver: WebDriver) -> None:
     """
     Remove the split window if it is open
 
@@ -565,7 +550,7 @@ def _remove_split_window(driver: webdriver) -> None:
 
 
 def _set_interactivity(
-    driver: webdriver,
+    driver: WebDriver,
     comment: bool = True,
     stitch: bool = True,
     duet: bool = True,
@@ -610,7 +595,7 @@ def _set_interactivity(
         logger.error("Failed to set interactivity settings")
 
 
-def _set_schedule_video(driver: webdriver, schedule: datetime.datetime) -> None:
+def _set_schedule_video(driver: WebDriver, schedule: datetime.datetime) -> None:
     """
     Sets the schedule of the video
 
@@ -644,7 +629,7 @@ def _set_schedule_video(driver: webdriver, schedule: datetime.datetime) -> None:
         raise FailedToUpload()
 
 
-def __date_picker(driver: webdriver, month: int, day: int) -> None:
+def __date_picker(driver: WebDriver, month: int, day: int) -> None:
     logger.debug(green("Picking date"))
 
     condition = EC.presence_of_element_located(
@@ -689,7 +674,7 @@ def __date_picker(driver: webdriver, month: int, day: int) -> None:
     __verify_date_picked_is_correct(driver, month, day)
 
 
-def __verify_date_picked_is_correct(driver: webdriver, month: int, day: int):
+def __verify_date_picked_is_correct(driver: WebDriver, month: int, day: int) -> None:
     date_selected = driver.find_element(
         By.XPATH, config["selectors"]["schedule"]["date_picker"]
     ).text
@@ -704,7 +689,7 @@ def __verify_date_picked_is_correct(driver: webdriver, month: int, day: int):
         raise Exception(msg)
 
 
-def __time_picker(driver: webdriver, hour: int, minute: int) -> None:
+def __time_picker(driver: WebDriver, hour: int, minute: int) -> None:
     logger.debug(green("Picking time"))
 
     condition = EC.presence_of_element_located(
@@ -756,7 +741,7 @@ def __time_picker(driver: webdriver, hour: int, minute: int) -> None:
     __verify_time_picked_is_correct(driver, hour, minute)
 
 
-def __verify_time_picked_is_correct(driver: webdriver, hour: int, minute: int):
+def __verify_time_picked_is_correct(driver: WebDriver, hour: int, minute: int) -> None:
     time_selected = driver.find_element(
         By.XPATH, config["selectors"]["schedule"]["time_picker_text"]
     ).text
@@ -774,7 +759,7 @@ def __verify_time_picked_is_correct(driver: webdriver, hour: int, minute: int):
         raise Exception(msg)
 
 
-def _post_video(driver: webdriver) -> None:
+def _post_video(driver: WebDriver) -> None:
     """
     Posts the video by clicking the post button
 
@@ -893,7 +878,7 @@ def _get_splice_index(
         return min(nearest_mention, nearest_hashtag)
 
 
-def _convert_videos_dict(videos_list_of_dictionaries: list[VideoDict]) -> list[VideoDict]:
+def _convert_videos_dict(videos_list_of_dictionaries: list[dict[str, Any]]) -> list[VideoDict]:
     """
     Takes in a videos dictionary and converts it.
 
@@ -912,7 +897,7 @@ def _convert_videos_dict(videos_list_of_dictionaries: list[VideoDict]) -> list[V
         """return the intersection of two lists"""
         return list(set(lst1) & set(lst2))
 
-    return_list = []
+    return_list : list[VideoDict] = []
     for elem in videos_list_of_dictionaries:
         # preprocess the dictionary
         elem = {k.strip().lower(): v for k, v in elem.items()}
@@ -951,12 +936,12 @@ def _convert_videos_dict(videos_list_of_dictionaries: list[VideoDict]) -> list[V
             else:
                 elem[correct_description] = ""  # null description is fine
 
-        return_list.append(elem)
+        return_list.append(elem) # type: ignore
 
     return return_list
 
 
-def __get_driver_timezone(driver: webdriver) -> pytz.timezone:
+def __get_driver_timezone(driver: WebDriver) -> Any:
     """
     Returns the timezone of the driver
     """
@@ -966,7 +951,7 @@ def __get_driver_timezone(driver: webdriver) -> pytz.timezone:
     return pytz.timezone(timezone_str)
 
 
-def _refresh_with_alert(driver: webdriver) -> None:
+def _refresh_with_alert(driver: WebDriver) -> None:
     try:
         # attempt to refresh the page
         driver.refresh()
@@ -999,7 +984,7 @@ class FailedToUpload(Exception):
         super().__init__(message or self.__doc__)
 
 
-def _add_product_link(driver: webdriver, product_id: str) -> None:
+def _add_product_link(driver: WebDriver, product_id: str) -> None:
     """
     Adds the product link to the video using the provided product ID.
     """

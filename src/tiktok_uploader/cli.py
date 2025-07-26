@@ -8,7 +8,7 @@ import datetime
 
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
-
+from tiktok_uploader.types import VideoDict, ProxyDict
 
 def main() -> None:
     """
@@ -99,7 +99,7 @@ def validate_uploader_args(args: Namespace) -> None:
 
     # Makes sure the video file exists
     if not exists(args.video):
-        raise FileNotFoundError(f'Could not find the video file at {args["video"]}')
+        raise FileNotFoundError(f'Could not find the video file at {args.video}')
 
     # User can not pass in both cookies and username / password
     if args.cookies and (args.username or args.password):
@@ -151,7 +151,7 @@ def validate_auth_args(args: Namespace) -> None:
     Preforms validation on each input given
     """
     # username and password or input files are mutually exclusive
-    if (args["username"] and args["password"]) and args["input"]:
+    if args.username and args.password and args.input:
         raise ValueError("You can not pass in both username / password and input file")
 
 
@@ -159,22 +159,32 @@ def get_login_info(path: str, header: bool = True) -> list[tuple[str, str]]:
     """
     Parses the input file into a list of usernames and passwords
     """
+    def extract_username_and_pass(input_str: str) -> tuple[str, str]:
+        split_string = input_str.strip().split(",")
+        if len(split_string) != 2:
+            raise ValueError(f"{input_str} not valid")
+        
+        user, password = split_string
+
+        return user, password
+
     with open(path, "r", encoding="utf-8") as file:
-        file = file.readlines()
+        parsed_file = file.readlines()
         if header:
-            file = file[1:]
-        return [line.split(",")[:2] for line in file]
+            parsed_file = parsed_file[1:]
+        
+        return [extract_username_and_pass(line) for line in parsed_file]
 
 
-def parse_schedule(schedule_raw: str | None) -> datetime.datetime:
+def parse_schedule(schedule_raw: str | None) -> datetime.datetime | None:
     return datetime.datetime.strptime(schedule_raw, "%Y-%m-%d %H:%M") if schedule_raw else None
 
-def parse_proxy(proxy_raw: str | None) -> dict:
-    proxy = {}
+def parse_proxy(proxy_raw: str | None) -> ProxyDict:
+    proxy : ProxyDict = {}
     if proxy_raw:
         if "@" in proxy_raw:
             proxy["user"] = proxy_raw.split("@")[0].split(":")[0]
-            proxy["pass"] = proxy_raw.split("@")[0].split(":")[1]
+            proxy["password"] = proxy_raw.split("@")[0].split(":")[1]
             proxy["host"] = proxy_raw.split("@")[1].split(":")[0]
             proxy["port"] = proxy_raw.split("@")[1].split(":")[1]
         else:
