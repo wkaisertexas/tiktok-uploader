@@ -20,6 +20,7 @@ jobs:
     - name: Install dev dependencies with uv
       run: |
         uv sync --all-extras
+        uv sync --group types
 
     - name: Linter
       run: |
