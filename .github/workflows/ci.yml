@@ -19,7 +19,7 @@ jobs:
 
     - name: Install dev dependencies with uv
       run: |
-        uv pip install -e .[dev]
+        uv sync --all-extras
 
     - name: Linter
       run: |
