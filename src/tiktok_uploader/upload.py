@@ -176,7 +176,7 @@ def upload_videos(
                 "Posting %s%s",
                 bold(video.get("path", "")),
                 (
-                    f'\n{" " * 15}with description: {bold(description)}'
+                    f"\n{' ' * 15}with description: {bold(description)}"
                     if description
                     else ""
                 ),
@@ -880,7 +880,7 @@ def _get_splice_index(
 
 
 def _convert_videos_dict(
-    videos_list_of_dictionaries: list[dict[str, Any]]
+    videos_list_of_dictionaries: list[dict[str, Any]],
 ) -> list[VideoDict]:
     """
     Takes in a videos dictionary and converts it.
@@ -964,9 +964,8 @@ def _refresh_with_alert(driver: WebDriver) -> None:
 
         # accept the alert
         driver.switch_to.alert.accept()
-    except:
-        # if no alert appears, the page is fine
-        pass
+    except Exception as e:
+        print(f"Exception when refreshing alert {e}")
 
 
 class DescriptionTooLong(Exception):

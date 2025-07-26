@@ -1,6 +1,7 @@
 """
 Uploads multiple videos downloaded from the internet
 """
+
 from tiktok_uploader.upload import upload_videos
 from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader.types import VideoDict

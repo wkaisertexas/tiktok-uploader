@@ -1,6 +1,7 @@
 """
 Uploads a series of videos to TikTok
 """
+
 from sys import argv
 
 import pandas as pd

@@ -1,4 +1,5 @@
 """Handles authentication for TikTokUploader"""
+
 from http import cookiejar
 from time import time, sleep
 

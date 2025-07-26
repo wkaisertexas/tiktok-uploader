@@ -1,4 +1,5 @@
 """Gets the browser's given the user's input"""
+
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -7,7 +8,6 @@ from selenium.webdriver.safari.options import Options as SafariOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.common.options import BaseOptions
 from selenium.webdriver.common.service import Service
-from selenium.webdriver.chrome.options import Options as BaseOptions
 
 # Webdriver managers
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -17,7 +17,6 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.edge.service import Service as EdgeService
 
-from selenium.webdriver.remote.webdriver import WebDriver
 from selenium import webdriver
 
 from tiktok_uploader import config
@@ -127,7 +126,7 @@ def chrome_defaults(
             )
             options.add_extension(extension_file)
         else:
-            options.add_argument(f'--proxy-server={proxy["host"]}:{proxy["port"]}')
+            options.add_argument(f"--proxy-server={proxy['host']}:{proxy['port']}")
 
     return options
 
