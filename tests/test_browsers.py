@@ -8,6 +8,7 @@ import pytest
 SUPPORTED_BROWSERS = ["chrome", "firefox", "safari", "edge"]
 SERVICES = ["chrome", "firefox", "edge"]
 
+
 def test_get_driver() -> None:
     """
     Tests the get_driver function.
