@@ -779,6 +779,18 @@ def _post_video(driver: WebDriver) -> None:
         logger.debug(green("Trying to click on the button again"))
         driver.execute_script('document.querySelector(".TUXButton--primary").click()')
 
+    # wait for button with text "Post now" and click it if it exists
+    try:
+        print(green("Waiting for 'Post now' button"))
+        logger.debug(green("Waiting for 'Post now' button"))
+        post_now_button = WebDriverWait(driver, config["implicit_wait"]).until(
+            EC.element_to_be_clickable((By.XPATH, config["selectors"]["upload"]["post_now"]))
+        )
+        post_now_button.click()
+    except TimeoutException:
+        print("No 'Post now' button found, proceeding without it")
+        logger.debug("No 'Post now' button found, proceeding")
+
     # waits for the video to upload
     post_confirmation = EC.presence_of_element_located(
         (By.XPATH, config["selectors"]["upload"]["post_confirmation"])
