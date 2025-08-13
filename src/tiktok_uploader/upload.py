@@ -603,10 +603,12 @@ def _set_interactivity(
         logger.error("Failed to set interactivity settings")
 
 
-def _set_visibility(driver: WebDriver, visibility: Literal["everyone", "friends", "only_you"]) -> None:
+def _set_visibility(
+    driver: WebDriver, visibility: Literal["everyone", "friends", "only_you"]
+) -> None:
     """
     Sets the visibility/privacy of the video
-    
+
     Parameters
     ----------
     driver : selenium.webdriver
@@ -615,34 +617,36 @@ def _set_visibility(driver: WebDriver, visibility: Literal["everyone", "friends"
     """
     try:
         logger.debug(green(f"Setting visibility to: {visibility}"))
-        
+
         # Find the dropdown button for visibility
-        dropdown_xpath = "//div[@data-e2e='video_visibility_container']//button[@role='combobox']"
+        dropdown_xpath = (
+            "//div[@data-e2e='video_visibility_container']//button[@role='combobox']"
+        )
         dropdown = WebDriverWait(driver, config["implicit_wait"]).until(
             EC.element_to_be_clickable((By.XPATH, dropdown_xpath))
         )
-        
+
         # Click to open the dropdown
         dropdown.click()
         time.sleep(1.5)  # Wait for dropdown animation
-        
+
         # Map visibility values to the text that appears in the dropdown
         visibility_text_map = {
             "everyone": "Everyone",
-            "friends": "Friends", 
-            "only_you": "Only you"
+            "friends": "Friends",
+            "only_you": "Only you",
         }
-        
+
         option_text = visibility_text_map.get(visibility, "Everyone")
-        
+
         # Try multiple selectors for the dropdown options
         option_selectors = [
             f"//div[@role='option']//span[contains(text(), '{option_text}')]",
             f"//div[@role='option' and contains(., '{option_text}')]",
             f"//li[@role='option' and contains(., '{option_text}')]",
-            f"//*[@role='option' and contains(text(), '{option_text}')]"
+            f"//*[@role='option' and contains(text(), '{option_text}')]",
         ]
-        
+
         option_found = False
         for selector in option_selectors:
             try:
@@ -655,9 +659,13 @@ def _set_visibility(driver: WebDriver, visibility: Literal["everyone", "friends"
                 option_found = True
                 logger.debug(green(f"Successfully set visibility to: {visibility}"))
                 break
-            except (TimeoutException, NoSuchElementException, ElementClickInterceptedException):
+            except (
+                TimeoutException,
+                NoSuchElementException,
+                ElementClickInterceptedException,
+            ):
                 continue
-        
+
         if not option_found:
             # Fallback: try to find by partial text
             all_options = driver.find_elements(By.XPATH, "//*[@role='option']")
@@ -667,12 +675,16 @@ def _set_visibility(driver: WebDriver, visibility: Literal["everyone", "friends"
                     time.sleep(0.5)
                     opt.click()
                     option_found = True
-                    logger.debug(green(f"Successfully set visibility to: {visibility} (fallback method)"))
+                    logger.debug(
+                        green(
+                            f"Successfully set visibility to: {visibility} (fallback method)"
+                        )
+                    )
                     break
-        
+
         if not option_found:
             logger.error(red(f"Could not find option for visibility: {visibility}"))
-        
+
     except TimeoutException:
         logger.error(red("Failed to set visibility - dropdown not found"))
     except Exception as e:
