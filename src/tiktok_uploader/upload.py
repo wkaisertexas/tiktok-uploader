@@ -655,7 +655,7 @@ def _set_visibility(driver: WebDriver, visibility: Literal["everyone", "friends"
                 option_found = True
                 logger.debug(green(f"Successfully set visibility to: {visibility}"))
                 break
-            except:
+            except (TimeoutException, NoSuchElementException, ElementClickInterceptedException):
                 continue
         
         if not option_found:
