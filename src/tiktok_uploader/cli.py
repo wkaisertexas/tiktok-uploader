@@ -170,7 +170,7 @@ def get_login_info(path: str, header: bool = True) -> list[tuple[str, str]]:
 
         return user, password
 
-    with open(path, "r", encoding="utf-8") as file:
+    with open(path, encoding="utf-8") as file:
         parsed_file = file.readlines()
         if header:
             parsed_file = parsed_file[1:]

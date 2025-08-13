@@ -96,7 +96,7 @@ class AuthBackend:
         Gets cookies from the passed file using the netscape standard
         """
         if path:
-            with open(path, "r", encoding="utf-8") as file:
+            with open(path, encoding="utf-8") as file:
                 lines = file.read().split("\n")
         elif cookies_str is not None:
             lines = cookies_str.split("\n")
