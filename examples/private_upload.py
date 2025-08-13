@@ -4,6 +4,7 @@ Example of uploading a private video to TikTok
 
 from tiktok_uploader.upload import upload_video, upload_videos
 from tiktok_uploader.auth import AuthBackend
+from tiktok_uploader.types import VideoDict
 
 # Upload a private video (only visible to you)
 upload_video(
@@ -23,7 +24,7 @@ upload_video(
 
 # Using multiple videos with different visibility settings
 
-videos = [
+videos: list[VideoDict] = [
     {
         "path": "public_video.mp4",
         "description": "This is a public video",

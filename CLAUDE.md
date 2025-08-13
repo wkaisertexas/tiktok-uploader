@@ -42,24 +42,48 @@ uv run python -m tiktok_uploader
 # Run all tests
 uv run pytest
 
+# Run all tests with verbose output
+uv run pytest -v
+
 # Run specific test file
 uv run pytest tests/test_upload.py
 
-# Run with specific test selection
+# Run with specific test selection (by name pattern)
 uv run pytest -k "test_name"
+
+# Run specific test function
+uv run pytest tests/test_upload.py::test_function_name
+
+# Run tests for specific feature
+uv run pytest -k "visibility"
+
+# Run tests with coverage report
+uv run pytest --cov=src/tiktok_uploader
+
+# Run tests and stop on first failure
+uv run pytest -x
 ```
 
 ### Code Quality
 
 ```bash
-# Lint code with ruff
-uv run ruff check src/
+# Lint code with ruff (check for errors)
+uv run ruff check .
 
-# Format code with ruff
-uv run ruff format src/
+# Format code with ruff (apply consistent formatting)
+uv run ruff format .
+
+# Check formatting without applying changes
+uv run ruff format --check .
 
 # Type checking with mypy
 uv run mypy src/tiktok_uploader/
+
+# Combined quality check workflow (run all before committing)
+uv run ruff check . && uv run ruff format . && uv run mypy src/tiktok_uploader/
+
+# Complete CI workflow (matches GitHub Actions - REQUIRED before committing)
+uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run pytest
 ```
 
 ### Package Management
@@ -74,6 +98,57 @@ uv add package_name
 # Add dev dependency
 uv add --group dev package_name
 ```
+
+## Development Workflow
+
+### Before Committing Changes
+
+**ALWAYS run the complete quality check workflow:**
+
+```bash
+# 1. Run tests to ensure functionality
+uv run pytest
+
+# 2. Check for linting errors
+uv run ruff check .
+
+# 3. Format code consistently
+uv run ruff format .
+
+# 4. Verify type checking
+uv run mypy src/tiktok_uploader/
+
+# Complete CI workflow - REQUIRED before committing (matches GitHub Actions)
+uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run pytest
+```
+
+### Git Workflow
+
+```bash
+# Create feature branch
+git checkout -b feature-name
+
+# Make changes and test them
+# ... code changes ...
+
+# Run complete CI workflow (REQUIRED before committing)
+uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run pytest
+
+# Stage and commit changes
+git add .
+git commit -m "feat: descriptive commit message"
+
+# Push to remote
+git push -u origin feature-name
+```
+
+### Testing New Features
+
+When adding new features:
+1. **Write tests first** - Add test cases in `tests/` directory
+2. **Test locally** - Use provided test videos and session credentials
+3. **Verify with screenshots** - For UI interactions, capture browser screenshots
+4. **Run full test suite** - Ensure no regressions
 
 ## Important Implementation Details
 

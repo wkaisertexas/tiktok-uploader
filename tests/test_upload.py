@@ -248,7 +248,7 @@ def test_visibility_parameter_validation() -> None:
     ]
 
     for visibility in valid_visibilities:
-        video_dict: VideoDict = {
+        video_dict = {
             "path": FILENAME,
             "description": f"Video with {visibility} visibility",
             "visibility": visibility,
@@ -366,9 +366,14 @@ def test_video_dict_type_with_visibility() -> None:
     assert video["visibility"] == "only_you"
 
     # Test all valid visibility values
-    for visibility_value in ["everyone", "friends", "only_you"]:
-        video: VideoDict = {
+    visibility_options: list[Literal["everyone", "friends", "only_you"]] = [
+        "everyone",
+        "friends",
+        "only_you",
+    ]
+    for visibility_value in visibility_options:
+        test_video: VideoDict = {
             "path": FILENAME,
-            "visibility": visibility_value,  # type: ignore
+            "visibility": visibility_value,
         }
-        assert video["visibility"] == visibility_value
+        assert test_video["visibility"] == visibility_value
