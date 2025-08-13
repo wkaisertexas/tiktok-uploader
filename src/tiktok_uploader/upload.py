@@ -32,7 +32,8 @@ from tiktok_uploader.utils import bold, green, red
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 from tiktok_uploader.types import VideoDict, ProxyDict, Cookie
-from typing import Any, Callable, Literal
+from typing import Any, Literal
+from collections.abc import Callable
 
 
 def upload_video(
@@ -768,8 +769,11 @@ def _post_video(driver: WebDriver) -> None:
 
     try:
         post = WebDriverWait(driver, config["uploading_wait"]).until(
-            lambda d: (el := d.find_element(By.XPATH, config["selectors"]["upload"]["post"])) and
-                      el.get_attribute("data-disabled") == "false" and el
+            lambda d: (
+                el := d.find_element(By.XPATH, config["selectors"]["upload"]["post"])
+            )
+            and el.get_attribute("data-disabled") == "false"
+            and el
         )
         driver.execute_script(
             "arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", post
