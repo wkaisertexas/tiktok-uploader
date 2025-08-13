@@ -639,51 +639,17 @@ def _set_visibility(
 
         option_text = visibility_text_map.get(visibility, "Everyone")
 
-        # Try multiple selectors for the dropdown options
-        option_selectors = [
-            f"//div[@role='option']//span[contains(text(), '{option_text}')]",
-            f"//div[@role='option' and contains(., '{option_text}')]",
-            f"//li[@role='option' and contains(., '{option_text}')]",
-            f"//*[@role='option' and contains(text(), '{option_text}')]",
-        ]
+        # Use the selector that actually works (verified through testing)
+        option_xpath = f"//div[@role='option' and contains(., '{option_text}')]"
+        option = WebDriverWait(driver, config["implicit_wait"]).until(
+            EC.element_to_be_clickable((By.XPATH, option_xpath))
+        )
 
-        option_found = False
-        for selector in option_selectors:
-            try:
-                option = WebDriverWait(driver, 2).until(
-                    EC.element_to_be_clickable((By.XPATH, selector))
-                )
-                driver.execute_script("arguments[0].scrollIntoView(true);", option)
-                time.sleep(0.5)
-                option.click()
-                option_found = True
-                logger.debug(green(f"Successfully set visibility to: {visibility}"))
-                break
-            except (
-                TimeoutException,
-                NoSuchElementException,
-                ElementClickInterceptedException,
-            ):
-                continue
+        driver.execute_script("arguments[0].scrollIntoView(true);", option)
+        time.sleep(0.5)
+        option.click()
 
-        if not option_found:
-            # Fallback: try to find by partial text
-            all_options = driver.find_elements(By.XPATH, "//*[@role='option']")
-            for opt in all_options:
-                if option_text.lower() in opt.text.lower():
-                    driver.execute_script("arguments[0].scrollIntoView(true);", opt)
-                    time.sleep(0.5)
-                    opt.click()
-                    option_found = True
-                    logger.debug(
-                        green(
-                            f"Successfully set visibility to: {visibility} (fallback method)"
-                        )
-                    )
-                    break
-
-        if not option_found:
-            logger.error(red(f"Could not find option for visibility: {visibility}"))
+        logger.debug(green(f"Successfully set visibility to: {visibility}"))
 
     except TimeoutException:
         logger.error(red("Failed to set visibility - dropdown not found"))
