@@ -286,7 +286,7 @@ def test_upload_video_with_visibility(
     call_args = mock_complete_upload.call_args
 
     # Check that visibility was passed to complete_upload_form
-    assert call_args[0][6] == "only_you"  # visibility is the 7th positional argument
+    assert call_args[0][7] == "only_you"  # visibility is the 7th positional argument
 
     # Reset mocks
     mock_complete_upload.reset_mock()
@@ -300,7 +300,7 @@ def test_upload_video_with_visibility(
     )
 
     call_args = mock_complete_upload.call_args
-    assert call_args[0][6] == "friends"
+    assert call_args[0][7] == "friends"
 
     # Reset mocks
     mock_complete_upload.reset_mock()
@@ -311,7 +311,7 @@ def test_upload_video_with_visibility(
     )
 
     call_args = mock_complete_upload.call_args
-    assert call_args[0][6] == "everyone"  # Default value
+    assert call_args[0][7] == "everyone"  # Default value
 
 
 @patch("tiktok_uploader.upload.WebDriverWait")
