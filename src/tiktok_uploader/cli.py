@@ -2,27 +2,27 @@
 CLI is a controller for the command line use of this library
 """
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from os.path import exists, join
 import datetime
-import json
 
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
+from tiktok_uploader.types import ProxyDict
 
 
-def main():
+def main() -> None:
     """
     Passes arguments into the program
     """
     args = get_uploader_args()
-
-    args = validate_uploader_args(args=args)
+    validate_uploader_args(args)
 
     # parse args
     schedule = parse_schedule(args.schedule)
     proxy = parse_proxy(args.proxy)
     product_id = args.product_id
+    visibility = args.visibility
 
     # runs the program using the arguments provided
     result = upload_video(
@@ -35,6 +35,7 @@ def main():
         proxy=proxy,
         product_id=product_id,
         cover=args.cover,
+        visibility=visibility,
         sessionid=args.sessionid,
         headless=not args.attach,
     )
@@ -47,7 +48,7 @@ def main():
     print("-------------------------")
 
 
-def get_uploader_args():
+def get_uploader_args() -> Namespace:
     """
     Generates a parser which is used to get all of the video's information
     """
@@ -64,7 +65,7 @@ def get_uploader_args():
     parser.add_argument(
         "-t",
         "--schedule",
-        help="Schedule UTC time in %Y-%m-%d %H:%M format ",
+        help="Schedule UTC time in %%Y-%%m-%%d %%H:%%M format ",
         default=None,
     )
     parser.add_argument(
@@ -73,7 +74,13 @@ def get_uploader_args():
     parser.add_argument(
         "--product-id",
         help="ID of the product to link in the video (if applicable)",
-        default=None
+        default=None,
+    )
+    parser.add_argument(
+        "--visibility",
+        help="Video visibility: everyone (default), friends, or only_you",
+        choices=["everyone", "friends", "only_you"],
+        default="everyone",
     )
     parser.add_argument(
         "--cover",
@@ -101,14 +108,14 @@ def get_uploader_args():
     return parser.parse_args()
 
 
-def validate_uploader_args(args: dict):
+def validate_uploader_args(args: Namespace) -> None:
     """
     Preforms validation on each input given
     """
 
     # Makes sure the video file exists
     if not exists(args.video):
-        raise FileNotFoundError(f'Could not find the video file at {args["video"]}')
+        raise FileNotFoundError(f"Could not find the video file at {args.video}")
 
     # Makes sure the optional cover image file exists
     if args.cover and not exists(args.cover):
@@ -118,15 +125,13 @@ def validate_uploader_args(args: dict):
     if args.cookies and (args.username or args.password):
         raise ValueError("You can not pass in both cookies and username / password")
 
-    return args
 
-
-def auth():
+def auth() -> None:
     """
     Authenticates the user
     """
     args = get_auth_args()
-    args = validate_auth_args(args=args)
+    validate_auth_args(args=args)
 
     # runs the program using the arguments provided
     if args.input:
@@ -140,7 +145,7 @@ def auth():
         save_cookies(path=join(args.output, username + ".txt"), cookies=cookies)
 
 
-def get_auth_args():
+def get_auth_args() -> Namespace:
     """
     Generates a parser which is used to get all of the authentication information
     """
@@ -161,42 +166,51 @@ def get_auth_args():
     return parser.parse_args()
 
 
-def validate_auth_args(args):
+def validate_auth_args(args: Namespace) -> None:
     """
     Preforms validation on each input given
     """
     # username and password or input files are mutually exclusive
-    if (args["username"] and args["password"]) and args["input"]:
+    if args.username and args.password and args.input:
         raise ValueError("You can not pass in both username / password and input file")
 
-    return args
 
-
-def get_login_info(path: str, header=True) -> list:
+def get_login_info(path: str, header: bool = True) -> list[tuple[str, str]]:
     """
     Parses the input file into a list of usernames and passwords
     """
-    with open(path, "r", encoding="utf-8") as file:
-        file = file.readlines()
+
+    def extract_username_and_pass(input_str: str) -> tuple[str, str]:
+        split_string = input_str.strip().split(",")
+        if len(split_string) != 2:
+            raise ValueError(f"{input_str} not valid")
+
+        user, password = split_string
+
+        return user, password
+
+    with open(path, encoding="utf-8") as file:
+        parsed_file = file.readlines()
         if header:
-            file = file[1:]
-        return [line.split(",")[:2] for line in file]
+            parsed_file = parsed_file[1:]
+
+        return [extract_username_and_pass(line) for line in parsed_file]
 
 
-def parse_schedule(schedule_raw):
-    if schedule_raw:
-        schedule = datetime.datetime.strptime(schedule_raw, "%Y-%m-%d %H:%M")
-    else:
-        schedule = None
-    return schedule
+def parse_schedule(schedule_raw: str | None) -> datetime.datetime | None:
+    return (
+        datetime.datetime.strptime(schedule_raw, "%Y-%m-%d %H:%M")
+        if schedule_raw
+        else None
+    )
 
 
-def parse_proxy(proxy_raw):
-    proxy = {}
+def parse_proxy(proxy_raw: str | None) -> ProxyDict:
+    proxy: ProxyDict = {}
     if proxy_raw:
         if "@" in proxy_raw:
             proxy["user"] = proxy_raw.split("@")[0].split(":")[0]
-            proxy["pass"] = proxy_raw.split("@")[0].split(":")[1]
+            proxy["password"] = proxy_raw.split("@")[0].split(":")[1]
             proxy["host"] = proxy_raw.split("@")[1].split(":")[0]
             proxy["port"] = proxy_raw.split("@")[1].split(":")[1]
         else:

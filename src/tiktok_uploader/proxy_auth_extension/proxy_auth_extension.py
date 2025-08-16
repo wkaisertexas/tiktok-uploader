@@ -2,11 +2,13 @@ import zipfile
 import os
 import json
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 
 
-def replace_variables_in_js(js_content: str, variables_dict: dict):
+def replace_variables_in_js(js_content: str, variables_dict: dict[str, str]) -> str:
     for variable, value in variables_dict.items():
         js_content = js_content.replace("{{ " + variable + " }}", value)
+
     return js_content
 
 
@@ -16,7 +18,7 @@ def generate_proxy_auth_extension(
     proxy_user: str,
     proxy_pass: str,
     extension_file: str,
-):
+) -> None:
     """Generate a Chrome extension that modify proxy settings based on desired host, port, username and password.
 
     If you are using --headless in chromedriver, you must use --headless=new to support extensions in headless mode.
@@ -24,9 +26,9 @@ def generate_proxy_auth_extension(
     current_dir = os.path.dirname(os.path.abspath(__file__))
     manifest_json_path = os.path.join(current_dir, "manifest.json")
     background_js_path = os.path.join(current_dir, "background.js")
-    with open(manifest_json_path, "r", encoding="utf-8") as f:
+    with open(manifest_json_path, encoding="utf-8") as f:
         manifest_json = f.read()
-    with open(background_js_path, "r", encoding="utf-8") as f:
+    with open(background_js_path, encoding="utf-8") as f:
         background_js = f.read()
 
     variables_dict = {
@@ -42,7 +44,7 @@ def generate_proxy_auth_extension(
         zp.writestr("background.js", background_js)
 
 
-def get_my_ip(driver):
+def get_my_ip(driver: WebDriver):
     origin_tab = driver.current_window_handle
     driver.execute_script("window.open('', '_blank');")
     driver.switch_to.window(driver.window_handles[-1])
@@ -58,10 +60,7 @@ def get_my_ip(driver):
     return ip
 
 
-def proxy_is_working(driver, host: str):
+def proxy_is_working(driver: WebDriver, host: str) -> bool:
     ip = get_my_ip(driver)
 
-    if ip == host:
-        return True
-    else:
-        return False
+    return ip == host

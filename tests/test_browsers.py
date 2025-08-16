@@ -1,44 +1,24 @@
 """
 Test the browsers module.
 """
-import pytest
 
 import tiktok_uploader.browsers as browsers
+import pytest
 
 SUPPORTED_BROWSERS = ["chrome", "firefox", "safari", "edge"]
 SERVICES = ["chrome", "firefox", "edge"]
 
 
-# Default behavior testing
-def test_get_browser():
-    """
-    Tests the get_browser function.
-
-    Requires all browsers to be installed on the system.
-    """
-    browser = browsers.get_browser()
-    assert browser is not None
-
-
-def test_get_driver():
+def test_get_driver() -> None:
     """
     Tests the get_driver function.
     """
-    default = browsers.get_driver()
+    default = browsers.get_driver(name="chrome")
     assert default is not None
 
     # pytest throws exception test
     with pytest.raises(browsers.UnsupportedBrowserException):
         browsers.get_driver("invalid")
-
-
-def test_get_service():
-    """
-    Tests the get_service function.
-    """
-    default = browsers.get_service()
-
-    assert default is not None
 
 
 # Test each default

@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    name: Type Check, Lint, Format, and Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+
+    - name: Install dev dependencies with uv
+      run: |
+        uv sync --all-extras
+        uv sync --group types
+
+    - name: Linter
+      run: |
+        uv run ruff check .
+
+    - name: Format Check
+      run: |
+        uv run ruff format --check .
+
+    - name: Run mypy
+      run: |
+        uv run mypy .
+
+    - name: Run pytest with JUnit XML output
+      run: |
+        uv run pytest --junitxml=test-results.xml
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: junit-test-results
+        path: test-results.xml
