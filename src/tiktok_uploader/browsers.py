@@ -51,7 +51,7 @@ def get_browser(
     else:
         driver = driver_to_use(options=options)
 
-    driver.implicitly_wait(config["implicit_wait"])
+    driver.implicitly_wait(config.implicit_wait)
 
     return driver
 

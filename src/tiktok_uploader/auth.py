@@ -75,11 +75,9 @@ class AuthBackend:
 
         logger.debug(green("Authenticating browser with cookies"))
 
-        driver.get(config["paths"]["main"])
+        driver.get(str(config.paths.main))
 
-        WebDriverWait(driver, config["explicit_wait"]).until(
-            EC.title_contains("TikTok")
-        )
+        WebDriverWait(driver, config.explicit_wait).until(EC.title_contains("TikTok"))
 
         for cookie in self.cookies:
             try:
@@ -160,48 +158,48 @@ def login(driver: WebDriver, username: str, password: str) -> list[Cookie]:
     assert username and password, "Username and password are required"
 
     # checks if the browser is on TikTok
-    if config["paths"]["main"] not in driver.current_url:
-        driver.get(config["paths"]["main"])
+    if str(config.paths.main) not in driver.current_url:
+        driver.get(str(config.paths.main))
 
     # checks if the user is already logged in
-    if driver.get_cookie(config["selectors"]["login"]["cookie_of_interest"]):
+    if driver.get_cookie(config.selectors.login.cookie_of_interest):
         # clears the existing cookies
         driver.delete_all_cookies()
 
     # goes to the login site
-    driver.get(config["paths"]["login"])
+    driver.get(str(config.paths.login))
 
     # selects and fills the login and the password
-    username_field = WebDriverWait(driver, config["explicit_wait"]).until(
+    username_field = WebDriverWait(driver, config.explicit_wait).until(
         EC.presence_of_element_located(
-            (By.XPATH, config["selectors"]["login"]["username_field"])
+            (By.XPATH, config.selectors.login.username_field)
         )
     )
     username_field.clear()
     username_field.send_keys(username)
 
     password_field = driver.find_element(
-        By.XPATH, config["selectors"]["login"]["password_field"]
+        By.XPATH, config.selectors.login.password_field
     )
     password_field.clear()
     password_field.send_keys(password)
 
     # submits the form
-    submit = driver.find_element(By.XPATH, config["selectors"]["login"]["login_button"])
+    submit = driver.find_element(By.XPATH, config.selectors.login.login_button)
     submit.click()
 
     print(f"Complete the captcha for {username}")
 
     # Wait until the session id cookie is set
     start_time = time()
-    while not driver.get_cookie(config["selectors"]["login"]["cookie_of_interest"]):
+    while not driver.get_cookie(config.selectors.login.cookie_of_interest):
         sleep(0.5)
-        if time() - start_time > config["explicit_wait"]:
+        if time() - start_time > config.explicit_wait:
             raise InsufficientAuth()  # TODO: Make this something more real
 
     # wait until the url changes
-    WebDriverWait(driver, config["explicit_wait"]).until(
-        EC.url_changes(config["paths"]["login"])
+    WebDriverWait(driver, config.explicit_wait).until(
+        EC.url_changes(str(config.paths.login))
     )
 
     return driver.get_cookies()  # type: ignore
