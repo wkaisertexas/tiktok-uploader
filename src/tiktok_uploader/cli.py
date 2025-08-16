@@ -22,6 +22,7 @@ def main() -> None:
     schedule = parse_schedule(args.schedule)
     proxy = parse_proxy(args.proxy)
     product_id = args.product_id
+    visibility = args.visibility
 
     # runs the program using the arguments provided
     result = upload_video(
@@ -33,6 +34,7 @@ def main() -> None:
         cookies=args.cookies,
         proxy=proxy,
         product_id=product_id,
+        visibility=visibility,
         sessionid=args.sessionid,
         headless=not args.attach,
     )
@@ -62,7 +64,7 @@ def get_uploader_args() -> Namespace:
     parser.add_argument(
         "-t",
         "--schedule",
-        help="Schedule UTC time in %Y-%m-%d %H:%M format ",
+        help="Schedule UTC time in %%Y-%%m-%%d %%H:%%M format ",
         default=None,
     )
     parser.add_argument(
@@ -72,6 +74,12 @@ def get_uploader_args() -> Namespace:
         "--product-id",
         help="ID of the product to link in the video (if applicable)",
         default=None,
+    )
+    parser.add_argument(
+        "--visibility",
+        help="Video visibility: everyone (default), friends, or only_you",
+        choices=["everyone", "friends", "only_you"],
+        default="everyone",
     )
 
     # authentication arguments

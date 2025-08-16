@@ -48,6 +48,7 @@ def upload_video(
     cookies_str: str | None = None,
     proxy: ProxyDict | None = None,
     product_id: str | None = None,
+    visibility: Literal["everyone", "friends", "only_you"] = "everyone",
     *args,
     **kwargs,
 ) -> list[VideoDict]:
@@ -86,6 +87,8 @@ def upload_video(
         video_dict["schedule"] = schedule
     if product_id:
         video_dict["product_id"] = product_id
+    if visibility != "everyone":
+        video_dict["visibility"] = visibility
 
     return upload_videos(
         [video_dict],
@@ -172,6 +175,7 @@ def upload_videos(
             description = video.get("description", "")
             schedule = video.get("schedule", None)
             product_id = video.get("product_id", None)
+            visibility = video.get("visibility", "everyone")
 
             logger.debug(
                 "Posting %s%s",
@@ -223,6 +227,7 @@ def upload_videos(
                 schedule,
                 skip_split_window,
                 product_id,
+                visibility,
                 num_retries,
                 *args,
                 **kwargs,
@@ -248,6 +253,7 @@ def complete_upload_form(
     schedule: datetime.datetime | None,
     skip_split_window: bool,
     product_id: str | None = None,
+    visibility: Literal["everyone", "friends", "only_you"] = "everyone",
     num_retries: int = 1,
     headless: bool = False,
     *args,
@@ -284,6 +290,8 @@ def complete_upload_form(
         _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
+    if visibility != "everyone":
+        _set_visibility(driver, visibility)
     if schedule:
         _set_schedule_video(driver, schedule)
     if product_id:
@@ -587,6 +595,60 @@ def _set_interactivity(
 
     except Exception as _:
         logger.error("Failed to set interactivity settings")
+
+
+def _set_visibility(
+    driver: WebDriver, visibility: Literal["everyone", "friends", "only_you"]
+) -> None:
+    """
+    Sets the visibility/privacy of the video
+
+    Parameters
+    ----------
+    driver : selenium.webdriver
+    visibility : str
+        The visibility setting - "everyone", "friends", or "only_you"
+    """
+    try:
+        logger.debug(green(f"Setting visibility to: {visibility}"))
+
+        # Find the dropdown button for visibility
+        dropdown_xpath = (
+            "//div[@data-e2e='video_visibility_container']//button[@role='combobox']"
+        )
+        dropdown = WebDriverWait(driver, config["implicit_wait"]).until(
+            EC.element_to_be_clickable((By.XPATH, dropdown_xpath))
+        )
+
+        # Click to open the dropdown
+        dropdown.click()
+        time.sleep(1.5)  # Wait for dropdown animation
+
+        # Map visibility values to the text that appears in the dropdown
+        visibility_text_map = {
+            "everyone": "Everyone",
+            "friends": "Friends",
+            "only_you": "Only you",
+        }
+
+        option_text = visibility_text_map.get(visibility, "Everyone")
+
+        # Use the selector that actually works (verified through testing)
+        option_xpath = f"//div[@role='option' and contains(., '{option_text}')]"
+        option = WebDriverWait(driver, config["implicit_wait"]).until(
+            EC.element_to_be_clickable((By.XPATH, option_xpath))
+        )
+
+        driver.execute_script("arguments[0].scrollIntoView(true);", option)
+        time.sleep(0.5)
+        option.click()
+
+        logger.debug(green(f"Successfully set visibility to: {visibility}"))
+
+    except TimeoutException:
+        logger.error(red("Failed to set visibility - dropdown not found"))
+    except Exception as e:
+        logger.error(red(f"Failed to set visibility: {e}"))
 
 
 def _set_schedule_video(driver: WebDriver, schedule: datetime.datetime) -> None:
