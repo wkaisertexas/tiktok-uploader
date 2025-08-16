@@ -50,6 +50,16 @@ class LoginSelectors(StrictModel):
     cookie_of_interest: str
 
 
+class Cover(StrictModel):
+    cover_preview: str
+    edit_cover_button: str
+    edit_cover_container: str
+    upload_cover_tab: str
+    upload_cover: str
+    upload_confirmation: str
+    exit_cover_container: str
+
+
 class UploadSelectors(StrictModel):
     iframe: str
     split_window: str
@@ -58,6 +68,7 @@ class UploadSelectors(StrictModel):
     upload_confirmation: str
     process_confirmation: str
     description: str
+    cover: Cover
 
     visibility: str
     options: list[VisibilityOption]
@@ -114,6 +125,7 @@ class TikTokConfig(StrictModel):
 
     # Files / text
     supported_file_types: list[str]
+    supported_image_file_types: list[str]
     max_description_length: PositiveChars
 
     # Nested
@@ -133,7 +145,7 @@ class TikTokConfig(StrictModel):
             raise ValueError("list entries must be unique (case-insensitive)")
         return stripped
 
-    @field_validator("supported_file_types")
+    @field_validator("supported_file_types", "supported_image_file_types")
     @classmethod
     def _extensions(cls, v: list[str]) -> list[str]:
         if not v:

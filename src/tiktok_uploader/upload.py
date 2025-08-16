@@ -48,6 +48,8 @@ def upload_video(
     cookies_str: str | None = None,
     proxy: ProxyDict | None = None,
     product_id: str | None = None,
+    cover: str | None = None,
+    visibility: Literal["everyone", "friends", "only_you"] = "everyone",
     *args,
     **kwargs,
 ) -> list[VideoDict]:
@@ -86,6 +88,8 @@ def upload_video(
         video_dict["schedule"] = schedule
     if product_id:
         video_dict["product_id"] = product_id
+    if visibility != "everyone":
+        video_dict["visibility"] = visibility
 
     return upload_videos(
         [video_dict],
@@ -172,6 +176,11 @@ def upload_videos(
             description = video.get("description", "")
             schedule = video.get("schedule", None)
             product_id = video.get("product_id", None)
+            cover_path = video.get("cover", None)
+            if cover_path is not None:
+                cover_path = abspath(cover_path)
+
+            visibility = video.get("visibility", "everyone")
 
             logger.debug(
                 "Posting %s%s",
@@ -222,8 +231,11 @@ def upload_videos(
                 description,
                 schedule,
                 skip_split_window,
+                cover_path,
                 product_id,
+                visibility,
                 num_retries,
+                headless,
                 *args,
                 **kwargs,
             )
@@ -247,7 +259,9 @@ def complete_upload_form(
     description: str,
     schedule: datetime.datetime | None,
     skip_split_window: bool,
+    cover_path: str | None = None,
     product_id: str | None = None,
+    visibility: Literal["everyone", "friends", "only_you"] = "everyone",
     num_retries: int = 1,
     headless: bool = False,
     *args,
@@ -280,10 +294,14 @@ def complete_upload_form(
     # Wait for the upload to complete before proceeding
     upload_complete_event.wait()
 
+    if cover_path:
+        _set_cover(driver, cover_path)
     if not skip_split_window:
         _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
+    if visibility != "everyone":
+        _set_visibility(driver, visibility)
     if schedule:
         _set_schedule_video(driver, schedule)
     if product_id:
@@ -589,6 +607,60 @@ def _set_interactivity(
         logger.error("Failed to set interactivity settings")
 
 
+def _set_visibility(
+    driver: WebDriver, visibility: Literal["everyone", "friends", "only_you"]
+) -> None:
+    """
+    Sets the visibility/privacy of the video
+
+    Parameters
+    ----------
+    driver : selenium.webdriver
+    visibility : str
+        The visibility setting - "everyone", "friends", or "only_you"
+    """
+    try:
+        logger.debug(green(f"Setting visibility to: {visibility}"))
+
+        # Find the dropdown button for visibility
+        dropdown_xpath = (
+            "//div[@data-e2e='video_visibility_container']//button[@role='combobox']"
+        )
+        dropdown = WebDriverWait(driver, config.implicit_wait).until(
+            EC.element_to_be_clickable((By.XPATH, dropdown_xpath))
+        )
+
+        # Click to open the dropdown
+        dropdown.click()
+        time.sleep(1.5)  # Wait for dropdown animation
+
+        # Map visibility values to the text that appears in the dropdown
+        visibility_text_map = {
+            "everyone": "Everyone",
+            "friends": "Friends",
+            "only_you": "Only you",
+        }
+
+        option_text = visibility_text_map.get(visibility, "Everyone")
+
+        # Use the selector that actually works (verified through testing)
+        option_xpath = f"//div[@role='option' and contains(., '{option_text}')]"
+        option = WebDriverWait(driver, config.implicit_wait).until(
+            EC.element_to_be_clickable((By.XPATH, option_xpath))
+        )
+
+        driver.execute_script("arguments[0].scrollIntoView(true);", option)
+        time.sleep(0.5)
+        option.click()
+
+        logger.debug(green(f"Successfully set visibility to: {visibility}"))
+
+    except TimeoutException:
+        logger.error(red("Failed to set visibility - dropdown not found"))
+    except Exception as e:
+        logger.error(red(f"Failed to set visibility: {e}"))
+
+
 def _set_schedule_video(driver: WebDriver, schedule: datetime.datetime) -> None:
     """
     Sets the schedule of the video
@@ -790,6 +862,13 @@ def _check_valid_path(path: str) -> bool:
     Returns whether or not the filetype is supported by TikTok
     """
     return exists(path) and path.split(".")[-1] in config.supported_file_types
+
+
+def _check_valid_cover_path(path: str) -> bool:
+    """
+    Returns whether or not the cover image filetype is supported by TikTok
+    """
+    return exists(path) and path.split(".")[-1] in config.supported_image_file_types
 
 
 def _get_valid_schedule_minute(
@@ -1093,6 +1172,97 @@ def _add_product_link(driver: WebDriver, product_id: str) -> None:
         logger.error(
             red(f"An unexpected error occurred while adding product link: {e}")
         )
-        print(
-            f"Warning: An unexpected error occurred while adding product link {product_id}. Continuing upload without link."
+
+
+def _set_cover(driver, cover_path: str) -> None:
+    """
+    Adds a custom cover to the video using the provided cover image path.
+    """
+    logger.debug(green(f"Attempting to add custom cover: {cover_path}..."))
+    try:
+        if not _check_valid_cover_path(cover_path):
+            raise Exception("Invalid cover image file path")
+
+        # First, get the current cover image blob source
+        WebDriverWait(driver, config.implicit_wait).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config.selectors.upload.cover.edit_cover_button)
+            )
         )
+        current_cover_preview = driver.find_element(
+            By.XPATH, config.selectors.upload.cover.cover_preview
+        ).get_attribute("src")
+
+        # Click the "Edit Cover" button
+        WebDriverWait(driver, config.implicit_wait).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config.selectors.upload.cover.edit_cover_button)
+            )
+        )
+        edit_cover_button = driver.find_element(
+            By.XPATH, config.selectors.upload.cover.edit_cover_button
+        )
+        edit_cover_button.click()
+
+        # Enter the Custom Cover tab
+        WebDriverWait(driver, config.implicit_wait).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config.selectors.upload.cover.upload_cover_tab)
+            )
+        )
+        upload_cover_tab = driver.find_element(
+            By.XPATH, config.selectors.upload.cover.upload_cover_tab
+        )
+        upload_cover_tab.click()
+
+        # Wait For Input File
+        driverWait = WebDriverWait(driver, config.explicit_wait)
+        upload_boxWait = EC.presence_of_element_located(
+            (By.XPATH, config.selectors.upload.cover.upload_cover)
+        )
+        driverWait.until(upload_boxWait)
+        upload_box = driver.find_element(
+            By.XPATH, config.selectors.upload.cover.upload_cover
+        )
+        upload_box.send_keys(cover_path)
+
+        # Wait until image is loaded and click confirmation button
+        WebDriverWait(driver, config.implicit_wait).until(
+            EC.presence_of_element_located(
+                (By.XPATH, config.selectors.upload.cover.upload_confirmation)
+            )
+        )
+        upload_confirmation = driver.find_element(
+            By.XPATH, config.selectors.upload.cover.upload_confirmation
+        )
+        upload_confirmation.click()
+
+        # At last, wait until the cover image preview changes blob source
+        WebDriverWait(driver, config.implicit_wait).until_not(
+            EC.text_to_be_present_in_element_attribute(
+                (By.XPATH, config.selectors.upload.cover.cover_preview),
+                "src",
+                current_cover_preview,
+            )
+        )
+
+    except Exception as e:
+        logger.error(red(f"Error: {e}. Using default cover instead."))
+
+        try:
+            # If the edit cover container is open, close it
+            cover_container = driver.find_element(
+                By.XPATH, config.selectors.upload.cover.edit_cover_container
+            )
+            if cover_container.is_displayed():
+                exit_icon = WebDriverWait(driver, config.implicit_wait).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, config.selectors.upload.cover.exit_cover_container)
+                    )
+                )
+                exit_icon.click()
+        except Exception as e:
+            logger.error(red("Could not print with the default color"))
+        return
+
+    logger.debug(green("Custom cover posted successfully"))

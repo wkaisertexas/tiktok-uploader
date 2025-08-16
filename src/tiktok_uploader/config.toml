@@ -16,6 +16,7 @@ uploading_wait = 180 # seconds
 add_hashtag_wait = 5 # seconds
 
 supported_file_types = ["mp4", "mov", "avi", "wmv", "flv", "webm", "mkv", "m4v", "3gp", "3g2", "gif"]
+supported_image_file_types = ["png", "jpg", "jpeg"]
 
 max_description_length = 150 # characters
 
@@ -59,7 +60,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
 	post = "//button[@data-e2e='post_video_button']"
-	post_confirmation = "//div[contains(text(), 'Your video has been uploaded') or contains(text(), '视频已发布') or contains(text(), 'Video published')]"
+	post_confirmation = "//div[contains(text(), 'Your video has been uploaded') or contains(text(), '视频已发布')]"
 
 
 	[selectors.schedule]
@@ -80,3 +81,12 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	[selectors.upload.cookies_banner]
 		banner = "tiktok-cookie-banner"
 		button = "div.button-wrapper"
+
+	[selectors.upload.cover]
+		cover_preview = "//img[contains(@class, 'cover-image')]"
+		edit_cover_button = "//div[contains(@class, 'edit-container')]"
+		edit_cover_container = "//div[contains(@class, 'cover-edit-container')]"
+		upload_cover_tab = "//div[contains(text(), 'Upload cover')]"
+		upload_cover = "//input[@type='file' and @accept='image/png, image/jpeg, image/jpg']"
+ 		upload_confirmation = "//div[not(contains(@class, 'hide-panel'))]/div[contains(@class, 'cover-edit-footer')]/button[contains(@class, 'TUXButton--primary')]"
+		exit_cover_container = "//div[@class='jsx-3186560874']"
