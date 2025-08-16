@@ -34,6 +34,7 @@ def main() -> None:
         cookies=args.cookies,
         proxy=proxy,
         product_id=product_id,
+        cover=args.cover,
         visibility=visibility,
         sessionid=args.sessionid,
         headless=not args.attach,
@@ -81,6 +82,12 @@ def get_uploader_args() -> Namespace:
         choices=["everyone", "friends", "only_you"],
         default="everyone",
     )
+    parser.add_argument(
+        "--cover",
+        help="Custom cover image file",
+        default=None
+    )
+
 
     # authentication arguments
     parser.add_argument("-c", "--cookies", help="The cookies you want to use")
@@ -109,6 +116,10 @@ def validate_uploader_args(args: Namespace) -> None:
     # Makes sure the video file exists
     if not exists(args.video):
         raise FileNotFoundError(f"Could not find the video file at {args.video}")
+
+    # Makes sure the optional cover image file exists
+    if args.cover and not exists(args.cover):
+        raise FileNotFoundError(f'Could not find the cover image file at {args["cover"]}')
 
     # User can not pass in both cookies and username / password
     if args.cookies and (args.username or args.password):
