@@ -19,6 +19,7 @@ class VideoDict(TypedDict, total=False):
     description: str
     schedule: datetime
     product_id: str
+    cover: str
     visibility: Literal["everyone", "friends", "only_you"]
 
 
