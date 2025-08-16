@@ -24,6 +24,7 @@ classifiers = [
 ]
 
 dependencies = [
+	"pydantic>=2.10.6",
 	"pytz>=2025.2",
 	"selenium>=3.141.0",
 	"toml>=0.10.2",
