@@ -22,6 +22,7 @@ def main() -> None:
     schedule = parse_schedule(args.schedule)
     proxy = parse_proxy(args.proxy)
     product_id = args.product_id
+    visibility = args.visibility
 
     # runs the program using the arguments provided
     result = upload_video(
@@ -33,6 +34,8 @@ def main() -> None:
         cookies=args.cookies,
         proxy=proxy,
         product_id=product_id,
+        cover=args.cover,
+        visibility=visibility,
         sessionid=args.sessionid,
         headless=not args.attach,
     )
@@ -62,7 +65,7 @@ def get_uploader_args() -> Namespace:
     parser.add_argument(
         "-t",
         "--schedule",
-        help="Schedule UTC time in %Y-%m-%d %H:%M format ",
+        help="Schedule UTC time in %%Y-%%m-%%d %%H:%%M format ",
         default=None,
     )
     parser.add_argument(
@@ -73,6 +76,13 @@ def get_uploader_args() -> Namespace:
         help="ID of the product to link in the video (if applicable)",
         default=None,
     )
+    parser.add_argument(
+        "--visibility",
+        help="Video visibility: everyone (default), friends, or only_you",
+        choices=["everyone", "friends", "only_you"],
+        default="everyone",
+    )
+    parser.add_argument("--cover", help="Custom cover image file", default=None)
 
     # authentication arguments
     parser.add_argument("-c", "--cookies", help="The cookies you want to use")
@@ -101,6 +111,10 @@ def validate_uploader_args(args: Namespace) -> None:
     # Makes sure the video file exists
     if not exists(args.video):
         raise FileNotFoundError(f"Could not find the video file at {args.video}")
+
+    # Makes sure the optional cover image file exists
+    if args.cover and not exists(args.cover):
+        raise FileNotFoundError(f"Could not find the cover image file at {args.cover}")
 
     # User can not pass in both cookies and username / password
     if args.cookies and (args.username or args.password):
@@ -170,7 +184,7 @@ def get_login_info(path: str, header: bool = True) -> list[tuple[str, str]]:
 
         return user, password
 
-    with open(path, "r", encoding="utf-8") as file:
+    with open(path, encoding="utf-8") as file:
         parsed_file = file.readlines()
         if header:
             parsed_file = parsed_file[1:]

@@ -1,12 +1,12 @@
 [project]
 name = "tiktok-uploader"
-version = "1.1.2"
+version = "1.1.4"
 authors = [
   { name = "William Kaiser", email = "wkaisertexas@gmail.com" },
 ]
 description = "An automatic TikTok video uploader w/ CLI. Uploads videos automatically using an automated browser and your cookies for authentication."
 readme = "README.md"
-requires-python = ">=3.0"
+requires-python = ">=3.8"
 keywords = [
 	"Selenium",
 	"Automation",
@@ -24,6 +24,7 @@ classifiers = [
 ]
 
 dependencies = [
+	"pydantic>=2.10.6",
 	"pytz>=2025.2",
 	"selenium>=3.141.0",
 	"toml>=0.10.2",
