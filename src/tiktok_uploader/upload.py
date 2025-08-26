@@ -278,7 +278,7 @@ def complete_upload_form(
         The path to the video to upload
     """
     _go_to_upload(driver)
-    #  _remove_cookies_window(driver)
+    _remove_cookies_window(driver)
 
     upload_complete_event = threading.Event()
 
@@ -522,27 +522,16 @@ def _remove_cookies_window(driver) -> None:
     """
 
     logger.debug(green("Removing cookies window"))
-    cookies_banner = WebDriverWait(driver, config.implicit_wait).until(
+    WebDriverWait(driver, config.implicit_wait).until(
         EC.presence_of_element_located(
             (By.TAG_NAME, config.selectors.upload.cookies_banner.banner)
         )
     )
 
-    item = WebDriverWait(driver, config.implicit_wait).until(
-        EC.visibility_of(
-            cookies_banner.shadow_root.find_element(
-                By.CSS_SELECTOR,
-                config.selectors.upload.cookies_banner.button,
-            )
-        )
+    driver.execute_script(
+        "document.querySelector(arguments[0]).remove()",
+        config["selectors"]["upload"]["cookies_banner"]["banner"],
     )
-
-    # Wait that the Decline all button is clickable
-    decline_button = WebDriverWait(driver, config.implicit_wait).until(
-        EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, "button")[0])
-    )
-
-    decline_button.click()
 
 
 def _remove_split_window(driver: WebDriver) -> None:
