@@ -1,4 +1,4 @@
-from typing import TypedDict, Literal
+from typing import TypedDict
 
 from datetime import datetime
 from http.cookiejar import Cookie as HttpCookie
@@ -19,8 +19,6 @@ class VideoDict(TypedDict, total=False):
     description: str
     schedule: datetime
     product_id: str
-    cover: str
-    visibility: Literal["everyone", "friends", "only_you"]
 
 
 class Cookie(TypedDict, total=False):

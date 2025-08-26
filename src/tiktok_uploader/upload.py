@@ -32,8 +32,7 @@ from tiktok_uploader.utils import bold, green, red
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
 
 from tiktok_uploader.types import VideoDict, ProxyDict, Cookie
-from typing import Any, Literal
-from collections.abc import Callable
+from typing import Any, Callable, Literal
 
 
 def upload_video(
@@ -48,8 +47,6 @@ def upload_video(
     cookies_str: str | None = None,
     proxy: ProxyDict | None = None,
     product_id: str | None = None,
-    cover: str | None = None,
-    visibility: Literal["everyone", "friends", "only_you"] = "everyone",
     *args,
     **kwargs,
 ) -> list[VideoDict]:
@@ -88,8 +85,6 @@ def upload_video(
         video_dict["schedule"] = schedule
     if product_id:
         video_dict["product_id"] = product_id
-    if visibility != "everyone":
-        video_dict["visibility"] = visibility
 
     return upload_videos(
         [video_dict],
@@ -176,11 +171,6 @@ def upload_videos(
             description = video.get("description", "")
             schedule = video.get("schedule", None)
             product_id = video.get("product_id", None)
-            cover_path = video.get("cover", None)
-            if cover_path is not None:
-                cover_path = abspath(cover_path)
-
-            visibility = video.get("visibility", "everyone")
 
             logger.debug(
                 "Posting %s%s",
@@ -231,11 +221,8 @@ def upload_videos(
                 description,
                 schedule,
                 skip_split_window,
-                cover_path,
                 product_id,
-                visibility,
                 num_retries,
-                headless,
                 *args,
                 **kwargs,
             )
@@ -247,7 +234,7 @@ def upload_videos(
         if on_complete is callable:  # calls the user-specified on-complete function
             on_complete(video)
 
-    if config.quit_on_end:
+    if config["quit_on_end"]:
         driver.quit()
 
     return failed
@@ -259,9 +246,7 @@ def complete_upload_form(
     description: str,
     schedule: datetime.datetime | None,
     skip_split_window: bool,
-    cover_path: str | None = None,
     product_id: str | None = None,
-    visibility: Literal["everyone", "friends", "only_you"] = "everyone",
     num_retries: int = 1,
     headless: bool = False,
     *args,
@@ -294,14 +279,10 @@ def complete_upload_form(
     # Wait for the upload to complete before proceeding
     upload_complete_event.wait()
 
-    if cover_path:
-        _set_cover(driver, cover_path)
     if not skip_split_window:
         _remove_split_window(driver)
     _set_interactivity(driver, **kwargs)
     _set_description(driver, description)
-    if visibility != "everyone":
-        _set_visibility(driver, visibility)
     if schedule:
         _set_schedule_video(driver, schedule)
     if product_id:
@@ -320,8 +301,8 @@ def _go_to_upload(driver: WebDriver) -> None:
     logger.debug(green("Navigating to upload page"))
 
     # if the upload page is not open, navigate to it
-    if driver.current_url != config.paths.upload:
-        driver.get(str(config.paths.upload))
+    if driver.current_url != config["paths"]["upload"]:
+        driver.get(config["paths"]["upload"])
     # otherwise, refresh the page and accept the reload alert
     else:
         _refresh_with_alert(driver)
@@ -331,7 +312,7 @@ def _go_to_upload(driver: WebDriver) -> None:
 
     # waits for the iframe to load
     root_selector = EC.presence_of_element_located((By.ID, "root"))
-    WebDriverWait(driver, config.explicit_wait).until(root_selector)
+    WebDriverWait(driver, config["explicit_wait"]).until(root_selector)
 
     # Return to default webpage
     driver.switch_to.default_content()
@@ -346,9 +327,9 @@ def _change_to_upload_iframe(driver: WebDriver) -> None:
     driver : selenium.webdriver
     """
     iframe_selector = EC.presence_of_element_located(
-        (By.XPATH, config.selectors.upload.iframe)
+        (By.XPATH, config["selectors"]["upload"]["iframe"])
     )
-    iframe = WebDriverWait(driver, config.explicit_wait).until(iframe_selector)
+    iframe = WebDriverWait(driver, config["explicit_wait"]).until(iframe_selector)
     driver.switch_to.frame(iframe)
 
 
@@ -373,21 +354,23 @@ def _set_description(driver: WebDriver, description: str) -> None:
 
     saved_description = description  # save the description in case it fails
 
-    WebDriverWait(driver, config.implicit_wait).until(
-        EC.presence_of_element_located((By.XPATH, config.selectors.upload.description))
+    WebDriverWait(driver, config["implicit_wait"]).until(
+        EC.presence_of_element_located(
+            (By.XPATH, config["selectors"]["upload"]["description"])
+        )
     )
 
-    desc = driver.find_element(By.XPATH, config.selectors.upload.description)
+    desc = driver.find_element(By.XPATH, config["selectors"]["upload"]["description"])
 
     desc.click()
 
     # desc populates with filename before clearing
-    WebDriverWait(driver, config.explicit_wait).until(lambda driver: desc.text != "")
+    WebDriverWait(driver, config["explicit_wait"]).until(lambda driver: desc.text != "")
 
     desc.send_keys(Keys.END)
     _clear(desc)
 
-    WebDriverWait(driver, config.explicit_wait).until(lambda driver: desc.text == "")
+    WebDriverWait(driver, config["explicit_wait"]).until(lambda driver: desc.text == "")
 
     desc.click()
 
@@ -399,12 +382,12 @@ def _set_description(driver: WebDriver, description: str) -> None:
             if word[0] == "#":
                 desc.send_keys(word)
                 desc.send_keys(" " + Keys.BACKSPACE)
-                WebDriverWait(driver, config.implicit_wait).until(
+                WebDriverWait(driver, config["implicit_wait"]).until(
                     EC.presence_of_element_located(
-                        (By.XPATH, config.selectors.upload.mention_box)
+                        (By.XPATH, config["selectors"]["upload"]["mention_box"])
                     )
                 )
-                time.sleep(config.add_hashtag_wait)
+                time.sleep(config["add_hashtag_wait"])
                 desc.send_keys(Keys.ENTER)
             elif word[0] == "@":
                 logger.debug(green("- Adding Mention: " + word))
@@ -413,9 +396,9 @@ def _set_description(driver: WebDriver, description: str) -> None:
                 time.sleep(1)
                 desc.send_keys(Keys.BACKSPACE)
 
-                WebDriverWait(driver, config.explicit_wait).until(
+                WebDriverWait(driver, config["explicit_wait"]).until(
                     EC.presence_of_element_located(
-                        (By.XPATH, config.selectors.upload.mention_box_user_id)
+                        (By.XPATH, config["selectors"]["upload"]["mention_box_user_id"])
                     )
                 )
 
@@ -426,7 +409,7 @@ def _set_description(driver: WebDriver, description: str) -> None:
 
                 while not found and (time.time() - start_time < timeout):
                     user_id_elements = driver.find_elements(
-                        By.XPATH, config.selectors.upload.mention_box_user_id
+                        By.XPATH, config["selectors"]["upload"]["mention_box_user_id"]
                     )
                     time.sleep(1)
 
@@ -489,21 +472,21 @@ def _set_video(
         try:
             # _change_to_upload_iframe(driver)
             # Wait For Input File
-            driverWait = WebDriverWait(driver, config.explicit_wait)
+            driverWait = WebDriverWait(driver, config["explicit_wait"])
             upload_boxWait = EC.presence_of_element_located(
-                (By.XPATH, config.selectors.upload.upload_video)
+                (By.XPATH, config["selectors"]["upload"]["upload_video"])
             )
             driverWait.until(upload_boxWait)
             upload_box = driver.find_element(
-                By.XPATH, config.selectors.upload.upload_video
+                By.XPATH, config["selectors"]["upload"]["upload_video"]
             )
             upload_box.send_keys(path)
 
             # wait until a non-draggable image is found
             process_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config.selectors.upload.process_confirmation)
+                (By.XPATH, config["selectors"]["upload"]["process_confirmation"])
             )
-            WebDriverWait(driver, config.explicit_wait).until(process_confirmation)
+            WebDriverWait(driver, config["explicit_wait"]).until(process_confirmation)
             return
         except TimeoutException as exception:
             print("TimeoutException occurred:\n", exception)
@@ -512,7 +495,7 @@ def _set_video(
             raise FailedToUpload(exception)
 
 
-def _(_cookies_window(driver) -> None:
+def _remove_cookies_window(driver) -> None:
     """
     Removes the cookies window if it is open
 
@@ -522,9 +505,9 @@ def _(_cookies_window(driver) -> None:
     """
 
     logger.debug(green("Removing cookies window"))
-    cookies_banner = WebDriverWait(driver, config.implicit_wait).until(
+    cookies_banner = WebDriverWait(driver, config["implicit_wait"]).until(
         EC.presence_of_element_located(
-            (By.TAG_NAME, config.selectors.upload.cookies_banner.banner)
+            (By.TAG_NAME, config["selectors"]["upload"]["cookies_banner"]["banner"])
         )
     )
 
@@ -543,11 +526,11 @@ def _remove_split_window(driver: WebDriver) -> None:
     driver : selenium.webdriver
     """
     logger.debug(green("Removing split window"))
-    window_xpath = config.selectors.upload.split_window
+    window_xpath = config["selectors"]["upload"]["split_window"]
 
     try:
         condition = EC.presence_of_element_located((By.XPATH, window_xpath))
-        window = WebDriverWait(driver, config.implicit_wait).until(condition)
+        window = WebDriverWait(driver, config["implicit_wait"]).until(condition)
         window.click()
 
     except TimeoutException:
@@ -578,9 +561,13 @@ def _set_interactivity(
     try:
         logger.debug(green("Setting interactivity settings"))
 
-        comment_box = driver.find_element(By.XPATH, config.selectors.upload.comment)
-        stitch_box = driver.find_element(By.XPATH, config.selectors.upload.stitch)
-        duet_box = driver.find_element(By.XPATH, config.selectors.upload.duet)
+        comment_box = driver.find_element(
+            By.XPATH, config["selectors"]["upload"]["comment"]
+        )
+        stitch_box = driver.find_element(
+            By.XPATH, config["selectors"]["upload"]["stitch"]
+        )
+        duet_box = driver.find_element(By.XPATH, config["selectors"]["upload"]["duet"])
 
         # xor the current state with the desired state
         if comment ^ comment_box.is_selected():
@@ -594,60 +581,6 @@ def _set_interactivity(
 
     except Exception as _:
         logger.error("Failed to set interactivity settings")
-
-
-def _set_visibility(
-    driver: WebDriver, visibility: Literal["everyone", "friends", "only_you"]
-) -> None:
-    """
-    Sets the visibility/privacy of the video
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    visibility : str
-        The visibility setting - "everyone", "friends", or "only_you"
-    """
-    try:
-        logger.debug(green(f"Setting visibility to: {visibility}"))
-
-        # Find the dropdown button for visibility
-        dropdown_xpath = (
-            "//div[@data-e2e='video_visibility_container']//button[@role='combobox']"
-        )
-        dropdown = WebDriverWait(driver, config.implicit_wait).until(
-            EC.element_to_be_clickable((By.XPATH, dropdown_xpath))
-        )
-
-        # Click to open the dropdown
-        dropdown.click()
-        time.sleep(1.5)  # Wait for dropdown animation
-
-        # Map visibility values to the text that appears in the dropdown
-        visibility_text_map = {
-            "everyone": "Everyone",
-            "friends": "Friends",
-            "only_you": "Only you",
-        }
-
-        option_text = visibility_text_map.get(visibility, "Everyone")
-
-        # Use the selector that actually works (verified through testing)
-        option_xpath = f"//div[@role='option' and contains(., '{option_text}')]"
-        option = WebDriverWait(driver, config.implicit_wait).until(
-            EC.element_to_be_clickable((By.XPATH, option_xpath))
-        )
-
-        driver.execute_script("arguments[0].scrollIntoView(true);", option)
-        time.sleep(0.5)
-        option.click()
-
-        logger.debug(green(f"Successfully set visibility to: {visibility}"))
-
-    except TimeoutException:
-        logger.error(red("Failed to set visibility - dropdown not found"))
-    except Exception as e:
-        logger.error(red(f"Failed to set visibility: {e}"))
 
 
 def _set_schedule_video(driver: WebDriver, schedule: datetime.datetime) -> None:
@@ -672,7 +605,9 @@ def _set_schedule_video(driver: WebDriver, schedule: datetime.datetime) -> None:
     minute = schedule.minute
 
     try:
-        switch = driver.find_element(By.XPATH, config.selectors.schedule.switch)
+        switch = driver.find_element(
+            By.XPATH, config["selectors"]["schedule"]["switch"]
+        )
         switch.click()
         __date_picker(driver, month, day)
         __time_picker(driver, hour, minute)
@@ -686,32 +621,32 @@ def __date_picker(driver: WebDriver, month: int, day: int) -> None:
     logger.debug(green("Picking date"))
 
     condition = EC.presence_of_element_located(
-        (By.XPATH, config.selectors.schedule.date_picker)
+        (By.XPATH, config["selectors"]["schedule"]["date_picker"])
     )
-    date_picker = WebDriverWait(driver, config.implicit_wait).until(condition)
+    date_picker = WebDriverWait(driver, config["implicit_wait"]).until(condition)
     date_picker.click()
 
     condition = EC.presence_of_element_located(
-        (By.XPATH, config.selectors.schedule.calendar)
+        (By.XPATH, config["selectors"]["schedule"]["calendar"])
     )
-    WebDriverWait(driver, config.implicit_wait).until(condition)
+    WebDriverWait(driver, config["implicit_wait"]).until(condition)
 
     calendar_month = driver.find_element(
-        By.XPATH, config.selectors.schedule.calendar_month
+        By.XPATH, config["selectors"]["schedule"]["calendar_month"]
     ).text
     n_calendar_month = datetime.datetime.strptime(calendar_month, "%B").month
     if n_calendar_month != month:  # Max can be a month before or after
         if n_calendar_month < month:
             arrow = driver.find_elements(
-                By.XPATH, config.selectors.schedule.calendar_arrows
+                By.XPATH, config["selectors"]["schedule"]["calendar_arrows"]
             )[-1]
         else:
             arrow = driver.find_elements(
-                By.XPATH, config.selectors.schedule.calendar_arrows
+                By.XPATH, config["selectors"]["schedule"]["calendar_arrows"]
             )[0]
         arrow.click()
     valid_days = driver.find_elements(
-        By.XPATH, config.selectors.schedule.calendar_valid_days
+        By.XPATH, config["selectors"]["schedule"]["calendar_valid_days"]
     )
 
     day_to_click = None
@@ -729,7 +664,7 @@ def __date_picker(driver: WebDriver, month: int, day: int) -> None:
 
 def __verify_date_picked_is_correct(driver: WebDriver, month: int, day: int) -> None:
     date_selected = driver.find_element(
-        By.XPATH, config.selectors.schedule.date_picker
+        By.XPATH, config["selectors"]["schedule"]["date_picker"]
     ).text
     date_selected_month = int(date_selected.split("-")[1])
     date_selected_day = int(date_selected.split("-")[2])
@@ -746,24 +681,24 @@ def __time_picker(driver: WebDriver, hour: int, minute: int) -> None:
     logger.debug(green("Picking time"))
 
     condition = EC.presence_of_element_located(
-        (By.XPATH, config.selectors.schedule.time_picker)
+        (By.XPATH, config["selectors"]["schedule"]["time_picker"])
     )
-    time_picker = WebDriverWait(driver, config.implicit_wait).until(condition)
+    time_picker = WebDriverWait(driver, config["implicit_wait"]).until(condition)
     time_picker.click()
 
     condition = EC.presence_of_element_located(
-        (By.XPATH, config.selectors.schedule.time_picker_container)
+        (By.XPATH, config["selectors"]["schedule"]["time_picker_container"])
     )
-    WebDriverWait(driver, config.implicit_wait).until(condition)
+    WebDriverWait(driver, config["implicit_wait"]).until(condition)
 
     # 00 = 0, 01 = 1, 02 = 2, 03 = 3, 04 = 4, 05 = 5, 06 = 6, 07 = 7, 08 = 8, 09 = 9, 10 = 10, 11 = 11, 12 = 12,
     # 13 = 13, 14 = 14, 15 = 15, 16 = 16, 17 = 17, 18 = 18, 19 = 19, 20 = 20, 21 = 21, 22 = 22, 23 = 23
     hour_options = driver.find_elements(
-        By.XPATH, config.selectors.schedule.timepicker_hours
+        By.XPATH, config["selectors"]["schedule"]["timepicker_hours"]
     )
     # 00 == 0, 05 == 1, 10 == 2, 15 == 3, 20 == 4, 25 == 5, 30 == 6, 35 == 7, 40 == 8, 45 == 9, 50 == 10, 55 == 11
     minute_options = driver.find_elements(
-        By.XPATH, config.selectors.schedule.timepicker_minutes
+        By.XPATH, config["selectors"]["schedule"]["timepicker_minutes"]
     )
 
     hour_to_click = hour_options[hour]
@@ -794,7 +729,7 @@ def __time_picker(driver: WebDriver, hour: int, minute: int) -> None:
 
 def __verify_time_picked_is_correct(driver: WebDriver, hour: int, minute: int) -> None:
     time_selected = driver.find_element(
-        By.XPATH, config.selectors.schedule.time_picker_text
+        By.XPATH, config["selectors"]["schedule"]["time_picker_text"]
     ).text
     time_selected_hour = int(time_selected.split(":")[0])
     time_selected_minute = int(time_selected.split(":")[1])
@@ -850,9 +785,9 @@ def _post_video(driver: WebDriver) -> None:
 
     # waits for the video to upload
     post_confirmation = EC.presence_of_element_located(
-        (By.XPATH, config.selectors.upload.post_confirmation)
+        (By.XPATH, config["selectors"]["upload"]["post_confirmation"])
     )
-    WebDriverWait(driver, config.explicit_wait).until(post_confirmation)
+    WebDriverWait(driver, config["explicit_wait"]).until(post_confirmation)
 
     logger.debug(green("Video posted successfully"))
 
@@ -864,14 +799,7 @@ def _check_valid_path(path: str) -> bool:
     """
     Returns whether or not the filetype is supported by TikTok
     """
-    return exists(path) and path.split(".")[-1] in config.supported_file_types
-
-
-def _check_valid_cover_path(path: str) -> bool:
-    """
-    Returns whether or not the cover image filetype is supported by TikTok
-    """
-    return exists(path) and path.split(".")[-1] in config.supported_image_file_types
+    return exists(path) and path.split(".")[-1] in config["supported_file_types"]
 
 
 def _get_valid_schedule_minute(
@@ -965,8 +893,8 @@ def _convert_videos_dict(
     if not videos_list_of_dictionaries:
         raise RuntimeError("No videos to upload")
 
-    valid_path = config.valid_path_names
-    valid_description = config.valid_descriptions
+    valid_path = config["valid_path_names"]
+    valid_description = config["valid_descriptions"]
 
     correct_path = valid_path[0]
     correct_description = valid_description[0]
@@ -1035,7 +963,7 @@ def _refresh_with_alert(driver: WebDriver) -> None:
         driver.refresh()
 
         # wait for the alert to appear
-        WebDriverWait(driver, config.explicit_wait).until(EC.alert_is_present())
+        WebDriverWait(driver, config["explicit_wait"]).until(EC.alert_is_present())
 
         # accept the alert
         driver.switch_to.alert.accept()
@@ -1175,97 +1103,6 @@ def _add_product_link(driver: WebDriver, product_id: str) -> None:
         logger.error(
             red(f"An unexpected error occurred while adding product link: {e}")
         )
-
-
-def _set_cover(driver, cover_path: str) -> None:
-    """
-    Adds a custom cover to the video using the provided cover image path.
-    """
-    logger.debug(green(f"Attempting to add custom cover: {cover_path}..."))
-    try:
-        if not _check_valid_cover_path(cover_path):
-            raise Exception("Invalid cover image file path")
-
-        # First, get the current cover image blob source
-        WebDriverWait(driver, config.implicit_wait).until(
-            EC.presence_of_element_located(
-                (By.XPATH, config.selectors.upload.cover.edit_cover_button)
-            )
+        print(
+            f"Warning: An unexpected error occurred while adding product link {product_id}. Continuing upload without link."
         )
-        current_cover_preview = driver.find_element(
-            By.XPATH, config.selectors.upload.cover.cover_preview
-        ).get_attribute("src")
-
-        # Click the "Edit Cover" button
-        WebDriverWait(driver, config.implicit_wait).until(
-            EC.presence_of_element_located(
-                (By.XPATH, config.selectors.upload.cover.edit_cover_button)
-            )
-        )
-        edit_cover_button = driver.find_element(
-            By.XPATH, config.selectors.upload.cover.edit_cover_button
-        )
-        edit_cover_button.click()
-
-        # Enter the Custom Cover tab
-        WebDriverWait(driver, config.implicit_wait).until(
-            EC.presence_of_element_located(
-                (By.XPATH, config.selectors.upload.cover.upload_cover_tab)
-            )
-        )
-        upload_cover_tab = driver.find_element(
-            By.XPATH, config.selectors.upload.cover.upload_cover_tab
-        )
-        upload_cover_tab.click()
-
-        # Wait For Input File
-        driverWait = WebDriverWait(driver, config.explicit_wait)
-        upload_boxWait = EC.presence_of_element_located(
-            (By.XPATH, config.selectors.upload.cover.upload_cover)
-        )
-        driverWait.until(upload_boxWait)
-        upload_box = driver.find_element(
-            By.XPATH, config.selectors.upload.cover.upload_cover
-        )
-        upload_box.send_keys(cover_path)
-
-        # Wait until image is loaded and click confirmation button
-        WebDriverWait(driver, config.implicit_wait).until(
-            EC.presence_of_element_located(
-                (By.XPATH, config.selectors.upload.cover.upload_confirmation)
-            )
-        )
-        upload_confirmation = driver.find_element(
-            By.XPATH, config.selectors.upload.cover.upload_confirmation
-        )
-        upload_confirmation.click()
-
-        # At last, wait until the cover image preview changes blob source
-        WebDriverWait(driver, config.implicit_wait).until_not(
-            EC.text_to_be_present_in_element_attribute(
-                (By.XPATH, config.selectors.upload.cover.cover_preview),
-                "src",
-                current_cover_preview,
-            )
-        )
-
-    except Exception as e:
-        logger.error(red(f"Error: {e}. Using default cover instead."))
-
-        try:
-            # If the edit cover container is open, close it
-            cover_container = driver.find_element(
-                By.XPATH, config.selectors.upload.cover.edit_cover_container
-            )
-            if cover_container.is_displayed():
-                exit_icon = WebDriverWait(driver, config.implicit_wait).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, config.selectors.upload.cover.exit_cover_container)
-                    )
-                )
-                exit_icon.click()
-        except Exception as e:
-            logger.error(red("Could not print with the default color"))
-        return
-
-    logger.debug(green("Custom cover posted successfully"))
