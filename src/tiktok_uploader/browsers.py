@@ -24,7 +24,8 @@ from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import (
     generate_proxy_auth_extension,
 )
 
-from typing import Literal, Any, Type, Callable
+from typing import Literal, Any
+from collections.abc import Callable
 
 browser_t = Literal["chrome", "safari", "chromium", "edge", "firefox"]
 
@@ -50,12 +51,12 @@ def get_browser(
     else:
         driver = driver_to_use(options=options)
 
-    driver.implicitly_wait(config["implicit_wait"])
+    driver.implicitly_wait(config.implicit_wait)
 
     return driver
 
 
-def get_driver(name: str, *args, **kwargs) -> Type[WebDriver]:
+def get_driver(name: str, *args, **kwargs) -> type[WebDriver]:
     """
     Gets the web driver function for the browser
     """
@@ -206,7 +207,7 @@ def _clean_name(name: str) -> str:
     return name.strip().lower()
 
 
-drivers: dict[str, Type[WebDriver]] = {
+drivers: dict[str, type[WebDriver]] = {
     "chrome": webdriver.Chrome,
     "firefox": webdriver.Firefox,
     "safari": webdriver.Safari,

@@ -3,7 +3,7 @@
 from tiktok_uploader import cli
 
 
-def main():
+def main() -> None:
     """
     Entry point for TikTok-Uploader, makes a call to CLI
     """

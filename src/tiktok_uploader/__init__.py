@@ -5,12 +5,11 @@ TikTok Uploader Initialization
 from os.path import abspath, join, dirname
 import logging
 
-import toml
-
+from tiktok_uploader.config import load_config
 
 ## Load Config
-src_dir = abspath(dirname(__file__))
-config = toml.load(join(src_dir, "config.toml"))
+config_dir = abspath(dirname(__file__))
+config = load_config(join(config_dir, "config.toml"))
 
 ## Setup Logging
 logger = logging.getLogger(__name__)
