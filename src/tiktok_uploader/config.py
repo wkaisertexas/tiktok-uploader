@@ -81,6 +81,7 @@ class UploadSelectors(StrictModel):
     stitch: str
 
     post: str
+    post_now: str
     post_confirmation: str
 
     cookies_banner: CookiesBanner
