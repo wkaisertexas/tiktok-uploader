@@ -511,7 +511,10 @@ def _remove_cookies_window(driver) -> None:
         )
     )
 
-    driver.execute_script("document.querySelector(arguments[0]).remove()", config["selectors"]["upload"]["cookies_banner"]["banner"])
+    driver.execute_script(
+        "document.querySelector(arguments[0]).remove()",
+        config["selectors"]["upload"]["cookies_banner"]["banner"],
+    )
 
 
 def _remove_split_window(driver: WebDriver) -> None:
@@ -754,8 +757,11 @@ def _post_video(driver: WebDriver) -> None:
 
     try:
         post = WebDriverWait(driver, config["uploading_wait"]).until(
-            lambda d: (el := d.find_element(By.XPATH, config["selectors"]["upload"]["post"])) and
-                      el.get_attribute("data-disabled") == "false" and el
+            lambda d: (
+                el := d.find_element(By.XPATH, config["selectors"]["upload"]["post"])
+            )
+            and el.get_attribute("data-disabled") == "false"
+            and el
         )
         driver.execute_script(
             "arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", post
@@ -769,7 +775,9 @@ def _post_video(driver: WebDriver) -> None:
     try:
         logger.debug(green("Waiting for 'Post now' button"))
         post_now_button = WebDriverWait(driver, config["implicit_wait"]).until(
-            EC.element_to_be_clickable((By.XPATH, config["selectors"]["upload"]["post_now"]))
+            EC.element_to_be_clickable(
+                (By.XPATH, config["selectors"]["upload"]["post_now"])
+            )
         )
         post_now_button.click()
     except TimeoutException:
