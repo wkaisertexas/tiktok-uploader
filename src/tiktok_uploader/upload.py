@@ -530,7 +530,7 @@ def _remove_cookies_window(driver) -> None:
 
     driver.execute_script(
         "document.querySelector(arguments[0]).remove()",
-        config["selectors"]["upload"]["cookies_banner"]["banner"],
+        config.selectors.upload.cookies_banner.banner,
     )
 
 
@@ -837,9 +837,9 @@ def _post_video(driver: WebDriver) -> None:
     # wait for button with text "Post now" and click it if it exists
     try:
         logger.debug(green("Waiting for 'Post now' button"))
-        post_now_button = WebDriverWait(driver, config["implicit_wait"]).until(
+        post_now_button = WebDriverWait(driver, config.implicit_wait).until(
             EC.element_to_be_clickable(
-                (By.XPATH, config["selectors"]["upload"]["post_now"])
+                (By.XPATH, config.selectors.upload.post_now)
             )
         )
         post_now_button.click()
