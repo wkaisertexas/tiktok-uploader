@@ -505,7 +505,7 @@ def _remove_cookies_window(driver) -> None:
     """
 
     logger.debug(green("Removing cookies window"))
-    cookies_banner = WebDriverWait(driver, config["implicit_wait"]).until(
+    WebDriverWait(driver, config["implicit_wait"]).until(
         EC.presence_of_element_located(
             (By.TAG_NAME, config["selectors"]["upload"]["cookies_banner"]["banner"])
         )
