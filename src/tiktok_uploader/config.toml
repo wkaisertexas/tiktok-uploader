@@ -64,7 +64,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 
 	[selectors.schedule]
-	switch = "//*[@id='tux-1']"
+	switch = '(//input[@name="postSchedule" and @value="schedule"]/ancestor::label)'
 
 	date_picker = "//div[contains(@class, 'date-picker-input')]"
 	calendar = "//div[contains(@class, 'calendar-wrapper')]"
@@ -72,7 +72,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	calendar_valid_days = "//div[@class='jsx-4172176419 days-wrapper']//span[contains(@class, 'day') and contains(@class, 'valid')]"
 	calendar_arrows = "//span[contains(@class, 'arrow')]"  # first last, second next
 
-	time_picker = "//div[contains(@class, 'time-picker-input')]"
+	time_picker = '//input[@class="TUXTextInputCore-input" and @type="text" and @readonly]'
 	time_picker_text = "//div[contains(@class, 'time-picker-input')]/*[1]"
 	time_picker_container = "//div[@class='tiktok-timepicker-time-picker-container']"
 	timepicker_hours = "//span[contains(@class, 'tiktok-timepicker-left')]"
