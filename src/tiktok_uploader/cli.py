@@ -2,13 +2,13 @@
 CLI is a controller for the command line use of this library
 """
 
+import datetime
 from argparse import ArgumentParser, Namespace
 from os.path import exists, join
-import datetime
 
-from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
 from tiktok_uploader.types import ProxyDict
+from tiktok_uploader.upload import upload_video
 
 
 def main() -> None:
