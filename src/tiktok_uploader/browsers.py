@@ -1,31 +1,29 @@
 """Gets the browser's given the user's input"""
 
-from selenium.webdriver.remote.webdriver import WebDriver
+from collections.abc import Callable
+from typing import Any, Literal
 
+from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.safari.options import Options as SafariOptions
-from selenium.webdriver.edge.options import Options as EdgeOptions
-from selenium.webdriver.common.options import BaseOptions
-from selenium.webdriver.common.service import Service
 
 # Webdriver managers
 from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.options import BaseOptions
+from selenium.webdriver.common.service import Service
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.safari.options import Options as SafariOptions
+from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
-from selenium.webdriver.edge.service import Service as EdgeService
-
-from selenium import webdriver
 
 from tiktok_uploader import config
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import (
     generate_proxy_auth_extension,
 )
-
-from typing import Literal, Any
-from collections.abc import Callable
 
 browser_t = Literal["chrome", "safari", "chromium", "edge", "firefox"]
 

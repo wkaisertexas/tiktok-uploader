@@ -1,6 +1,7 @@
-import zipfile
-import os
 import json
+import os
+import zipfile
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 

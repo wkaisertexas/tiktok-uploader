@@ -1,7 +1,6 @@
-from typing import TypedDict, Literal
-
 from datetime import datetime
 from http.cookiejar import Cookie as HttpCookie
+from typing import Literal, TypedDict
 
 
 class ProxyDict(TypedDict, total=False):
