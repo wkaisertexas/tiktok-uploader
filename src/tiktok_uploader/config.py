@@ -1,9 +1,9 @@
 from enum import Enum
 from pathlib import Path
 from typing import Annotated
-import toml
 
-from pydantic import BaseModel, Field, HttpUrl, ConfigDict, field_validator
+import toml
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 
 class StrictModel(BaseModel):

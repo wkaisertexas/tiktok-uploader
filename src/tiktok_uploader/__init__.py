@@ -2,8 +2,8 @@
 TikTok Uploader Initialization
 """
 
-from os.path import abspath, join, dirname
 import logging
+from os.path import abspath, dirname, join
 
 from tiktok_uploader.config import load_config
 

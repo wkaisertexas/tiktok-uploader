@@ -2,20 +2,22 @@
 Tests uploader
 """
 
-from tiktok_uploader.upload import (
-    _convert_videos_dict,
-    _get_valid_schedule_minute,
-    _check_valid_schedule,
-    upload_video,
-)
-from tiktok_uploader.types import VideoDict
-import os
 import datetime
+import os
+from typing import Literal
+from unittest.mock import MagicMock, patch
+
+import pytz
 from freezegun import freeze_time
 from pytest import raises
-import pytz
-from unittest.mock import patch, MagicMock
-from typing import Literal
+
+from tiktok_uploader.types import VideoDict
+from tiktok_uploader.upload import (
+    _check_valid_schedule,
+    _convert_videos_dict,
+    _get_valid_schedule_minute,
+    upload_video,
+)
 
 # before each create a file called test.mp4 and test.jpg
 FILENAME = "test.mp4"

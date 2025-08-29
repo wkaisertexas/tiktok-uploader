@@ -7,34 +7,32 @@ upload_video : Uploads a single TikTok video
 upload_videos : Uploads multiple TikTok videos
 """
 
-from os.path import abspath, exists
-import time
-import pytz
 import datetime
 import threading
+import time
+from collections.abc import Callable
+from os.path import abspath, exists
+from typing import Any, Literal
 
-from selenium.webdriver.common.by import By
-
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
+import pytz
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
-    TimeoutException,
     NoSuchElementException,
+    TimeoutException,
+    NoSuchShadowRootException
 )
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.common.exceptions import NoSuchShadowRootException
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
-from tiktok_uploader.browsers import get_browser
-from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader import config, logger
-from tiktok_uploader.utils import bold, green, red
+from tiktok_uploader.auth import AuthBackend
+from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working
-
-from tiktok_uploader.types import VideoDict, ProxyDict, Cookie
-from typing import Any, Literal
-from collections.abc import Callable
+from tiktok_uploader.types import Cookie, ProxyDict, VideoDict
+from tiktok_uploader.utils import bold, green, red
 
 
 def upload_video(
