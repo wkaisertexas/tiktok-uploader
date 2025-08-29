@@ -24,6 +24,7 @@ from selenium.common.exceptions import (
     NoSuchElementException,
 )
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.common.exceptions import NoSuchShadowRootException
 
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.auth import AuthBackend
@@ -522,16 +523,34 @@ def _remove_cookies_window(driver) -> None:
     """
 
     logger.debug(green("Removing cookies window"))
-    WebDriverWait(driver, config.implicit_wait).until(
+    cookies_banner = WebDriverWait(driver, config.implicit_wait).until(
         EC.presence_of_element_located(
             (By.TAG_NAME, config.selectors.upload.cookies_banner.banner)
         )
     )
 
-    driver.execute_script(
-        "document.querySelector(arguments[0]).remove()",
-        config.selectors.upload.cookies_banner.banner,
-    )
+    try:
+        item = WebDriverWait(driver, config.implicit_wait).until(
+            EC.visibility_of(
+                cookies_banner.shadow_root.find_element(
+                    By.CSS_SELECTOR,
+                    config.selectors.upload.cookies_banner.button,
+                )
+            )
+        )
+
+        # Wait that the Decline all button is clickable
+        decline_button = WebDriverWait(driver, config.implicit_wait).until(
+            EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, "button")[0])
+        )
+        decline_button.click()
+
+    # If shadow root is not found, we remove it
+    except NoSuchShadowRootException:
+        driver.execute_script(
+            "document.querySelector(arguments[0]).remove()",
+            config.selectors.upload.cookies_banner.banner,
+        )
 
 
 def _remove_split_window(driver: WebDriver) -> None:
