@@ -18,6 +18,7 @@ import pytz
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
     NoSuchElementException,
+    NoSuchShadowRootException,
     TimeoutException,
 )
 from selenium.webdriver.common.by import By
@@ -276,7 +277,7 @@ def complete_upload_form(
         The path to the video to upload
     """
     _go_to_upload(driver)
-    #  _remove_cookies_window(driver)
+    _remove_cookies_window(driver)
 
     upload_complete_event = threading.Event()
 
@@ -526,21 +527,28 @@ def _remove_cookies_window(driver) -> None:
         )
     )
 
-    item = WebDriverWait(driver, config.implicit_wait).until(
-        EC.visibility_of(
-            cookies_banner.shadow_root.find_element(
-                By.CSS_SELECTOR,
-                config.selectors.upload.cookies_banner.button,
+    try:
+        item = WebDriverWait(driver, config.implicit_wait).until(
+            EC.visibility_of(
+                cookies_banner.shadow_root.find_element(
+                    By.CSS_SELECTOR,
+                    config.selectors.upload.cookies_banner.button,
+                )
             )
         )
-    )
 
-    # Wait that the Decline all button is clickable
-    decline_button = WebDriverWait(driver, config.implicit_wait).until(
-        EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, "button")[0])
-    )
+        # Wait that the Decline all button is clickable
+        decline_button = WebDriverWait(driver, config.implicit_wait).until(
+            EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, "button")[0])
+        )
+        decline_button.click()
 
-    decline_button.click()
+    # If shadow root is not found, we remove it
+    except NoSuchShadowRootException:
+        driver.execute_script(
+            "document.querySelector(arguments[0]).remove()",
+            config.selectors.upload.cookies_banner.banner,
+        )
 
 
 def _remove_split_window(driver: WebDriver) -> None:
@@ -842,6 +850,16 @@ def _post_video(driver: WebDriver) -> None:
     except ElementClickInterceptedException:
         logger.debug(green("Trying to click on the button again"))
         driver.execute_script('document.querySelector(".TUXButton--primary").click()')
+
+    # wait for button with text "Post now" and click it if it exists
+    try:
+        logger.debug(green("Waiting for 'Post now' button"))
+        post_now_button = WebDriverWait(driver, config.implicit_wait).until(
+            EC.element_to_be_clickable((By.XPATH, config.selectors.upload.post_now))
+        )
+        post_now_button.click()
+    except TimeoutException:
+        logger.debug("No 'Post now' button found, proceeding without it")
 
     # waits for the video to upload
     post_confirmation = EC.presence_of_element_located(
