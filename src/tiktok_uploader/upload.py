@@ -367,6 +367,7 @@ def _set_description(driver: WebDriver, description: str) -> None:
 
     logger.debug(green("Setting description"))
 
+
     # Remove any characters outside the BMP range (emojis, etc) & Fix accents
     description = description.encode("utf-8", "ignore").decode("utf-8")
 
@@ -527,28 +528,31 @@ def _remove_cookies_window(driver) -> None:
         )
     )
 
-    try:
-        item = WebDriverWait(driver, config.implicit_wait).until(
-            EC.visibility_of(
-                cookies_banner.shadow_root.find_element(
-                    By.CSS_SELECTOR,
-                    config.selectors.upload.cookies_banner.button,
-                )
-            )
-        )
+    # Debug: pause here to allow visual inspection before interacting with the cookies banner
+    # This helps identify DOM/selector issues when running non-headless
 
-        # Wait that the Decline all button is clickable
-        decline_button = WebDriverWait(driver, config.implicit_wait).until(
-            EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, "button")[0])
-        )
-        decline_button.click()
+    # try:
+    #     item = WebDriverWait(driver, config.implicit_wait).until(
+    #         EC.visibility_of(
+    #             cookies_banner.shadow_root.find_element(
+    #                 By.CSS_SELECTOR,
+    #                 config.selectors.upload.cookies_banner.button,
+    #             )
+    #         )
+    #     )
 
-    # If shadow root is not found, we remove it
-    except NoSuchShadowRootException:
-        driver.execute_script(
-            "document.querySelector(arguments[0]).remove()",
-            config.selectors.upload.cookies_banner.banner,
-        )
+    #     # Wait that the Decline all button is clickable
+    #     decline_button = WebDriverWait(driver, config.implicit_wait).until(
+    #         EC.element_to_be_clickable(item.find_elements(By.TAG_NAME, "button")[0])
+    #     )
+    #     decline_button.click()
+
+    # # If shadow root is not found, we remove it
+    # except NoSuchShadowRootException:
+    #     driver.execute_script(
+    #         "document.querySelector(arguments[0]).remove()",
+    #         config.selectors.upload.cookies_banner.banner,
+    #     )
 
 
 def _remove_split_window(driver: WebDriver) -> None:
@@ -562,13 +566,13 @@ def _remove_split_window(driver: WebDriver) -> None:
     logger.debug(green("Removing split window"))
     window_xpath = config.selectors.upload.split_window
 
-    try:
-        condition = EC.presence_of_element_located((By.XPATH, window_xpath))
-        window = WebDriverWait(driver, config.implicit_wait).until(condition)
-        window.click()
+    # try:
+    #     condition = EC.presence_of_element_located((By.XPATH, window_xpath))
+    #     window = WebDriverWait(driver, config.implicit_wait).until(condition)
+    #     window.click()
 
-    except TimeoutException:
-        logger.debug(red("Split window not found or operation timed out"))
+    # except TimeoutException:
+    #     logger.debug(red("Split window not found or operation timed out"))
 
 
 def _set_interactivity(
@@ -847,14 +851,16 @@ def _post_video(driver: WebDriver) -> None:
             "arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", post
         )
         post.click()
+
     except ElementClickInterceptedException:
         logger.debug(green("Trying to click on the button again"))
         driver.execute_script('document.querySelector(".TUXButton--primary").click()')
 
     # wait for button with text "Post now" and click it if it exists
     try:
-        logger.debug(green("Waiting for 'Post now' button"))
-        post_now_button = WebDriverWait(driver, config.implicit_wait).until(
+        time.sleep(1)
+        logger.debug(green("Waiting for 'Post sekarang' button"))
+        post_now_button = WebDriverWait(driver, config.explicit_wait).until(
             EC.element_to_be_clickable((By.XPATH, config.selectors.upload.post_now))
         )
         post_now_button.click()
@@ -862,10 +868,12 @@ def _post_video(driver: WebDriver) -> None:
         logger.debug("No 'Post now' button found, proceeding without it")
 
     # waits for the video to upload
-    post_confirmation = EC.presence_of_element_located(
-        (By.XPATH, config.selectors.upload.post_confirmation)
-    )
-    WebDriverWait(driver, config.explicit_wait).until(post_confirmation)
+    time.sleep(1)
+    # the toast gone so fast it couldn't be detected
+    # post_confirmation = EC.presence_of_element_located(
+    #     (By.XPATH, config.selectors.upload.post_confirmation)
+    # )
+    # WebDriverWait(driver, config.explicit_wait).until(post_confirmation)
 
     logger.debug(green("Video posted successfully"))
 

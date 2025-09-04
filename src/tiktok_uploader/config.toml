@@ -60,7 +60,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
 	post = "//button[@data-e2e='post_video_button']"
-	post_now = "//button[.//div[text()='Post now']]"
+	post_now = "//button[.//div[text()='Posting sekarang' or text()='Post now']]"
 	post_confirmation = "//div[contains(text(), 'Your video has been uploaded') or contains(text(), '视频已发布') or contains(text(), 'Video published')]"
 
 
