@@ -6,7 +6,7 @@ authors = [
 ]
 description = "An automatic TikTok video uploader w/ CLI. Uploads videos automatically using an automated browser and your cookies for authentication."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = [
 	"Selenium",
 	"Automation",
