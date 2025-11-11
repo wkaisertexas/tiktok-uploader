@@ -1,4 +1,4 @@
-# TikTok Uploader Default Configuation File
+# TikTok Uploader Default Configuration File
 
 headless = true
 quit_on_end = true

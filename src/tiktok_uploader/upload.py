@@ -787,12 +787,12 @@ def __time_picker(driver: WebDriver, hour: int, minute: int) -> None:
     minute_option_correct_index = int(minute / 5)
     minute_to_click = minute_options[minute_option_correct_index]
 
-    time.sleep(1)  # temporay fix => might be better to use an explicit wait
+    time.sleep(1)  # temporary fix => might be better to use an explicit wait
     driver.execute_script(
         "arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});",
         hour_to_click,
     )
-    time.sleep(1)  # temporay fix => might be better to use an explicit wait
+    time.sleep(1)  # temporary fix => might be better to use an explicit wait
     hour_to_click.click()
 
     driver.execute_script(

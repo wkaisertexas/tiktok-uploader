@@ -36,7 +36,7 @@
 
 # Installation
 
-A prequisite to using this program is the installation of a [Selenium-compatible](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
+A prerequisite to using this program is the installation of a [Selenium-compatible](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
 
 <h2 id="macos-windows-and-linux">MacOS, Windows and Linux</h2>
 
