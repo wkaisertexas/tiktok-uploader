@@ -720,13 +720,13 @@ def __date_picker(driver: WebDriver, month: int, day: int) -> None:
     if n_calendar_month != month:  # Max can be a month before or after
         arrows = driver.find_elements(By.XPATH, config.selectors.schedule.calendar_arrows)
         if month == 12 and n_calendar_month == 1:
-            arrow = arrows[0]          # next
+            arrow = arrows[0]
         elif month == 1 and n_calendar_month == 12:
-            arrow = arrows[-1]         # previous
+            arrow = arrows[-1]
         elif n_calendar_month < month:
-            arrow = arrows[-1]         # previous
+            arrow = arrows[-1]
         else:
-            arrow = arrows[0]          # next
+            arrow = arrows[0]
 
         arrow.click()
     valid_days = driver.find_elements(
