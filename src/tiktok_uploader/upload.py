@@ -718,7 +718,9 @@ def __date_picker(driver: WebDriver, month: int, day: int) -> None:
     ).text
     n_calendar_month = datetime.datetime.strptime(calendar_month, "%B").month
     if n_calendar_month != month:  # Max can be a month before or after
-        arrows = driver.find_elements(By.XPATH, config.selectors.schedule.calendar_arrows)
+        arrows = driver.find_elements(
+            By.XPATH, config.selectors.schedule.calendar_arrows
+        )
         if month == 12 and n_calendar_month == 1:
             arrow = arrows[0]
         elif month == 1 and n_calendar_month == 12:
