@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center"> ⬆️ TikTok Uploader </h1>
-<p align="center">A <strong>Selenium</strong>-based automated <strong>TikTok</strong> video uploader</p>
+<p align="center">A <strong>Playwright</strong>-based automated <strong>TikTok</strong> video uploader</p>
 
 <p align="center">
   <img alt="Forks" src="https://img.shields.io/github/forks/wkaisertexas/tiktok-uploader" />
@@ -27,7 +27,6 @@
   - [🛍️ Product Link](#product-link)
   - [🔐 Authentication](#authentication)
   - [👀 Browser Selection](#browser-selection)
-  - [🚲 Custom WebDriver Options](#custom-webdriver)
   - [🤯 Headless Browsers](#headless)
   - [🔨 Initial Setup](#initial-setup)
 - [♻️ Examples](#examples)
@@ -36,7 +35,7 @@
 
 # Installation
 
-A prerequisite to using this program is the installation of a [Selenium-compatible](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
+A prerequisite to using this program is the installation of [Playwright](https://playwright.dev/) browsers.
 
 <h2 id="macos-windows-and-linux">MacOS, Windows and Linux</h2>
 
@@ -48,6 +47,7 @@ Install `tiktok-uploader` using `pip`
 
 ```bash
 pip install tiktok-uploader
+playwright install
 ```
 
 <h3 id="building-from-source">Building from source</h3>
@@ -65,6 +65,8 @@ Next, clone the repository using `git`. Then change directories and run the proj
 ```bash
 git clone https://github.com/wkaisertexas/tiktok-uploader
 cd tiktok-uploader
+uv sync
+uv run playwright install
 uv run tiktok-uploader
 ```
 
@@ -241,13 +243,28 @@ upload_videos(videos=videos, auth=auth)
 
 <h2 id="authentication"> 🔐 Authentication</h2>
 
-Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authentication by a Selenium-controlled browser.
+Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authentication by a Playwright-controlled browser.
 
 Your `sessionid` is all that is required for authentication and can be passed as an argument to nearly any function
 
 [🍪 Get cookies.txt](https://github.com/kairi003/Get-cookies.txt-LOCALLY) makes getting cookies in a [NetScape cookies format](http://fileformats.archiveteam.org/wiki/Netscape_cookies.txt).
 
 After installing, open the extensions menu on [TikTok.com](https://tiktok.com/) and click `🍪 Get cookies.txt` to reveal your cookies. Select `Export As ⇩` and specify a location and name to save.
+
+**Alternatively**, if you don't want to use an extension, you can use the following JavaScript line in the Developer Console (F12) on TikTok.com:
+
+1. Copy the code below:
+```javascript
+(function(){const c=document.cookie.split("; ").map(x=>{const i=x.indexOf("=");return ".tiktok.com\tTRUE\t/\tFALSE\t2147483647\t"+x.substring(0,i)+"\t"+x.substring(i+1)}).join("\n");const b=new Blob([c],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="cookies.txt";a.textContent="Download cookies.txt";a.style="position:fixed;top:20px;right:20px;z-index:9999;padding:10px;background:#fe2c55;color:white;border-radius:5px;text-decoration:none;font-weight:bold;font-family:sans-serif;";document.body.appendChild(a);if(!document.cookie.includes("sessionid"))alert("⚠️ sessionid is missing (HttpOnly). You must add it manually!");})();
+```
+2. Paste it into the console and press Enter.
+3. A "Download cookies.txt" button will appear in the top-right corner. Click it to download your cookies file.
+4. If alerted about the missing `sessionid`, follow the manual steps below.
+
+> **⚠️ Important:** Browsers often hide the `sessionid` cookie from JavaScript (HttpOnly). If the script alerts you about this:
+> 1. Go to **Application** > **Cookies** in DevTools.
+> 2. Find `sessionid` and copy its value.
+> 3. Manually add it to your downloaded `cookies.txt`: `.tiktok.com	TRUE	/	FALSE	2147483647	sessionid	YOUR_SESSION_ID`
 
 ```python
 upload_video(..., cookies='cookies.txt')
@@ -299,29 +316,9 @@ upload_video(..., browser=choice(BROWSERS))
 - **Edge**
 - **FireFox**
 
-<h2 id="custom-webdriver"> 🚲 Custom WebDriver Options</h2>
-
-Default modifications to Selenium are applied which help it avoid being detected by TikTok.
-
-However, you **may** pass a custom driver configuration options. Simply pass `options` as a keyword argument to either `upload_video` or `upload_videos`.
-
-```python
-from selenium.webdriver.chrome.options import Options
-
-options = Options()
-
-options.add_argument('start-maximized')
-
-upload_videos(..., options=options)
-```
-
-
-> [!NOTE]
-> Make sure to use the right selenium options for your browser
-
 <h2 id="headless"> 🤯 Headless Browsers </h2>
 
-Headless browsing only works on Chrome. When using Chrome, adding the `--headless` flag using the CLI or passing `headless` as a keyword argument to `upload_video` or `upload_videos` is all that is required.
+When using Chrome, adding the `--headless` flag using the CLI or passing `headless` as a keyword argument to `upload_video` or `upload_videos` is all that is required.
 
 ```python
 upload_video(..., headless=True)
@@ -330,9 +327,11 @@ upload_videos(..., headless=True)
 
 <h2 id="initial-setup"> 🔨 Initial Setup</h2>
 
-[WebDriverManager](https://bonigarcia.dev/webdrivermanager/) is used to manage driver versions.
+You must install Playwright browsers:
 
-On initial startup, you **may** be prompted to install the correct driver for your selected browser. However, for **Chrome** and **Edge** the driver is automatically installed.
+```bash
+playwright install
+```
 
 <h2 id="examples"> ♻ Examples</h2>
 

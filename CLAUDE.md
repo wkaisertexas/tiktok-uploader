@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TikTok Uploader is a Selenium-based automated video uploader for TikTok. It uses browser automation to upload videos with descriptions, schedules, product links, and other features by simulating user interactions with the TikTok website.
+TikTok Uploader is a Playwright-based automated video uploader for TikTok. It uses browser automation to upload videos with descriptions, schedules, product links, and other features by simulating user interactions with the TikTok website.
 
 ## Key Architecture
 
@@ -12,15 +12,14 @@ TikTok Uploader is a Selenium-based automated video uploader for TikTok. It uses
 
 - **Upload Module** (`src/tiktok_uploader/upload.py`): Main upload logic handling single and batch video uploads to TikTok
 - **Auth Backend** (`src/tiktok_uploader/auth.py`): Handles authentication via cookies, sessionid, or username/password
-- **Browser Management** (`src/tiktok_uploader/browsers.py`): Manages Selenium WebDriver instances for Chrome, Firefox, Safari, Edge with anti-detection measures
+- **Browser Management** (`src/tiktok_uploader/browsers.py`): Manages Playwright Page instances for Chrome, Firefox, Safari, Edge with anti-detection measures
 - **CLI Interface** (`src/tiktok_uploader/cli.py`): Command-line interface for the uploader and authentication tools
-- **Proxy Extension** (`src/tiktok_uploader/proxy_auth_extension/`): Chrome extension for authenticated proxy support
 
 ### Authentication Flow
 
 The uploader uses browser cookies to authenticate with TikTok, bypassing the need for direct API access. Authentication priority:
 1. Cookies from file (NetScape format)
-2. Cookie list (Selenium-compatible dictionaries)
+2. Cookie list (Playwright-compatible dictionaries)
 3. SessionID
 4. Username/Password (fallback, creates cookies)
 
@@ -163,7 +162,7 @@ When adding new features:
 
 ### Anti-Detection Measures
 
-- Custom Chrome options to avoid Selenium detection
+- Custom Chrome options to avoid bot detection
 - User-agent spoofing
 - Webdriver property removal
 - Stealth JavaScript injection
@@ -179,7 +178,7 @@ When adding new features:
 
 Main configuration file: `src/tiktok_uploader/config.toml`
 - Contains timeouts, URLs, and XPath selectors
-- Explicit wait times for Selenium operations
+- Explicit wait times for Playwright operations
 - TikTok page element locators
 
 ## Testing Approach

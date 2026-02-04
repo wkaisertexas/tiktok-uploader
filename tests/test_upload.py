@@ -271,9 +271,9 @@ def test_upload_video_with_visibility(
     Tests that upload_video properly passes visibility parameter through
     """
     # Setup mocks
-    mock_driver = MagicMock()
-    mock_browser.return_value = mock_driver
-    mock_auth.return_value = mock_driver
+    mock_page = MagicMock()
+    mock_browser.return_value = mock_page
+    mock_auth.return_value = mock_page
 
     # Test uploading with "only_you" visibility
     upload_video(
@@ -316,42 +316,29 @@ def test_upload_video_with_visibility(
     assert call_args[0][7] == "everyone"  # Default value
 
 
-@patch("tiktok_uploader.upload.WebDriverWait")
-@patch("tiktok_uploader.upload.EC")
-def test_set_visibility_dropdown_interaction(mock_ec, mock_wait) -> None:
+def test_set_visibility_dropdown_interaction() -> None:
     """
     Tests the _set_visibility function's interaction with the dropdown
     """
     from tiktok_uploader.upload import _set_visibility
 
-    # Create mock driver and elements
-    mock_driver = MagicMock()
-    mock_dropdown = MagicMock()
-    mock_option = MagicMock()
+    # Create mock page and elements
+    mock_page = MagicMock()
+    
+    # Run
+    _set_visibility(mock_page, "only_you")
+    
+    # We expect calls to locator and click
+    assert mock_page.locator.call_count >= 2
+    mock_page.locator.return_value.click.assert_called()
 
-    # Setup the wait to return our mock elements
-    mock_wait_instance = MagicMock()
-    mock_wait.return_value = mock_wait_instance
-    mock_wait_instance.until.side_effect = [mock_dropdown, mock_option]
+    # Reset
+    mock_page.reset_mock()
 
-    # Test setting visibility to "only_you"
-    _set_visibility(mock_driver, "only_you")
+    _set_visibility(mock_page, "friends")
 
-    # Verify dropdown was clicked
-    mock_dropdown.click.assert_called_once()
-
-    # Verify the option was clicked
-    mock_option.click.assert_called_once()
-
-    # Test setting visibility to "friends"
-    mock_dropdown.reset_mock()
-    mock_option.reset_mock()
-    mock_wait_instance.until.side_effect = [mock_dropdown, mock_option]
-
-    _set_visibility(mock_driver, "friends")
-
-    mock_dropdown.click.assert_called_once()
-    mock_option.click.assert_called_once()
+    assert mock_page.locator.call_count >= 2
+    mock_page.locator.return_value.click.assert_called()
 
 
 def test_video_dict_type_with_visibility() -> None:

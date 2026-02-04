@@ -2,63 +2,32 @@
 Test the browsers module.
 """
 
-import pytest
+from unittest.mock import MagicMock, patch
 
 import tiktok_uploader.browsers as browsers
 
-SUPPORTED_BROWSERS = ["chrome", "firefox", "safari", "edge"]
-SERVICES = ["chrome", "firefox", "edge"]
 
+@patch("tiktok_uploader.browsers.sync_playwright")
+def test_get_browser(mock_sync_playwright):
+    mock_p = MagicMock()
+    mock_browser_type = MagicMock()
+    mock_browser = MagicMock()
+    mock_context = MagicMock()
+    mock_page = MagicMock()
 
-def test_get_driver() -> None:
-    """
-    Tests the get_driver function.
-    """
-    default = browsers.get_driver(name="chrome")
-    assert default is not None
+    mock_sync_playwright.return_value.start.return_value = mock_p
+    # Default is chromium for chrome
+    mock_p.chromium = mock_browser_type
+    mock_browser_type.launch.return_value = mock_browser
+    mock_browser.new_context.return_value = mock_context
+    mock_context.new_page.return_value = mock_page
 
-    # pytest throws exception test
-    with pytest.raises(browsers.UnsupportedBrowserException):
-        browsers.get_driver("invalid")
-
-
-# Test each default
-def test_chrome_defaults():
-    """
-    Tests the chrome_defaults function.
-    """
-    options = browsers.chrome_defaults()
-    headless = browsers.chrome_defaults(headless=True)
-    assert options is not None
-    assert headless is not None
-
-
-def test_firefox_defaults():
-    """
-    Tests the firefox_defaults function.
-    """
-    options = browsers.firefox_defaults()
-    headless = browsers.firefox_defaults(headless=True)
-    assert options is not None
-    assert headless is not None
-
-
-def test_safari_defaults():
-    """
-    Tests the safari_defaults function.
-    """
-    options = browsers.safari_defaults()
-    headless = browsers.safari_defaults(headless=True)
-    assert options is not None
-    assert headless is not None
-
-
-def test_edge_defaults():
-    """
-    Tests the edge_defaults function.
-    """
-    options = browsers.edge_defaults()
-    headless = browsers.edge_defaults(headless=True)
-
-    assert options is not None
-    assert headless is not None
+    page = browsers.get_browser("chrome")
+    
+    assert page == mock_page
+    mock_p.chromium.launch.assert_called()
+    
+    # Check headless
+    browsers.get_browser("chrome", headless=True)
+    args, kwargs = mock_browser_type.launch.call_args
+    assert kwargs["headless"] is True

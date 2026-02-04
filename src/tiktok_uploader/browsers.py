@@ -1,227 +1,79 @@
 """Gets the browser's given the user's input"""
 
-from collections.abc import Callable
+import logging
 from typing import Any, Literal
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-
-# Webdriver managers
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.common.options import BaseOptions
-from selenium.webdriver.common.service import Service
-from selenium.webdriver.edge.options import Options as EdgeOptions
-from selenium.webdriver.edge.service import Service as EdgeService
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.safari.options import Options as SafariOptions
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from playwright.sync_api import Page, sync_playwright
 
 from tiktok_uploader import config
-from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import (
-    generate_proxy_auth_extension,
-)
 
-browser_t = Literal["chrome", "safari", "chromium", "edge", "firefox"]
-
+# Type alias for supported browsers
+browser_t = Literal["chrome", "firefox", "webkit", "edge"]
 
 def get_browser(
-    name: browser_t = "chrome", options: Any | None = None, *args, **kwargs
-) -> WebDriver:
+    name: browser_t = "chrome",
+    headless: bool = False,
+    proxy: dict | None = None,
+    *args,
+    **kwargs,
+) -> Page:
     """
     Gets a browser based on the name with the ability to pass in additional arguments
     """
-
-    # get the web driver for the browser
-    driver_to_use = get_driver(name, *args, **kwargs)
-
-    # gets the options for the browser
-
-    options = options or get_default_options(name, *args, **kwargs)
-
-    # combines them together into a completed driver
-    service = get_service(name=name)
-    if service:
-        driver = driver_to_use(service=service, options=options)  # type: ignore
+    p = sync_playwright().start()
+    
+    # Map browser names to Playwright launch functions
+    if name == "chrome" or name == "edge":
+        browser_type = p.chromium
+    elif name == "firefox":
+        browser_type = p.firefox
+    elif name == "webkit" or name == "safari":
+        browser_type = p.webkit
     else:
-        driver = driver_to_use(options=options)
+        browser_type = p.chromium # Default to chromium
 
-    driver.implicitly_wait(config.implicit_wait)
+    launch_args = {
+        "headless": headless,
+        "args": [
+            "--disable-blink-features=AutomationControlled",
+        ]
+    }
+    
+    if name == "chrome":
+        launch_args["channel"] = "chrome"
+    elif name == "edge":
+        launch_args["channel"] = "msedge"
 
-    return driver
-
-
-def get_driver(name: str, *args, **kwargs) -> type[WebDriver]:
-    """
-    Gets the web driver function for the browser
-    """
-    clean_name = _clean_name(name)
-    if clean_name in drivers:
-        return drivers[clean_name]
-
-    raise UnsupportedBrowserException()
-
-
-def get_service(name: str):
-    """
-    Gets a service to install the browser driver per webdriver-manager docs
-
-    https://pypi.org/project/webdriver-manager/
-    """
-    if _clean_name(name) in services:
-        return services[name]()
-
-    return None  # Safari doesn't need a service
-
-
-def get_default_options(name: browser_t, *args, **kwargs) -> BaseOptions:
-    """
-    Gets the default options for each browser to help remain undetected
-    """
-    cleaned_name = _clean_name(name)
-
-    if cleaned_name in defaults:
-        return defaults[cleaned_name](*args, **kwargs)
-
-    raise UnsupportedBrowserException()
-
-
-def chrome_defaults(
-    *args, headless: bool = False, proxy: dict | None = None, **kwargs
-) -> ChromeOptions:
-    """
-    Creates Chrome with Options
-    """
-
-    options = ChromeOptions()
-
-    ## regular
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--profile-directory=Default")
-
-    ## experimental
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option("useAutomationExtension", False)
-
-    ## add english language to avoid languages translation error
-    options.add_argument("--lang=en")
-
-    # headless
-    if headless:
-        options.add_argument("--headless=new")
     if proxy:
-        if "user" in proxy.keys() and "pass" in proxy.keys():
-            # This can fail if you are executing the function more than once in the same time
-            extension_file = "temp_proxy_auth_extension.zip"
-            generate_proxy_auth_extension(
-                proxy["host"],
-                proxy["port"],
-                proxy["user"],
-                proxy["password"],
-                extension_file,
-            )
-            options.add_extension(extension_file)
-        else:
-            options.add_argument(f"--proxy-server={proxy['host']}:{proxy['port']}")
+        launch_args["proxy"] = {
+            "server": f"{proxy['host']}:{proxy['port']}",
+        }
+        if "user" in proxy and "pass" in proxy:
+            launch_args["proxy"]["username"] = proxy["user"]
+            launch_args["proxy"]["password"] = proxy["pass"]
 
-    return options
+    browser = browser_type.launch(**launch_args)
+    
+    # Create a new context with stealth-like options if needed
+    # For now, we use standard context but set locale/timezone if passed in kwargs
+    # or rely on defaults.
+    
+    context_args = {
+        "viewport": {"width": 1280, "height": 720},
+        "user_agent": config.disguising.user_agent,
+        "locale": "en-US",
+    }
+    
+    context = browser.new_context(**context_args)
+    
+    # Add init script to mask webdriver
+    context.add_init_script("""
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => undefined
+        });
+    """)
+    
+    page = context.new_page()
+    page.set_default_timeout(config.implicit_wait * 1000) # Convert seconds to ms
 
-
-def firefox_defaults(
-    *args, headless: bool = False, proxy: dict | None = None, **kwargs
-) -> FirefoxOptions:
-    """
-    Creates Firefox with default options
-    """
-
-    options = FirefoxOptions()
-
-    # default options
-
-    if headless:
-        options.add_argument("--headless")
-    if proxy:
-        raise NotImplementedError("Proxy support is not implemented for this browser")
-    return options
-
-
-def safari_defaults(
-    *args, headless: bool = False, proxy: dict | None = None, **kwargs
-) -> SafariOptions:
-    """
-    Creates Safari with default options
-    """
-    options = SafariOptions()
-
-    # default options
-
-    if headless:
-        options.add_argument("--headless")
-    if proxy:
-        raise NotImplementedError("Proxy support is not implemented for this browser")
-    return options
-
-
-def edge_defaults(
-    *args, headless: bool = False, proxy: dict | None = None, **kwargs
-) -> EdgeOptions:
-    """
-    Creates Edge with default options
-    """
-    options = EdgeOptions()
-
-    # default options
-
-    if headless:
-        options.add_argument("--headless")
-    if proxy:
-        raise NotImplementedError("Proxy support is not implemented for this browser")
-    return options
-
-
-# Misc
-class UnsupportedBrowserException(Exception):
-    """
-    Browser is not supported by the library
-
-    Supported browsers are:
-        - Chrome
-        - Firefox
-        - Safari
-        - Edge
-    """
-
-    def __init__(self, message: str | None = None):
-        super().__init__(message or self.__doc__)
-
-
-def _clean_name(name: str) -> str:
-    """
-    Cleans the name of the browser to make it easier to use
-    """
-    return name.strip().lower()
-
-
-drivers: dict[str, type[WebDriver]] = {
-    "chrome": webdriver.Chrome,
-    "firefox": webdriver.Firefox,
-    "safari": webdriver.Safari,
-    "edge": webdriver.ChromiumEdge,
-}
-
-defaults: dict[str, Callable[..., BaseOptions]] = {
-    "chrome": chrome_defaults,
-    "firefox": firefox_defaults,
-    "safari": safari_defaults,
-    "edge": edge_defaults,
-}
-
-
-services: dict[str, Callable[[], Service]] = {
-    "chrome": lambda: ChromeService(ChromeDriverManager().install()),
-    "firefox": lambda: FirefoxService(GeckoDriverManager().install()),
-    "edge": lambda: EdgeService(EdgeChromiumDriverManager().install()),
-}
+    return page
