@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center"> ⬆️ TikTok Uploader </h1>
-<p align="center">A <strong>Selenium</strong>-based automated <strong>TikTok</strong> video uploader</p>
+<p align="center">A <strong>Playwright</strong>-based automated <strong>TikTok</strong> video uploader</p>
 
 <p align="center">
   <img alt="Forks" src="https://img.shields.io/github/forks/wkaisertexas/tiktok-uploader" />
@@ -27,7 +27,6 @@
   - [🛍️ Product Link](#product-link)
   - [🔐 Authentication](#authentication)
   - [👀 Browser Selection](#browser-selection)
-  - [🚲 Custom WebDriver Options](#custom-webdriver)
   - [🤯 Headless Browsers](#headless)
   - [🔨 Initial Setup](#initial-setup)
 - [♻️ Examples](#examples)
@@ -36,7 +35,7 @@
 
 # Installation
 
-A prerequisite to using this program is the installation of a [Selenium-compatible](https://www.selenium.dev/documentation/webdriver/getting_started/install_drivers/) web browser. [Google Chrome](https://www.google.com/chrome/) is recommended.
+A prerequisite to using this program is the installation of [Playwright](https://playwright.dev/) browsers.
 
 <h2 id="macos-windows-and-linux">MacOS, Windows and Linux</h2>
 
@@ -48,6 +47,7 @@ Install `tiktok-uploader` using `pip`
 
 ```bash
 pip install tiktok-uploader
+playwright install
 ```
 
 <h3 id="building-from-source">Building from source</h3>
@@ -65,6 +65,8 @@ Next, clone the repository using `git`. Then change directories and run the proj
 ```bash
 git clone https://github.com/wkaisertexas/tiktok-uploader
 cd tiktok-uploader
+uv sync
+uv run playwright install
 uv run tiktok-uploader
 ```
 
@@ -88,11 +90,11 @@ tiktok-uploader -v video.mp4 -d "this is my escaped \"description\"" -c cookies.
 ```
 
 ```python
-from tiktok_uploader.upload import upload_video, upload_videos
-from tiktok_uploader.auth import AuthBackend
+from tiktok_uploader.upload import TikTokUploader
 
 # single video
-upload_video('video.mp4', description='this is my description', cookies='cookies.txt')
+uploader = TikTokUploader(cookies='cookies.txt')
+uploader.upload_video('video.mp4', description='this is my description')
 
 # Multiple Videos
 videos = [
@@ -106,17 +108,16 @@ videos = [
     }
 ]
 
-auth = AuthBackend(cookies='cookies.txt')
-upload_videos(videos=videos, auth=auth)
+uploader = TikTokUploader(cookies='cookies.txt')
+uploader.upload_videos(videos=videos)
 ```
 
 <h2 id="uploading-videos"> ⬆ Uploading Videos</h2>
 
-This library revolves around the `upload_videos` function which takes in a list of videos which have **filenames** and **descriptions** and are passed as follows:
+This library revolves around the `TikTokUploader` class which has a `upload_videos` function which takes in a list of videos which have **filenames** and **descriptions** and are passed as follows:
 
 ```python
-from tiktok_uploader.upload import upload_videos
-from tiktok_uploader.auth import AuthBackend
+from tiktok_uploader.upload import TikTokUploader
 
 videos = [
     {
@@ -129,8 +130,8 @@ videos = [
     }
 ]
 
-auth = AuthBackend(cookies='cookies.txt')
-failed_videos = upload_videos(videos=videos, auth=auth)
+uploader = TikTokUploader(cookies='cookies.txt')
+failed_videos = uploader.upload_videos(videos=videos)
 
 for video in failed_videos:  # each input video object which failed
     print(f"{video['video']} with description {video['description']} failed")
@@ -141,9 +142,10 @@ for video in failed_videos:  # each input video object which failed
 Mentions and Hashtags now work so long as they are followed by a space. However, **you** as the user **are responsible** for verifying a mention or hashtag exists before posting
 
 ```python
-from tiktok_uploader.upload import upload_video
+from tiktok_uploader.upload import TikTokUploader
 
-upload_video('video.mp4', '#fyp @icespicee', 'cookies.txt')
+uploader = TikTokUploader(cookies='cookies.txt')
+uploader.upload_video('video.mp4', description='#fyp @icespicee')
 ```
 
 <h2 id="stitches-duets-and-comments"> 🪡 Stitches, Duets and Comments</h2>
@@ -151,7 +153,8 @@ upload_video('video.mp4', '#fyp @icespicee', 'cookies.txt')
 To set whether or not a video uploaded allows stitches, comments or duet, simply specify `comment`, `stitch` and/or `duet` as keyword arguments to `upload_video` or `upload_videos`.
 
 ```python
-upload_video(..., comment=True, stitch=True, duet=True)
+uploader = TikTokUploader(cookies='cookies.txt')
+uploader.upload_video(..., comment=True, stitch=True, duet=True)
 ```
 
 > Comments, Stitches and Duets are allowed by **default**
@@ -163,7 +166,9 @@ To set a proxy, currently only works with chrome as the browser, allow user:pass
 ```python
 # proxy = {'user': 'myuser', 'pass': 'mypass', 'host': '111.111.111', 'port': '99'}  # user:pass
 proxy = {'host': '111.111.111', 'port': '99'}
-upload_video(..., proxy=proxy)
+
+uploader = TikTokUploader(cookies='cookies.txt', proxy=proxy)
+uploader.upload_video(...)
 ```
 
 <h2 id="schedule"> 📆 Schedule</h2>
@@ -173,8 +178,12 @@ The scheduled datetime must be at least 20 minutes in the future and a maximum o
 
 ```python
 import datetime
+from tiktok_uploader.upload import TikTokUploader
+
 schedule = datetime.datetime(2020, 12, 20, 13, 00)
-upload_video(..., schedule=schedule)
+
+uploader = TikTokUploader(cookies='cookies.txt')
+uploader.upload_video(..., schedule=schedule)
 ```
 
 <h2 id="covers"> 🖼️ Covers</h2>
@@ -184,7 +193,9 @@ TikTok supports ".png", ".jpeg" and ".jpg".
 
 ```python
 my_cover = "crazy_cover.jpg"
-upload_video(..., cover=my_cover)
+
+uploader = TikTokUploader(cookies='cookies.txt')
+uploader.upload_video(..., cover=my_cover)
 ```
 
 <h2 id="product-link"> 🛍️ Product Link</h2>
@@ -213,13 +224,13 @@ tiktok-uploader -v video.mp4 -d "this is my description" -c cookies.txt --produc
 **Python:**
 
 ```python
-from tiktok_uploader.upload import upload_video, upload_videos
-from tiktok_uploader.auth import AuthBackend
+from tiktok_uploader.upload import TikTokUploader
+
+uploader = TikTokUploader(cookies='cookies.txt')
 
 # Single video
-upload_video('video.mp4',
+uploader.upload_video('video.mp4',
             description='this is my description',
-            cookies='cookies.txt',
             product_id='YOUR_PRODUCT_ID')
 
 # Multiple videos
@@ -235,13 +246,12 @@ videos = [
     }
 ]
 
-auth = AuthBackend(cookies='cookies.txt')
-upload_videos(videos=videos, auth=auth)
+uploader.upload_videos(videos=videos)
 ```
 
 <h2 id="authentication"> 🔐 Authentication</h2>
 
-Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authentication by a Selenium-controlled browser.
+Authentication uses your browser's cookies. This workaround was done due to TikTok's stricter stance on authentication by a Playwright-controlled browser.
 
 Your `sessionid` is all that is required for authentication and can be passed as an argument to nearly any function
 
@@ -249,8 +259,24 @@ Your `sessionid` is all that is required for authentication and can be passed as
 
 After installing, open the extensions menu on [TikTok.com](https://tiktok.com/) and click `🍪 Get cookies.txt` to reveal your cookies. Select `Export As ⇩` and specify a location and name to save.
 
+**Alternatively**, if you don't want to use an extension, you can use the following JavaScript line in the Developer Console (F12) on TikTok.com:
+
+1. Copy the code below:
+```javascript
+(function(){const c=document.cookie.split("; ").map(x=>{const i=x.indexOf("=");return ".tiktok.com\tTRUE\t/\tFALSE\t2147483647\t"+x.substring(0,i)+"\t"+x.substring(i+1)}).join("\n");const b=new Blob([c],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="cookies.txt";a.textContent="Download cookies.txt";a.style="position:fixed;top:20px;right:20px;z-index:9999;padding:10px;background:#fe2c55;color:white;border-radius:5px;text-decoration:none;font-weight:bold;font-family:sans-serif;";document.body.appendChild(a);if(!document.cookie.includes("sessionid"))alert("⚠️ sessionid is missing (HttpOnly). You must add it manually!");})();
+```
+2. Paste it into the console and press Enter.
+3. A "Download cookies.txt" button will appear in the top-right corner. Click it to download your cookies file.
+4. If alerted about the missing `sessionid`, follow the manual steps below.
+
+> **⚠️ Important:** Browsers often hide the `sessionid` cookie from JavaScript (HttpOnly). If the script alerts you about this:
+> 1. Go to **Application** > **Cookies** in DevTools.
+> 2. Find `sessionid` and copy its value.
+> 3. Manually add it to your downloaded `cookies.txt`: `.tiktok.com	TRUE	/	FALSE	2147483647	sessionid	YOUR_SESSION_ID`
+
 ```python
-upload_video(..., cookies='cookies.txt')
+uploader = TikTokUploader(cookies='cookies.txt')
+uploader.upload_video(...)
 ```
 
 **Optionally**, `cookies_list` is a list of dictionaries with keys `name`, `value`, `domain`, `path` and `expiry` which allow you to pass your own browser cookies.
@@ -267,15 +293,16 @@ cookies_list = [
     # the rest of your cookies all in a list
 ]
 
-upload_video(..., cookies_list=cookies_list)
+uploader = TikTokUploader(cookies_list=cookies_list)
+uploader.upload_video(...)
 ```
 
 <h2 id="browser-selection"> 👀 Browser Selection</h2>
 
-[Google Chrome](https://www.google.com/chrome) is the preferred browser for **TikTokUploader**. The default anti-detection techniques used in this packaged are optimized for this. However, if you wish to use a different browser you may specify the `browser` in `upload_video` or `upload_videos`.
+[Google Chrome](https://www.google.com/chrome) is the preferred browser for **TikTokUploader**. The default anti-detection techniques used in this packaged are optimized for this. However, if you wish to use a different browser you may specify the `browser` in `TikTokUploader`.
 
 ```python
-from tiktok_uploader.upload import upload_video
+from tiktok_uploader.upload import TikTokUploader
 
 from random import choice
 
@@ -288,7 +315,8 @@ BROWSERS = [
 ]
 
 # randomly picks a web browser
-upload_video(..., browser=choice(BROWSERS))
+uploader = TikTokUploader(cookies='cookies.txt', browser=choice(BROWSERS))
+uploader.upload_video(...)
 ```
 
 ✅ Supported Browsers:
@@ -299,40 +327,22 @@ upload_video(..., browser=choice(BROWSERS))
 - **Edge**
 - **FireFox**
 
-<h2 id="custom-webdriver"> 🚲 Custom WebDriver Options</h2>
-
-Default modifications to Selenium are applied which help it avoid being detected by TikTok.
-
-However, you **may** pass a custom driver configuration options. Simply pass `options` as a keyword argument to either `upload_video` or `upload_videos`.
-
-```python
-from selenium.webdriver.chrome.options import Options
-
-options = Options()
-
-options.add_argument('start-maximized')
-
-upload_videos(..., options=options)
-```
-
-
-> [!NOTE]
-> Make sure to use the right selenium options for your browser
-
 <h2 id="headless"> 🤯 Headless Browsers </h2>
 
-Headless browsing only works on Chrome. When using Chrome, adding the `--headless` flag using the CLI or passing `headless` as a keyword argument to `upload_video` or `upload_videos` is all that is required.
+When using Chrome, adding the `--headless` flag using the CLI or passing `headless` as a keyword argument to `TikTokUploader` is all that is required.
 
 ```python
-upload_video(..., headless=True)
-upload_videos(..., headless=True)
+uploader = TikTokUploader(cookies='cookies.txt', headless=True)
+uploader.upload_video(...)
 ```
 
 <h2 id="initial-setup"> 🔨 Initial Setup</h2>
 
-[WebDriverManager](https://bonigarcia.dev/webdrivermanager/) is used to manage driver versions.
+You must install Playwright browsers:
 
-On initial startup, you **may** be prompted to install the correct driver for your selected browser. However, for **Chrome** and **Edge** the driver is automatically installed.
+```bash
+playwright install
+```
 
 <h2 id="examples"> ♻ Examples</h2>
 

@@ -4,9 +4,8 @@ Uploads multiple videos downloaded from the internet
 
 import urllib.request
 
-from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader.types import VideoDict
-from tiktok_uploader.upload import upload_videos
+from tiktok_uploader.upload import TikTokUploader
 
 URL = "https://raw.githubusercontent.com/wkaisertexas/wkaisertexas.github.io/main/upload.mp4"
 FILENAME = "upload.mp4"
@@ -29,7 +28,7 @@ if __name__ == "__main__":
     urllib.request.urlretrieve(URL, FILENAME)
 
     # authentication backend
-    auth = AuthBackend(cookies="cookies.txt")
+    uploader = TikTokUploader(cookies="cookies.txt")
 
     # upload video to TikTok
-    upload_videos(videos, auth=auth)
+    uploader.upload_videos(videos)

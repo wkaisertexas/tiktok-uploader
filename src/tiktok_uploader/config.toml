@@ -7,8 +7,8 @@ quit_on_end = true
 valid_path_names = ["path", "filename", "video", "video_path"]
 valid_descriptions = ["description", "desc", "caption"]
 
-# Selenium Webdriver Waits
-implicit_wait = 5  # seconds
+# Playwright Waits
+implicit_wait = 30  # seconds
 explicit_wait = 60 # seconds
 uploading_wait = 180 # seconds
 
@@ -28,7 +28,7 @@ upload = "https://www.tiktok.com/creator-center/upload?lang=en"
 [disguising]
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 
-[selectors] # Selenium XPATH selectors
+[selectors] # Playwright XPATH selectors
 
 	[selectors.login]
 	username_field = "//input[@name=\"username\"]"

@@ -2,23 +2,22 @@
 Example of uploading a private video to TikTok
 """
 
-from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader.types import VideoDict
-from tiktok_uploader.upload import upload_video, upload_videos
+from tiktok_uploader.upload import TikTokUploader
+
+uploader = TikTokUploader(cookies="cookies.txt")
 
 # Upload a private video (only visible to you)
-upload_video(
+uploader.upload_video(
     filename="video.mp4",
     description="This is a private video - only I can see it",
-    cookies="cookies.txt",
     visibility="only_you",  # Options: 'everyone', 'friends', 'only_you'
 )
 
 # Upload a friends-only video
-upload_video(
+uploader.upload_video(
     filename="video2.mp4",
     description="This video is only visible to my friends",
-    cookies="cookies.txt",
     visibility="friends",
 )
 
@@ -42,8 +41,7 @@ videos: list[VideoDict] = [
     },
 ]
 
-auth = AuthBackend(cookies="cookies.txt")
-failed_videos = upload_videos(videos=videos, auth=auth)
+failed_videos = uploader.upload_videos(videos=videos)
 
 if failed_videos:
     print(f"Failed to upload: {failed_videos}")

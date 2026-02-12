@@ -7,7 +7,7 @@ from sys import argv
 import pandas as pd
 import toml
 
-from tiktok_uploader.upload import upload_video
+from tiktok_uploader.upload import TikTokUploader
 
 # NOTE: A TOML file with the following information also works
 # Good for when you have multiple accounts
@@ -26,14 +26,15 @@ def main() -> None:
     index = frame.index[frame[KEY] is False].to_list()[0]
     video_info = frame.iloc[index]
 
-    failed = upload_video(
+    uploader = TikTokUploader(cookies=COOKIES)
+
+    success = uploader.upload_video(
         video_info["file_path"],
         video_info["description"],
-        cookies=COOKIES,
         product_id=video_info.get("product_id", None),
     )
 
-    if not failed:
+    if success:
         video_info[KEY] = True  # Registers the video has been uploaded
         frame.to_excel(INFO)
 

@@ -14,7 +14,7 @@ class VideoDict(TypedDict, total=False):
     path: str
     video: str
     stitch: bool
-    duel: bool
+    duet: bool
     description: str
     schedule: datetime
     product_id: str
@@ -28,6 +28,8 @@ class Cookie(TypedDict, total=False):
     domain: str
     path: str
     expiry: int
+    expires: int
+    sameSite: str
 
 
 def cookie_from_dict(data: Cookie) -> HttpCookie:
