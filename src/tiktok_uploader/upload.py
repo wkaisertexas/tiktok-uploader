@@ -1,30 +1,245 @@
 """
 `tiktok_uploader` module for uploading videos to TikTok
 
-Key Functions
--------------
-upload_video : Uploads a single TikTok video
-upload_videos : Uploads multiple TikTok videos
+Key Classes
+-----------
+TikTokUploader : Client for uploading videos to TikTok
 """
 
 import datetime
-import threading
+import logging
 import time
 from collections.abc import Callable
 from os.path import abspath, exists
 from typing import Any, Literal
 
 import pytz
-from playwright.sync_api import Page, expect, TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-from tiktok_uploader import config, logger
+from tiktok_uploader import config
 from tiktok_uploader.auth import AuthBackend
 from tiktok_uploader.browsers import get_browser
-# from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_working # No longer needed
 from tiktok_uploader.types import Cookie, ProxyDict, VideoDict
 from tiktok_uploader.utils import bold, green, red
 
+logger = logging.getLogger(__name__)
 
+class TikTokUploader:
+    def __init__(
+        self,
+        username: str = "",
+        password: str = "",
+        cookies: str = "",
+        cookies_list: list[Cookie] = [],
+        cookies_str: str | None = None,
+        sessionid: str | None = None,
+        proxy: ProxyDict | None = None,
+        browser: Literal["chrome", "safari", "chromium", "edge", "firefox"] = "chrome",
+        headless: bool = False,
+        *args,
+        **kwargs,
+    ):
+        """
+        Initializes the TikTok Uploader client.
+        
+        The browser is not started until the first upload is attempted (lazy initialization).
+        """
+        self.auth = AuthBackend(
+            username=username,
+            password=password,
+            cookies=cookies,
+            cookies_list=cookies_list,
+            cookies_str=cookies_str,
+            sessionid=sessionid,
+        )
+        self.proxy = proxy
+        self.browser_name = browser
+        self.headless = headless
+        self.browser_args = args
+        self.browser_kwargs = kwargs
+        
+        self._page: Page | None = None
+        self._browser_context: Any = None # Stored implicitly via page.context if needed
+
+    @property
+    def page(self) -> Page:
+        if self._page is None:
+            logger.debug(
+                "Create a %s browser instance %s",
+                self.browser_name,
+                "in headless mode" if self.headless else "",
+            )
+            self._page = get_browser(
+                self.browser_name, 
+                headless=self.headless, 
+                proxy=self.proxy, 
+                *self.browser_args, 
+                **self.browser_kwargs
+            ) # type: ignore[misc]
+            self._page = self.auth.authenticate_agent(self._page)
+        return self._page
+
+    def upload_video(
+        self,
+        filename: str,
+        description: str = "",
+        schedule: datetime.datetime | None = None,
+        product_id: str | None = None,
+        cover: str | None = None,
+        visibility: Literal["everyone", "friends", "only_you"] = "everyone",
+        num_retries: int = 1,
+        skip_split_window: bool = False,
+        *args,
+        **kwargs,
+    ) -> bool:
+        """
+        Uploads a single TikTok video.
+        
+        Returns True if successful, False otherwise.
+        """
+        video_dict: VideoDict = {"path": filename}
+        if description:
+            video_dict["description"] = description
+        if schedule:
+            video_dict["schedule"] = schedule
+        if product_id:
+            video_dict["product_id"] = product_id
+        if visibility != "everyone":
+            video_dict["visibility"] = visibility
+        if cover:
+            video_dict["cover"] = cover
+
+        failed_list = self.upload_videos(
+            [video_dict],
+            num_retries=num_retries,
+            skip_split_window=skip_split_window,
+            *args,
+            **kwargs
+        )
+        
+        return len(failed_list) == 0
+
+    def upload_videos(
+        self,
+        videos: list[VideoDict],
+        num_retries: int = 1,
+        skip_split_window: bool = False,
+        on_complete: Callable[[VideoDict], None] | None = None,
+        *args,
+        **kwargs,
+    ) -> list[VideoDict]:
+        """
+        Uploads multiple videos to TikTok.
+        Returns a list of failed videos.
+        """
+        videos = _convert_videos_dict(videos)  # type: ignore
+
+        if videos and len(videos) > 1:
+            logger.debug("Uploading %d videos", len(videos))
+
+        page = self.page # Triggers lazy loading/authentication
+
+        failed = []
+        # uploads each video
+        for video in videos:
+            try:
+                path = abspath(video.get("path", "."))
+                description = video.get("description", "")
+                schedule = video.get("schedule", None)
+                product_id = video.get("product_id", None)
+                cover_path = video.get("cover", None)
+                if cover_path is not None:
+                    cover_path = abspath(cover_path)
+
+                visibility = video.get("visibility", "everyone")
+
+                logger.debug(
+                    "Posting %s%s",
+                    bold(video.get("path", "")),
+                    (
+                        f"\n{' ' * 15}with description: {bold(description)}"
+                        if description
+                        else ""
+                    ),
+                )
+
+                # Video must be of supported type
+                if not _check_valid_path(path):
+                    print(f"{path} is invalid, skipping")
+                    failed.append(video)
+                    continue
+
+                # Video must have a valid datetime for tiktok's scheduler
+                if schedule:
+                    timezone = pytz.UTC
+                    if schedule.tzinfo is None:
+                        schedule = schedule.astimezone(timezone)
+                    elif (utc_offset := schedule.utcoffset()) is not None and int(
+                        utc_offset.total_seconds()
+                    ) == 0:  # Equivalent to UTC
+                        schedule = timezone.localize(schedule)
+                    else:
+                        print(
+                            f"{schedule} is invalid, the schedule datetime must be naive or aware with UTC timezone, skipping"
+                        )
+                        failed.append(video)
+                        continue
+
+                    valid_tiktok_minute_multiple = 5
+                    schedule = _get_valid_schedule_minute(
+                        schedule, valid_tiktok_minute_multiple
+                    )
+                    if not _check_valid_schedule(schedule):
+                        print(
+                            f"{schedule} is invalid, the schedule datetime must be as least 20 minutes in the future, and a maximum of 10 days, skipping"
+                        )
+                        failed.append(video)
+                        continue
+
+                complete_upload_form(
+                    page,
+                    path,
+                    description,
+                    schedule,
+                    skip_split_window,
+                    cover_path,
+                    product_id,
+                    visibility,
+                    num_retries,
+                    self.headless,
+                    *args,
+                    **kwargs,
+                ) # type: ignore[misc]
+            except Exception as exception:
+                logger.error("Failed to upload %s", path)
+                logger.error(exception)
+                failed.append(video)
+                # import traceback
+                # traceback.print_exc()
+
+            if on_complete and callable(on_complete):  # calls the user-specified on-complete function
+                on_complete(video)
+
+        return failed
+
+    def close(self):
+        """Closes the browser instance."""
+        if self._page:
+            try:
+                self._page.context.browser.close()
+            except Exception as e:
+                logger.debug(f"Error closing browser: {e}")
+            self._page = None
+            
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+
+# Wrapper functions for backward compatibility (optional but good for transition)
 def upload_video(
     filename: str,
     description: str | None = None,
@@ -39,23 +254,30 @@ def upload_video(
     product_id: str | None = None,
     cover: str | None = None,
     visibility: Literal["everyone", "friends", "only_you"] = "everyone",
+    browser: Literal["chrome", "safari", "chromium", "edge", "firefox"] = "chrome",
+    headless: bool = False,
     *args,
     **kwargs,
 ) -> list[VideoDict]:
     """
-    Uploads a single TikTok video.
-
-    Consider using `upload_videos` if using multiple videos
+    Uploads a single TikTok video using the TikTokUploader class.
+    
+    Returns a list of failed videos (empty if successful).
     """
-    auth = AuthBackend(
+    uploader = TikTokUploader(
         username=username,
         password=password,
         cookies=cookies,
         cookies_list=cookies_list,
         cookies_str=cookies_str,
         sessionid=sessionid,
-    )
-
+        proxy=proxy,
+        browser=browser,
+        headless=headless,
+        *args,
+        **kwargs
+    ) # type: ignore[misc]
+    
     video_dict: VideoDict = {"path": filename}
     if description:
         video_dict["description"] = description
@@ -68,137 +290,52 @@ def upload_video(
     if cover:
         video_dict["cover"] = cover
 
-    return upload_videos(
-        [video_dict],
-        auth,
-        proxy,
-        *args,
-        **kwargs,
-    )
-
+    try:
+        return uploader.upload_videos([video_dict], *args, **kwargs)
+    finally:
+        if config.quit_on_end:
+             uploader.close()
 
 def upload_videos(
     videos: list[VideoDict],
-    auth: AuthBackend,
+    username: str = "",
+    password: str = "",
+    cookies: str = "",
+    cookies_list: list[Cookie] = [],
+    cookies_str: str | None = None,
+    sessionid: str | None = None,
     proxy: ProxyDict | None = None,
     browser: Literal["chrome", "safari", "chromium", "edge", "firefox"] = "chrome",
-    browser_agent: Page | None = None,
-    on_complete: Callable[[VideoDict], None] | None = None,
+    browser_agent: Page | None = None, # Not fully supported in new class-based approach as constructor
     headless: bool = False,
-    num_retries: int = 1,
-    skip_split_window: bool = False,
     *args,
     **kwargs,
 ) -> list[VideoDict]:
     """
-    Uploads multiple videos to TikTok
+    Uploads multiple videos to TikTok using the TikTokUploader class.
     """
-    videos = _convert_videos_dict(videos)  # type: ignore
-
-    if videos and len(videos) > 1:
-        logger.debug("Uploading %d videos", len(videos))
-
-    if not browser_agent:  # user-specified browser agent
-        logger.debug(
-            "Create a %s browser instance %s",
-            browser,
-            "in headless mode" if headless else "",
-        )
-        page = get_browser(browser, headless=headless, proxy=proxy, *args, **kwargs)
-    else:
-        logger.debug("Using user-defined browser agent")
-        page = browser_agent
-
-    # Proxy check is handled by Playwright launch, if it fails it throws error usually.
-    # We can skip explicit proxy check for now or implement a simple check.
+    uploader = TikTokUploader(
+        username=username,
+        password=password,
+        cookies=cookies,
+        cookies_list=cookies_list,
+        cookies_str=cookies_str,
+        sessionid=sessionid,
+        proxy=proxy,
+        browser=browser,
+        headless=headless,
+        *args,
+        **kwargs
+    ) # type: ignore[misc]
     
-    page = auth.authenticate_agent(page)
+    if browser_agent:
+        uploader._page = uploader.auth.authenticate_agent(browser_agent)
 
-    failed = []
-    # uploads each video
-    for video in videos:
-        try:
-            path = abspath(video.get("path", "."))
-            description = video.get("description", "")
-            schedule = video.get("schedule", None)
-            product_id = video.get("product_id", None)
-            cover_path = video.get("cover", None)
-            if cover_path is not None:
-                cover_path = abspath(cover_path)
-
-            visibility = video.get("visibility", "everyone")
-
-            logger.debug(
-                "Posting %s%s",
-                bold(video.get("path", "")),
-                (
-                    f"\n{' ' * 15}with description: {bold(description)}"
-                    if description
-                    else ""
-                ),
-            )
-
-            # Video must be of supported type
-            if not _check_valid_path(path):
-                print(f"{path} is invalid, skipping")
-                failed.append(video)
-                continue
-
-            # Video must have a valid datetime for tiktok's scheduler
-            if schedule:
-                timezone = pytz.UTC
-                if schedule.tzinfo is None:
-                    schedule = schedule.astimezone(timezone)
-                elif (utc_offset := schedule.utcoffset()) is not None and int(
-                    utc_offset.total_seconds()
-                ) == 0:  # Equivalent to UTC
-                    schedule = timezone.localize(schedule)
-                else:
-                    print(
-                        f"{schedule} is invalid, the schedule datetime must be naive or aware with UTC timezone, skipping"
-                    )
-                    failed.append(video)
-                    continue
-
-                valid_tiktok_minute_multiple = 5
-                schedule = _get_valid_schedule_minute(
-                    schedule, valid_tiktok_minute_multiple
-                )
-                if not _check_valid_schedule(schedule):
-                    print(
-                        f"{schedule} is invalid, the schedule datetime must be as least 20 minutes in the future, and a maximum of 10 days, skipping"
-                    )
-                    failed.append(video)
-                    continue
-
-            complete_upload_form(
-                page,
-                path,
-                description,
-                schedule,
-                skip_split_window,
-                cover_path,
-                product_id,
-                visibility,
-                num_retries,
-                headless,
-                *args,
-                **kwargs,
-            )
-        except Exception as exception:
-            logger.error("Failed to upload %s", path)
-            logger.error(exception)
-            failed.append(video)
-            import traceback
-            traceback.print_exc()
-
-        if on_complete and callable(on_complete):  # calls the user-specified on-complete function
-            on_complete(video)
-
-    if config.quit_on_end:
-        page.context.browser.close()
-
-    return failed
+    try:
+        return uploader.upload_videos(videos, *args, **kwargs)
+    finally:
+        if config.quit_on_end:
+            uploader.close()
 
 
 def complete_upload_form(
@@ -275,21 +412,10 @@ def _set_description(page: Page, description: str) -> None:
         
         desc_locator.click()
         
-        # Wait until it populates or is ready
-        # In Playwright, click waits for actionability.
-
         # Clear existing text
-        # desc_locator.fill("") # .fill() usually clears but contenteditable might be tricky
-        # For contenteditable, we can select all and delete
-        desc_locator.press("Control+A") # Or Meta+A on mac, Playwright handles 'Control' as Meta on mac usually?
-        # Actually Playwright has 'Meta'.
-        # Safest generic clear for contenteditable:
         desc_locator.press("Control+A")
         desc_locator.press("Backspace")
         
-        # Wait for empty?
-        # expect(desc_locator).to_have_text("")
-
         desc_locator.click()
         time.sleep(1)
 
@@ -297,48 +423,24 @@ def _set_description(page: Page, description: str) -> None:
         for word in words:
             if word[0] == "#":
                 desc_locator.press_sequentially(word, delay=50)
-                # desc_locator.press("Space")
-                # Remove space if needed or just space to trigger tag
-                # The original code: sends word, sends space+backspace, waits for mention box, then enter.
-                
-                # Logic from original:
-                # desc.send_keys(word)
-                # desc.send_keys(" " + Keys.BACKSPACE)
-                # wait for mention box
-                # enter
-                
-                # Playwright:
-                # desc_locator.type(word) # deprecated
-                desc_locator.press_sequentially(word)
                 time.sleep(0.5)
-                
-                # We need to trigger the hashtag menu.
-                # Sometimes just typing #tag is enough.
                 
                 mention_box = page.locator(f"xpath={config.selectors.upload.mention_box}")
                 try:
                     mention_box.wait_for(state="visible", timeout=config.add_hashtag_wait * 1000)
                     desc_locator.press("Enter")
                 except:
-                    # If no mention box, just continue?
                     pass
-                
-                # Add space if needed? Original code adds space then backspace then enter.
-                # The enter likely confirms the tag.
                 
             elif word[0] == "@":
                 logger.debug(green("- Adding Mention: " + word))
                 desc_locator.press_sequentially(word)
-                # desc_locator.press("Space")
                 time.sleep(1)
-                # desc_locator.press("Backspace")
 
                 mention_box_user_id = page.locator(f"xpath={config.selectors.upload.mention_box_user_id}")
                 try:
                     mention_box_user_id.first.wait_for(state="visible", timeout=5000)
                     
-                    # Search for match
-                    # This is tricky in Playwright because we need to iterate elements
                     found = False
                     user_ids = mention_box_user_id.all()
                     
@@ -350,7 +452,6 @@ def _set_description(page: Page, description: str) -> None:
                             if text.lower() == target_username:
                                 found = True
                                 print("Matching User found : Clicking User")
-                                # Navigate down to it?
                                 for _ in range(i):
                                     desc_locator.press("ArrowDown")
                                 desc_locator.press("Enter")
@@ -410,18 +511,7 @@ def _remove_cookies_window(page: Page) -> None:
     """
     logger.debug(green("Removing cookies window"))
     
-    # Playwright handles shadow DOM automatically
-    # banner = "tiktok-cookie-banner"
-    # button = "div.button-wrapper"
-    
-    # We can try to find the button inside the banner
     try:
-        # Selector: tiktok-cookie-banner >> div.button-wrapper button
-        # We want the "Decline all" button usually? 
-        # Original code finds "button" in "div.button-wrapper".
-        # Let's assume the first button or specific text.
-        
-        # We can construct a selector that pierces shadow DOM
         selector = f"{config.selectors.upload.cookies_banner.banner} >> {config.selectors.upload.cookies_banner.button} >> button"
         
         button = page.locator(selector).first
@@ -429,7 +519,6 @@ def _remove_cookies_window(page: Page) -> None:
             button.click()
             
     except Exception:
-        # Remove it via JS if failing
         page.evaluate(f"""
             const banner = document.querySelector("{config.selectors.upload.cookies_banner.banner}");
             if (banner) banner.remove();
@@ -469,11 +558,6 @@ def _set_interactivity(
         stitch_box = page.locator(f"xpath={config.selectors.upload.stitch}")
         duet_box = page.locator(f"xpath={config.selectors.upload.duet}")
 
-        # Checkboxes in Playwright
-        # We need to know if they are checked.
-        # .is_checked() works if input type=checkbox.
-        # XPATH points to 'input'.
-        
         if comment ^ comment_box.is_checked():
             comment_box.click()
 
@@ -529,8 +613,6 @@ def _set_schedule_video(page: Page, schedule: datetime.datetime) -> None:
     """
     logger.debug(green("Setting schedule"))
 
-    # Timezone handling
-    # Playwright's page timezone can be retrieved via evaluate
     timezone_str = page.evaluate("Intl.DateTimeFormat().resolvedOptions().timeZone")
     driver_timezone = pytz.timezone(timezone_str)
     
@@ -567,10 +649,8 @@ def __date_picker(page: Page, month: int, day: int) -> None:
     if n_calendar_month != month:
         arrows = page.locator(f"xpath={config.selectors.schedule.calendar_arrows}")
         if n_calendar_month < month:
-            # Next month (last arrow)
             arrows.last.click()
         else:
-            # Prev month (first arrow)
             arrows.first.click()
             
     valid_days = page.locator(f"xpath={config.selectors.schedule.calendar_valid_days}").all()
@@ -613,7 +693,6 @@ def __time_picker(page: Page, hour: int, minute: int) -> None:
     hour_options = page.locator(f"xpath={config.selectors.schedule.timepicker_hours}")
     minute_options = page.locator(f"xpath={config.selectors.schedule.timepicker_minutes}")
 
-    # Note: nth(index) is 0-based
     hour_to_click = hour_options.nth(hour)
     minute_option_correct_index = int(minute / 5)
     minute_to_click = minute_options.nth(minute_option_correct_index)
@@ -626,7 +705,6 @@ def __time_picker(page: Page, hour: int, minute: int) -> None:
     time.sleep(0.5)
     minute_to_click.click()
 
-    # click somewhere else
     time_picker.click()
     time.sleep(0.5)
     
@@ -655,14 +733,11 @@ def _post_video(page: Page) -> None:
     """
     logger.debug(green("Clicking the post button"))
 
-    # Wait for post button to be enabled
     post_btn = page.locator(f"xpath={config.selectors.upload.post}")
     try:
-        # custom wait
         def is_enabled():
             return post_btn.get_attribute("data-disabled") == "false"
             
-        # Poll for enabled
         for _ in range(int(config.uploading_wait / 2)):
              if is_enabled():
                  break
@@ -675,7 +750,6 @@ def _post_video(page: Page) -> None:
         logger.debug(green("Trying to click on the button again (fallback)"))
         page.evaluate('document.querySelector(".TUXButton--primary").click()')
 
-    # 'Post now' button handling
     try:
         post_now = page.locator(f"xpath={config.selectors.upload.post_now}")
         if post_now.is_visible(timeout=5000):
@@ -683,7 +757,6 @@ def _post_video(page: Page) -> None:
     except Exception:
         pass
 
-    # Confirmation
     post_confirmation = page.locator(f"xpath={config.selectors.upload.post_confirmation}")
     post_confirmation.wait_for(state="attached", timeout=config.explicit_wait * 1000)
 
@@ -696,12 +769,10 @@ def _add_product_link(page: Page, product_id: str) -> None:
     """
     logger.debug(green(f"Attempting to add product link for ID: {product_id}..."))
     try:
-        # Step 1
         add_link_button = page.locator("//button[contains(@class, 'Button__root') and contains(., 'Add')]")
         add_link_button.click()
         time.sleep(1)
 
-        # Step 2: Next in modal
         try:
              first_next = page.locator("//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]")
              if first_next.is_visible(timeout=3000):
@@ -710,27 +781,22 @@ def _add_product_link(page: Page, product_id: str) -> None:
         except:
             pass
 
-        # Step 3: Search
         search_input = page.locator("//input[@placeholder='Search products']")
         search_input.fill(product_id)
         search_input.press("Enter")
         time.sleep(3)
 
-        # Step 4: Radio
         product_radio = page.locator(f"//tr[.//span[contains(text(), '{product_id}')] or .//div[contains(text(), '{product_id}')]]//input[@type='radio' and contains(@class, 'TUXRadioStandalone-input')]")
         product_radio.click()
         time.sleep(1)
 
-        # Step 5: Next
         second_next = page.locator("//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]")
         second_next.click()
         time.sleep(1)
 
-        # Step 6: Add
         final_add = page.locator("//button[contains(@class, 'TUXButton--primary') and .//div[text()='Add']]")
         final_add.click()
         
-        # Wait for modal close
         final_add.wait_for(state="hidden")
 
     except Exception as e:
@@ -749,28 +815,21 @@ def _set_cover(page: Page, cover_path: str) -> None:
         preview_loc = page.locator(f"xpath={config.selectors.upload.cover.cover_preview}")
         current_cover_src = preview_loc.get_attribute("src")
 
-        # Edit Cover button
         edit_cover_btn = page.locator(f"xpath={config.selectors.upload.cover.edit_cover_button}")
         edit_cover_btn.click()
 
-        # Upload cover tab
         upload_tab = page.locator(f"xpath={config.selectors.upload.cover.upload_cover_tab}")
         upload_tab.click()
 
-        # File input
         upload_box = page.locator(f"xpath={config.selectors.upload.cover.upload_cover}")
         upload_box.set_input_files(cover_path)
 
-        # Confirmation
         confirm_btn = page.locator(f"xpath={config.selectors.upload.cover.upload_confirmation}")
         confirm_btn.click()
 
-        # Wait for change
-        # We need to wait until src changes
         def check_src_change():
             return preview_loc.get_attribute("src") != current_cover_src
             
-        # Poll
         for _ in range(20):
             if check_src_change():
                 break
@@ -778,7 +837,6 @@ def _set_cover(page: Page, cover_path: str) -> None:
 
     except Exception as e:
         logger.error(red(f"Error setting cover: {e}"))
-        # Close container if open
         try:
              exit_icon = page.locator(f"xpath={config.selectors.upload.cover.exit_cover_container}")
              if exit_icon.is_visible():
@@ -786,8 +844,6 @@ def _set_cover(page: Page, cover_path: str) -> None:
         except:
             pass
 
-
-# HELPERS (Unchanged mostly)
 
 def _check_valid_path(path: str) -> bool:
     return exists(path) and path.split(".")[-1] in config.supported_file_types

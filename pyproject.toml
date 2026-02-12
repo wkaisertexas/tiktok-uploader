@@ -1,6 +1,6 @@
 [project]
 name = "tiktok-uploader"
-version = "1.1.5"
+version = "1.2.0"
 authors = [
   { name = "William Kaiser", email = "wkaisertexas@gmail.com" },
 ]
@@ -38,8 +38,11 @@ build-backend = "hatchling.build"
 dev = [
     "freezegun>=0.3.15",
     "mypy>=0.720",
+    "pandas-stubs>=2.3.0.250703",
     "pytest>=4.6.11",
     "ruff>=0.0.17",
+    "types-pytz>=2025.2.0.20250516",
+    "types-toml>=0.10.8.20240310",
 ]
 types = [
     "pandas-stubs>=1.2.0.62",

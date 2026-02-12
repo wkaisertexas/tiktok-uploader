@@ -571,7 +571,7 @@ wheels = [
 
 [[package]]
 name = "tiktok-uploader"
-version = "1.1.5"
+version = "1.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "playwright" },
@@ -584,8 +584,11 @@ dependencies = [
 dev = [
     { name = "freezegun" },
     { name = "mypy" },
+    { name = "pandas-stubs" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "types-pytz" },
+    { name = "types-toml" },
 ]
 types = [
     { name = "pandas-stubs" },
@@ -610,8 +613,11 @@ requires-dist = [
 dev = [
     { name = "freezegun", specifier = ">=0.3.15" },
     { name = "mypy", specifier = ">=0.720" },
+    { name = "pandas-stubs", specifier = ">=2.3.0.250703" },
     { name = "pytest", specifier = ">=4.6.11" },
     { name = "ruff", specifier = ">=0.0.17" },
+    { name = "types-pytz", specifier = ">=2025.2.0.20250516" },
+    { name = "types-toml", specifier = ">=0.10.8.20240310" },
 ]
 types = [
     { name = "pandas-stubs", specifier = ">=1.2.0.62" },

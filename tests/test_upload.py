@@ -17,6 +17,7 @@ from tiktok_uploader.upload import (
     _convert_videos_dict,
     _get_valid_schedule_minute,
     upload_video,
+    upload_videos,
 )
 
 # before each create a file called test.mp4 and test.jpg
@@ -366,3 +367,25 @@ def test_video_dict_type_with_visibility() -> None:
             "visibility": visibility_value,
         }
         assert test_video["visibility"] == visibility_value
+
+
+@patch("tiktok_uploader.upload.TikTokUploader.upload_videos")
+@patch("tiktok_uploader.upload.TikTokUploader.close")
+@patch("tiktok_uploader.auth.AuthBackend.authenticate_agent")
+def test_upload_videos_with_browser_agent_authenticates(
+    mock_authenticate_agent, _mock_close, mock_upload_videos
+) -> None:
+    """
+    Tests that upload_videos still authenticates a user-provided browser agent.
+    """
+    browser_agent = MagicMock()
+    mock_authenticate_agent.return_value = browser_agent
+    mock_upload_videos.return_value = []
+
+    upload_videos(
+        videos=[{"path": FILENAME}],
+        sessionid="test_session",
+        browser_agent=browser_agent,
+    )
+
+    mock_authenticate_agent.assert_called_once_with(browser_agent)

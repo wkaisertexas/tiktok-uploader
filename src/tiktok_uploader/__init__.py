@@ -5,7 +5,7 @@ TikTok Uploader Initialization
 import logging
 from os.path import abspath, dirname, join
 
-from tiktok_uploader.config import load_config
+from tiktok_uploader.settings import load_config
 
 ## Load Config
 config_dir = abspath(dirname(__file__))
@@ -21,3 +21,7 @@ stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.DEBUG)
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
+
+from tiktok_uploader.upload import TikTokUploader, upload_video, upload_videos  # noqa: E402
+
+__all__ = ["TikTokUploader", "upload_video", "upload_videos"]

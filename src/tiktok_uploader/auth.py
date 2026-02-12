@@ -2,7 +2,6 @@
 
 from http import cookiejar
 from time import sleep, time
-from typing import Any
 
 from playwright.sync_api import Page, expect
 
@@ -148,7 +147,7 @@ class AuthBackend:
             domain = split[0]
             path = split[2]
 
-            cookie = {
+            cookie: Cookie = {
                 "name": name,
                 "value": value,
                 "domain": domain,
@@ -242,7 +241,7 @@ def login(page: Page, username: str, password: str) -> list[Cookie]:
     except:
         pass # might have already changed
 
-    return page.context.cookies()
+    return page.context.cookies() # type: ignore[return-value]
 
 
 def get_username_and_password(login_info: tuple | dict):

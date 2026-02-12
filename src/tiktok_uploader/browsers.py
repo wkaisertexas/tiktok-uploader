@@ -1,19 +1,19 @@
 """Gets the browser's given the user's input"""
 
-import logging
 from typing import Any, Literal
 
 from playwright.sync_api import Page, sync_playwright
 
 from tiktok_uploader import config
+from tiktok_uploader.types import ProxyDict
 
 # Type alias for supported browsers
-browser_t = Literal["chrome", "firefox", "webkit", "edge"]
+browser_t = Literal["chrome", "firefox", "webkit", "edge", "safari", "chromium"]
 
 def get_browser(
     name: browser_t = "chrome",
     headless: bool = False,
-    proxy: dict | None = None,
+    proxy: ProxyDict | None = None,
     *args,
     **kwargs,
 ) -> Page:
@@ -23,7 +23,7 @@ def get_browser(
     p = sync_playwright().start()
     
     # Map browser names to Playwright launch functions
-    if name == "chrome" or name == "edge":
+    if name == "chrome" or name == "edge" or name == "chromium":
         browser_type = p.chromium
     elif name == "firefox":
         browser_type = p.firefox
@@ -32,7 +32,7 @@ def get_browser(
     else:
         browser_type = p.chromium # Default to chromium
 
-    launch_args = {
+    launch_args: dict[str, Any] = {
         "headless": headless,
         "args": [
             "--disable-blink-features=AutomationControlled",
@@ -48,9 +48,9 @@ def get_browser(
         launch_args["proxy"] = {
             "server": f"{proxy['host']}:{proxy['port']}",
         }
-        if "user" in proxy and "pass" in proxy:
+        if "user" in proxy and "password" in proxy:
             launch_args["proxy"]["username"] = proxy["user"]
-            launch_args["proxy"]["password"] = proxy["pass"]
+            launch_args["proxy"]["password"] = proxy["password"]
 
     browser = browser_type.launch(**launch_args)
     
@@ -58,7 +58,7 @@ def get_browser(
     # For now, we use standard context but set locale/timezone if passed in kwargs
     # or rely on defaults.
     
-    context_args = {
+    context_args: dict[str, Any] = {
         "viewport": {"width": 1280, "height": 720},
         "user_agent": config.disguising.user_agent,
         "locale": "en-US",
