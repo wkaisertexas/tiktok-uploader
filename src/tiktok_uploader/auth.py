@@ -20,12 +20,16 @@ class AuthBackend:
     username: str
     password: str
     cookies: list[Cookie]
+    cookies_path: str | None
+    cookies_str: str | None
+    cookies_list: list[Cookie]
+    sessionid: str | None
 
     def __init__(
         self,
         username: str = "",
         password: str = "",
-        cookies_list: list[Cookie] = [],
+        cookies_list: list[Cookie] | None = None,
         cookies: str | None = None,
         cookies_str: str | None = None,
         sessionid: str | None = None,
@@ -42,12 +46,16 @@ class AuthBackend:
         if (username and not password) or (password and not username):
             raise InsufficientAuth()
 
-        self.cookies = self.get_cookies(path=cookies) if cookies else []
-        self.cookies += self.get_cookies(cookies_str=cookies_str) if cookies_str else []
-        self.cookies += cookies_list
-        self.cookies += [{"name": "sessionid", "value": sessionid}] if sessionid else []
+        self.cookies_path = cookies
+        self.cookies_str = cookies_str
+        self.cookies_list = list(cookies_list) if cookies_list else []
+        self.sessionid = sessionid
+        self.cookies = []
 
-        if not (self.cookies or (username and password)):
+        has_cookie_input = bool(
+            self.cookies_path or self.cookies_str or self.cookies_list or self.sessionid
+        )
+        if not (has_cookie_input or (username and password)):
             raise InsufficientAuth()
 
         self.username = username
@@ -59,16 +67,23 @@ class AuthBackend:
             logger.debug(green("Authenticating browser with username and password"))
         elif sessionid:
             logger.debug(green("Authenticating browser with sessionid"))
-        elif cookies_list:
+        elif self.cookies_list:
             logger.debug(green("Authenticating browser with cookies_list"))
 
     def authenticate_agent(self, page: Page) -> Page:
         """
         Authenticates the agent using the browser backend
         """
-        # tries to use cookies
+        if not self.cookies:
+            self.cookies = self._resolve_cookies()
+
         if not self.cookies and self.username and self.password:
             self.cookies = login(page, username=self.username, password=self.password)
+
+        if not self.cookies:
+            raise InsufficientAuth(
+                "No valid authentication source found. Provide a valid cookies file, cookies list/string, sessionid, or username/password."
+            )
 
         logger.debug(green("Authenticating browser with cookies"))
 
@@ -127,6 +142,30 @@ class AuthBackend:
         )
 
         return page
+
+    def _resolve_cookies(self) -> list[Cookie]:
+        resolved_cookies: list[Cookie] = []
+
+        if self.cookies_path:
+            try:
+                resolved_cookies.extend(self.get_cookies(path=self.cookies_path))
+            except OSError as error:
+                logger.warning(
+                    "Could not read cookies file '%s': %s",
+                    self.cookies_path,
+                    error,
+                )
+
+        if self.cookies_str:
+            resolved_cookies.extend(self.get_cookies(cookies_str=self.cookies_str))
+
+        if self.cookies_list:
+            resolved_cookies.extend(self.cookies_list)
+
+        if self.sessionid:
+            resolved_cookies.append({"name": "sessionid", "value": self.sessionid})
+
+        return resolved_cookies
 
     def get_cookies(
         self, path: str | None = None, cookies_str: str | None = None
