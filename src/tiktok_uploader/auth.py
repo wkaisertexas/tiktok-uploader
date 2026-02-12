@@ -2,6 +2,7 @@
 
 from http import cookiejar
 from time import sleep, time
+from typing import Any, cast
 
 from playwright.sync_api import Page, expect
 
@@ -81,11 +82,11 @@ class AuthBackend:
             if "sameSite" in c:
                 if c["sameSite"] not in ["Strict", "Lax", "None"]:
                     c.pop("sameSite")
-            
+
             # Playwright might fail if domain starts with a dot
             # if c.get("domain", "").startswith("."):
             #     c["domain"] = c["domain"][1:]
-            
+
             # logger.debug(f"Adding cookie: {c}")
             print(f"DEBUG: Adding cookie: {c}")
             playwright_cookies.append(c)
@@ -93,7 +94,7 @@ class AuthBackend:
         try:
             for pc in playwright_cookies:
                 try:
-                    page.context.add_cookies([pc])
+                    page.context.add_cookies([cast(Any, pc)])
                 except Exception as e:
                     print(f"DEBUG: Failed to add individual cookie {pc['name']}: {e}")
         except Exception as e:
@@ -104,19 +105,26 @@ class AuthBackend:
         # Check if we are redirected to a login or explore page
         current_url = page.url
         if "login" in current_url or "explore" in current_url:
-             # Check if we have the sessionid cookie
-             cookies = page.context.cookies()
-             has_sessionid = any(c['name'] == 'sessionid' for c in cookies)
-             if not has_sessionid:
-                 logger.error(f"Redirected to {current_url} and sessionid cookie is missing")
-                 raise InsufficientAuth(f"Authentication failed: Redirected to {current_url}. Please ensure your cookies are valid and include a sessionid.")
+            # Check if we have the sessionid cookie
+            cookies = page.context.cookies()
+            has_sessionid = any(c["name"] == "sessionid" for c in cookies)
+            if not has_sessionid:
+                logger.error(
+                    f"Redirected to {current_url} and sessionid cookie is missing"
+                )
+                raise InsufficientAuth(
+                    f"Authentication failed: Redirected to {current_url}. Please ensure your cookies are valid and include a sessionid."
+                )
 
         # WaitForTitle is not directly available, but we can wait for load or selector
         # Using expect(page).to_have_title(...) is better but authenticate_agent expects to return page.
         # We can just wait for network idle or a specific element.
         # However, for title check:
         import re
-        expect(page).to_have_title(re.compile(r"TikTok"), timeout=config.explicit_wait * 1000)
+
+        expect(page).to_have_title(
+            re.compile(r"TikTok"), timeout=config.explicit_wait * 1000
+        )
 
         return page
 
@@ -158,8 +166,8 @@ class AuthBackend:
                 cookie["expiry"] = int(split[4])
             except ValueError:
                 pass
-            
-            return_cookies.append(cookie) # type: ignore
+
+            return_cookies.append(cookie)  # type: ignore
         return return_cookies
 
 
@@ -173,7 +181,7 @@ def login_accounts(
     - page -> the playwright page to use
     - accounts -> a list of tuples of the form (username, password)
     """
-    page = page or get_browser(headless=False, *args, **kwargs)
+    page = page or get_browser(*args, **kwargs)
 
     cookies = {}
     for account in accounts:
@@ -197,8 +205,11 @@ def login(page: Page, username: str, password: str) -> list[Cookie]:
     # checks if the user is already logged in
     # We check cookies in context
     cookies = page.context.cookies()
-    session_cookie = next((c for c in cookies if c["name"] == config.selectors.login.cookie_of_interest), None)
-    
+    session_cookie = next(
+        (c for c in cookies if c["name"] == config.selectors.login.cookie_of_interest),
+        None,
+    )
+
     if session_cookie:
         # clears the existing cookies
         page.context.clear_cookies()
@@ -237,11 +248,14 @@ def login(page: Page, username: str, password: str) -> list[Cookie]:
     # page.wait_for_url(lambda url: str(config.paths.login) not in url) # simplified
     # or just wait for it to not be login
     try:
-        page.wait_for_function(f"window.location.href !== '{config.paths.login}'", timeout=config.explicit_wait * 1000)
-    except:
-        pass # might have already changed
+        page.wait_for_function(
+            f"window.location.href !== '{config.paths.login}'",
+            timeout=config.explicit_wait * 1000,
+        )
+    except Exception:
+        pass  # might have already changed
 
-    return page.context.cookies() # type: ignore[return-value]
+    return page.context.cookies()  # type: ignore[return-value]
 
 
 def get_username_and_password(login_info: tuple | dict):
@@ -267,7 +281,7 @@ def save_cookies(path: str, cookies: list[Cookie]) -> None:
     # saves the cookies to a file
     cookie_jar = cookiejar.MozillaCookieJar(path)
     # No need to load for new file or we can if we want to append
-    # cookie_jar.load() 
+    # cookie_jar.load()
 
     for cookie in cookies:
         cookie_jar.set_cookie(cookie_from_dict(cookie))

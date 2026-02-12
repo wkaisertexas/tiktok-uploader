@@ -25,6 +25,7 @@ from tiktok_uploader.utils import bold, green, red
 
 logger = logging.getLogger(__name__)
 
+
 class TikTokUploader:
     def __init__(
         self,
@@ -42,7 +43,7 @@ class TikTokUploader:
     ):
         """
         Initializes the TikTok Uploader client.
-        
+
         The browser is not started until the first upload is attempted (lazy initialization).
         """
         self.auth = AuthBackend(
@@ -58,9 +59,11 @@ class TikTokUploader:
         self.headless = headless
         self.browser_args = args
         self.browser_kwargs = kwargs
-        
+
         self._page: Page | None = None
-        self._browser_context: Any = None # Stored implicitly via page.context if needed
+        self._browser_context: Any = (
+            None  # Stored implicitly via page.context if needed
+        )
 
     @property
     def page(self) -> Page:
@@ -71,12 +74,12 @@ class TikTokUploader:
                 "in headless mode" if self.headless else "",
             )
             self._page = get_browser(
-                self.browser_name, 
-                headless=self.headless, 
-                proxy=self.proxy, 
-                *self.browser_args, 
-                **self.browser_kwargs
-            ) # type: ignore[misc]
+                self.browser_name,
+                headless=self.headless,
+                proxy=self.proxy,
+                *self.browser_args,
+                **self.browser_kwargs,
+            )  # type: ignore[misc]
             self._page = self.auth.authenticate_agent(self._page)
         return self._page
 
@@ -95,7 +98,7 @@ class TikTokUploader:
     ) -> bool:
         """
         Uploads a single TikTok video.
-        
+
         Returns True if successful, False otherwise.
         """
         video_dict: VideoDict = {"path": filename}
@@ -111,13 +114,9 @@ class TikTokUploader:
             video_dict["cover"] = cover
 
         failed_list = self.upload_videos(
-            [video_dict],
-            num_retries=num_retries,
-            skip_split_window=skip_split_window,
-            *args,
-            **kwargs
+            [video_dict], num_retries, skip_split_window, *args, **kwargs
         )
-        
+
         return len(failed_list) == 0
 
     def upload_videos(
@@ -138,7 +137,7 @@ class TikTokUploader:
         if videos and len(videos) > 1:
             logger.debug("Uploading %d videos", len(videos))
 
-        page = self.page # Triggers lazy loading/authentication
+        page = self.page  # Triggers lazy loading/authentication
 
         failed = []
         # uploads each video
@@ -210,7 +209,7 @@ class TikTokUploader:
                     self.headless,
                     *args,
                     **kwargs,
-                ) # type: ignore[misc]
+                )  # type: ignore[misc]
             except Exception as exception:
                 logger.error("Failed to upload %s", path)
                 logger.error(exception)
@@ -218,7 +217,9 @@ class TikTokUploader:
                 # import traceback
                 # traceback.print_exc()
 
-            if on_complete and callable(on_complete):  # calls the user-specified on-complete function
+            if on_complete and callable(
+                on_complete
+            ):  # calls the user-specified on-complete function
                 on_complete(video)
 
         return failed
@@ -231,7 +232,7 @@ class TikTokUploader:
             except Exception as e:
                 logger.debug(f"Error closing browser: {e}")
             self._page = None
-            
+
     def __enter__(self):
         return self
 
@@ -261,7 +262,7 @@ def upload_video(
 ) -> list[VideoDict]:
     """
     Uploads a single TikTok video using the TikTokUploader class.
-    
+
     Returns a list of failed videos (empty if successful).
     """
     uploader = TikTokUploader(
@@ -275,9 +276,9 @@ def upload_video(
         browser=browser,
         headless=headless,
         *args,
-        **kwargs
-    ) # type: ignore[misc]
-    
+        **kwargs,
+    )  # type: ignore[misc]
+
     video_dict: VideoDict = {"path": filename}
     if description:
         video_dict["description"] = description
@@ -294,7 +295,8 @@ def upload_video(
         return uploader.upload_videos([video_dict], *args, **kwargs)
     finally:
         if config.quit_on_end:
-             uploader.close()
+            uploader.close()
+
 
 def upload_videos(
     videos: list[VideoDict],
@@ -306,7 +308,8 @@ def upload_videos(
     sessionid: str | None = None,
     proxy: ProxyDict | None = None,
     browser: Literal["chrome", "safari", "chromium", "edge", "firefox"] = "chrome",
-    browser_agent: Page | None = None, # Not fully supported in new class-based approach as constructor
+    browser_agent: Page
+    | None = None,  # Not fully supported in new class-based approach as constructor
     headless: bool = False,
     *args,
     **kwargs,
@@ -325,9 +328,9 @@ def upload_videos(
         browser=browser,
         headless=headless,
         *args,
-        **kwargs
-    ) # type: ignore[misc]
-    
+        **kwargs,
+    )  # type: ignore[misc]
+
     if browser_agent:
         uploader._page = uploader.auth.authenticate_agent(browser_agent)
 
@@ -409,13 +412,13 @@ def _set_description(page: Page, description: str) -> None:
     try:
         desc_locator = page.locator(f"xpath={config.selectors.upload.description}")
         desc_locator.wait_for(state="visible", timeout=config.implicit_wait * 1000)
-        
+
         desc_locator.click()
-        
+
         # Clear existing text
         desc_locator.press("Control+A")
         desc_locator.press("Backspace")
-        
+
         desc_locator.click()
         time.sleep(1)
 
@@ -424,28 +427,34 @@ def _set_description(page: Page, description: str) -> None:
             if word[0] == "#":
                 desc_locator.press_sequentially(word, delay=50)
                 time.sleep(0.5)
-                
-                mention_box = page.locator(f"xpath={config.selectors.upload.mention_box}")
+
+                mention_box = page.locator(
+                    f"xpath={config.selectors.upload.mention_box}"
+                )
                 try:
-                    mention_box.wait_for(state="visible", timeout=config.add_hashtag_wait * 1000)
+                    mention_box.wait_for(
+                        state="visible", timeout=config.add_hashtag_wait * 1000
+                    )
                     desc_locator.press("Enter")
-                except:
+                except Exception:
                     pass
-                
+
             elif word[0] == "@":
                 logger.debug(green("- Adding Mention: " + word))
                 desc_locator.press_sequentially(word)
                 time.sleep(1)
 
-                mention_box_user_id = page.locator(f"xpath={config.selectors.upload.mention_box_user_id}")
+                mention_box_user_id = page.locator(
+                    f"xpath={config.selectors.upload.mention_box_user_id}"
+                )
                 try:
                     mention_box_user_id.first.wait_for(state="visible", timeout=5000)
-                    
+
                     found = False
                     user_ids = mention_box_user_id.all()
-                    
+
                     target_username = word[1:].lower()
-                    
+
                     for i, user_el in enumerate(user_ids):
                         if user_el.is_visible():
                             text = user_el.inner_text().split(" ")[0]
@@ -456,12 +465,12 @@ def _set_description(page: Page, description: str) -> None:
                                     desc_locator.press("ArrowDown")
                                 desc_locator.press("Enter")
                                 break
-                    
+
                     if not found:
-                         desc_locator.press_sequentially(" ")
-                         
-                except:
-                     desc_locator.press_sequentially(" ")
+                        desc_locator.press_sequentially(" ")
+
+                except Exception:
+                    desc_locator.press_sequentially(" ")
 
             else:
                 desc_locator.press_sequentially(word + " ")
@@ -481,9 +490,7 @@ def _clear(locator) -> None:
     locator.press("Backspace")
 
 
-def _set_video(
-    page: Page, path: str = "", num_retries: int = 3, **kwargs
-) -> None:
+def _set_video(page: Page, path: str = "", num_retries: int = 3, **kwargs) -> None:
     """
     Sets the video to upload
     """
@@ -495,8 +502,12 @@ def _set_video(
             upload_box.set_input_files(path)
 
             # wait until a non-draggable image is found (process confirmation)
-            process_confirmation = page.locator(f"xpath={config.selectors.upload.process_confirmation}")
-            process_confirmation.wait_for(state="attached", timeout=config.explicit_wait * 1000)
+            process_confirmation = page.locator(
+                f"xpath={config.selectors.upload.process_confirmation}"
+            )
+            process_confirmation.wait_for(
+                state="attached", timeout=config.explicit_wait * 1000
+            )
             return
         except PlaywrightTimeoutError as exception:
             print("TimeoutException occurred:\n", exception)
@@ -510,14 +521,14 @@ def _remove_cookies_window(page: Page) -> None:
     Removes the cookies window if it is open
     """
     logger.debug(green("Removing cookies window"))
-    
+
     try:
         selector = f"{config.selectors.upload.cookies_banner.banner} >> {config.selectors.upload.cookies_banner.button} >> button"
-        
+
         button = page.locator(selector).first
         if button.is_visible(timeout=5000):
             button.click()
-            
+
     except Exception:
         page.evaluate(f"""
             const banner = document.querySelector("{config.selectors.upload.cookies_banner.banner}");
@@ -595,7 +606,7 @@ def _set_visibility(
 
         option_text = visibility_text_map.get(visibility, "Everyone")
         option_xpath = f"//div[@role='option' and contains(., '{option_text}')]"
-        
+
         option = page.locator(f"xpath={option_xpath}")
         option.scroll_into_view_if_needed()
         time.sleep(0.5)
@@ -615,7 +626,7 @@ def _set_schedule_video(page: Page, schedule: datetime.datetime) -> None:
 
     timezone_str = page.evaluate("Intl.DateTimeFormat().resolvedOptions().timeZone")
     driver_timezone = pytz.timezone(timezone_str)
-    
+
     schedule = schedule.astimezone(driver_timezone)
 
     month = schedule.month
@@ -643,17 +654,21 @@ def __date_picker(page: Page, month: int, day: int) -> None:
     calendar = page.locator(f"xpath={config.selectors.schedule.calendar}")
     calendar.wait_for(state="visible")
 
-    calendar_month = page.locator(f"xpath={config.selectors.schedule.calendar_month}").inner_text()
+    calendar_month = page.locator(
+        f"xpath={config.selectors.schedule.calendar_month}"
+    ).inner_text()
     n_calendar_month = datetime.datetime.strptime(calendar_month, "%B").month
-    
+
     if n_calendar_month != month:
         arrows = page.locator(f"xpath={config.selectors.schedule.calendar_arrows}")
         if n_calendar_month < month:
             arrows.last.click()
         else:
             arrows.first.click()
-            
-    valid_days = page.locator(f"xpath={config.selectors.schedule.calendar_valid_days}").all()
+
+    valid_days = page.locator(
+        f"xpath={config.selectors.schedule.calendar_valid_days}"
+    ).all()
 
     day_to_click = None
     for day_option in valid_days:
@@ -669,7 +684,9 @@ def __date_picker(page: Page, month: int, day: int) -> None:
 
 
 def __verify_date_picked_is_correct(page: Page, month: int, day: int) -> None:
-    date_selected = page.locator(f"xpath={config.selectors.schedule.date_picker}").inner_text()
+    date_selected = page.locator(
+        f"xpath={config.selectors.schedule.date_picker}"
+    ).inner_text()
     date_selected_month = int(date_selected.split("-")[1])
     date_selected_day = int(date_selected.split("-")[2])
 
@@ -687,11 +704,15 @@ def __time_picker(page: Page, hour: int, minute: int) -> None:
     time_picker = page.locator(f"xpath={config.selectors.schedule.time_picker}")
     time_picker.click()
 
-    time_picker_container = page.locator(f"xpath={config.selectors.schedule.time_picker_container}")
+    time_picker_container = page.locator(
+        f"xpath={config.selectors.schedule.time_picker_container}"
+    )
     time_picker_container.wait_for(state="visible")
 
     hour_options = page.locator(f"xpath={config.selectors.schedule.timepicker_hours}")
-    minute_options = page.locator(f"xpath={config.selectors.schedule.timepicker_minutes}")
+    minute_options = page.locator(
+        f"xpath={config.selectors.schedule.timepicker_minutes}"
+    )
 
     hour_to_click = hour_options.nth(hour)
     minute_option_correct_index = int(minute / 5)
@@ -707,12 +728,14 @@ def __time_picker(page: Page, hour: int, minute: int) -> None:
 
     time_picker.click()
     time.sleep(0.5)
-    
+
     __verify_time_picked_is_correct(page, hour, minute)
 
 
 def __verify_time_picked_is_correct(page: Page, hour: int, minute: int) -> None:
-    time_selected = page.locator(f"xpath={config.selectors.schedule.time_picker_text}").inner_text()
+    time_selected = page.locator(
+        f"xpath={config.selectors.schedule.time_picker_text}"
+    ).inner_text()
     time_selected_hour = int(time_selected.split(":")[0])
     time_selected_minute = int(time_selected.split(":")[1])
 
@@ -735,17 +758,18 @@ def _post_video(page: Page) -> None:
 
     post_btn = page.locator(f"xpath={config.selectors.upload.post}")
     try:
+
         def is_enabled():
             return post_btn.get_attribute("data-disabled") == "false"
-            
+
         for _ in range(int(config.uploading_wait / 2)):
-             if is_enabled():
-                 break
-             time.sleep(2)
-             
+            if is_enabled():
+                break
+            time.sleep(2)
+
         post_btn.scroll_into_view_if_needed()
         post_btn.click()
-        
+
     except Exception:
         logger.debug(green("Trying to click on the button again (fallback)"))
         page.evaluate('document.querySelector(".TUXButton--primary").click()')
@@ -757,7 +781,9 @@ def _post_video(page: Page) -> None:
     except Exception:
         pass
 
-    post_confirmation = page.locator(f"xpath={config.selectors.upload.post_confirmation}")
+    post_confirmation = page.locator(
+        f"xpath={config.selectors.upload.post_confirmation}"
+    )
     post_confirmation.wait_for(state="attached", timeout=config.explicit_wait * 1000)
 
     logger.debug(green("Video posted successfully"))
@@ -769,16 +795,20 @@ def _add_product_link(page: Page, product_id: str) -> None:
     """
     logger.debug(green(f"Attempting to add product link for ID: {product_id}..."))
     try:
-        add_link_button = page.locator("//button[contains(@class, 'Button__root') and contains(., 'Add')]")
+        add_link_button = page.locator(
+            "//button[contains(@class, 'Button__root') and contains(., 'Add')]"
+        )
         add_link_button.click()
         time.sleep(1)
 
         try:
-             first_next = page.locator("//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]")
-             if first_next.is_visible(timeout=3000):
-                 first_next.click()
-                 time.sleep(1)
-        except:
+            first_next = page.locator(
+                "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]"
+            )
+            if first_next.is_visible(timeout=3000):
+                first_next.click()
+                time.sleep(1)
+        except Exception:
             pass
 
         search_input = page.locator("//input[@placeholder='Search products']")
@@ -786,17 +816,23 @@ def _add_product_link(page: Page, product_id: str) -> None:
         search_input.press("Enter")
         time.sleep(3)
 
-        product_radio = page.locator(f"//tr[.//span[contains(text(), '{product_id}')] or .//div[contains(text(), '{product_id}')]]//input[@type='radio' and contains(@class, 'TUXRadioStandalone-input')]")
+        product_radio = page.locator(
+            f"//tr[.//span[contains(text(), '{product_id}')] or .//div[contains(text(), '{product_id}')]]//input[@type='radio' and contains(@class, 'TUXRadioStandalone-input')]"
+        )
         product_radio.click()
         time.sleep(1)
 
-        second_next = page.locator("//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]")
+        second_next = page.locator(
+            "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Next']]"
+        )
         second_next.click()
         time.sleep(1)
 
-        final_add = page.locator("//button[contains(@class, 'TUXButton--primary') and .//div[text()='Add']]")
+        final_add = page.locator(
+            "//button[contains(@class, 'TUXButton--primary') and .//div[text()='Add']]"
+        )
         final_add.click()
-        
+
         final_add.wait_for(state="hidden")
 
     except Exception as e:
@@ -812,24 +848,32 @@ def _set_cover(page: Page, cover_path: str) -> None:
         if not _check_valid_cover_path(cover_path):
             raise Exception("Invalid cover image file path")
 
-        preview_loc = page.locator(f"xpath={config.selectors.upload.cover.cover_preview}")
+        preview_loc = page.locator(
+            f"xpath={config.selectors.upload.cover.cover_preview}"
+        )
         current_cover_src = preview_loc.get_attribute("src")
 
-        edit_cover_btn = page.locator(f"xpath={config.selectors.upload.cover.edit_cover_button}")
+        edit_cover_btn = page.locator(
+            f"xpath={config.selectors.upload.cover.edit_cover_button}"
+        )
         edit_cover_btn.click()
 
-        upload_tab = page.locator(f"xpath={config.selectors.upload.cover.upload_cover_tab}")
+        upload_tab = page.locator(
+            f"xpath={config.selectors.upload.cover.upload_cover_tab}"
+        )
         upload_tab.click()
 
         upload_box = page.locator(f"xpath={config.selectors.upload.cover.upload_cover}")
         upload_box.set_input_files(cover_path)
 
-        confirm_btn = page.locator(f"xpath={config.selectors.upload.cover.upload_confirmation}")
+        confirm_btn = page.locator(
+            f"xpath={config.selectors.upload.cover.upload_confirmation}"
+        )
         confirm_btn.click()
 
         def check_src_change():
             return preview_loc.get_attribute("src") != current_cover_src
-            
+
         for _ in range(20):
             if check_src_change():
                 break
@@ -838,18 +882,22 @@ def _set_cover(page: Page, cover_path: str) -> None:
     except Exception as e:
         logger.error(red(f"Error setting cover: {e}"))
         try:
-             exit_icon = page.locator(f"xpath={config.selectors.upload.cover.exit_cover_container}")
-             if exit_icon.is_visible():
-                 exit_icon.click()
-        except:
+            exit_icon = page.locator(
+                f"xpath={config.selectors.upload.cover.exit_cover_container}"
+            )
+            if exit_icon.is_visible():
+                exit_icon.click()
+        except Exception:
             pass
 
 
 def _check_valid_path(path: str) -> bool:
     return exists(path) and path.split(".")[-1] in config.supported_file_types
 
+
 def _check_valid_cover_path(path: str) -> bool:
     return exists(path) and path.split(".")[-1] in config.supported_image_file_types
+
 
 def _get_valid_schedule_minute(
     schedule: datetime.datetime, valid_multiple
@@ -859,11 +907,13 @@ def _get_valid_schedule_minute(
     else:
         return _set_valid_schedule_minute(schedule, valid_multiple)
 
+
 def _is_valid_schedule_minute(minute: int, valid_multiple) -> bool:
     if minute % valid_multiple != 0:
         return False
     else:
         return True
+
 
 def _set_valid_schedule_minute(
     schedule: datetime.datetime, valid_multiple: int
@@ -873,6 +923,7 @@ def _set_valid_schedule_minute(
     integers_to_valid_multiple = 5 - remainder
     schedule += datetime.timedelta(minutes=integers_to_valid_multiple)
     return schedule
+
 
 def _check_valid_schedule(schedule: datetime.datetime) -> bool:
     valid_tiktok_minute_multiple = 5
@@ -889,6 +940,7 @@ def _check_valid_schedule(schedule: datetime.datetime) -> bool:
         return False
     else:
         return True
+
 
 def _convert_videos_dict(
     videos_list_of_dictionaries: list[dict[str, Any]],
@@ -935,13 +987,15 @@ def _convert_videos_dict(
             else:
                 elem[correct_description] = ""
 
-        return_list.append(elem) # type: ignore
+        return_list.append(elem)  # type: ignore
 
     return return_list
+
 
 class DescriptionTooLong(Exception):
     def __init__(self, message: str | None = None):
         super().__init__(message or self.__doc__)
+
 
 class FailedToUpload(Exception):
     def __init__(self, message=None):

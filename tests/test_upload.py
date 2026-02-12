@@ -325,10 +325,10 @@ def test_set_visibility_dropdown_interaction() -> None:
 
     # Create mock page and elements
     mock_page = MagicMock()
-    
+
     # Run
     _set_visibility(mock_page, "only_you")
-    
+
     # We expect calls to locator and click
     assert mock_page.locator.call_count >= 2
     mock_page.locator.return_value.click.assert_called()

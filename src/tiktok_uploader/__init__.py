@@ -22,6 +22,6 @@ stream_handler.setLevel(logging.DEBUG)
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
-from tiktok_uploader.upload import TikTokUploader, upload_video, upload_videos  # noqa: E402
+from tiktok_uploader.upload import TikTokUploader, upload_video, upload_videos  # noqa: E402, I001
 
 __all__ = ["TikTokUploader", "upload_video", "upload_videos"]

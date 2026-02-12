@@ -9,6 +9,7 @@ from tiktok_uploader.upload import TikTokUploader
 
 FILENAME = "test.mp4"
 
+
 def setup_function() -> None:
     """
     Creates a dummy file
@@ -40,13 +41,13 @@ def test_tiktok_uploader_lazy_loading(
 
     # Create uploader
     uploader = TikTokUploader(cookies="cookies.txt")
-    
+
     # Browser should not be called yet
     mock_browser.assert_not_called()
-    
+
     # Upload video
     uploader.upload_video(FILENAME, description="Test")
-    
+
     # Now browser should be called
     mock_browser.assert_called_once()
     mock_auth.assert_called_once()
@@ -67,17 +68,17 @@ def test_tiktok_uploader_reuse_browser(
     mock_auth.return_value = mock_page
 
     uploader = TikTokUploader(cookies="cookies.txt")
-    
+
     # First upload
     uploader.upload_video(FILENAME, description="Test 1")
-    
+
     # Second upload
     uploader.upload_video(FILENAME, description="Test 2")
-    
+
     # Browser should be called only once
     mock_browser.assert_called_once()
     # Auth should be called only once
     mock_auth.assert_called_once()
-    
+
     # Complete upload should be called twice
     assert mock_complete_upload.call_count == 2

@@ -23,10 +23,10 @@ def test_get_browser(mock_sync_playwright):
     mock_context.new_page.return_value = mock_page
 
     page = browsers.get_browser("chrome")
-    
+
     assert page == mock_page
     mock_p.chromium.launch.assert_called()
-    
+
     # Check headless
     browsers.get_browser("chrome", headless=True)
     args, kwargs = mock_browser_type.launch.call_args
