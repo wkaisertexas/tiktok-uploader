@@ -286,6 +286,8 @@ def upload_video(
         video_dict["schedule"] = schedule
     if product_id:
         video_dict["product_id"] = product_id
+    if cover:
+        video_dict["cover"] = cover
     if visibility != "everyone":
         video_dict["visibility"] = visibility
     if cover:
