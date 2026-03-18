@@ -367,6 +367,7 @@ def complete_upload_form(
         _set_cover(page, cover_path)
     if not skip_split_window:
         _remove_split_window(page)
+    _handle_modals(page)
     _set_interactivity(page, **kwargs)
     _set_description(page, description)
     if visibility != "everyone":
@@ -990,6 +991,23 @@ def _convert_videos_dict(
         return_list.append(elem)  # type: ignore
 
     return return_list
+
+
+def _handle_modals(page: Page) -> None:
+    """
+    Check for and dismiss common TikTok popups like 'Got it'.
+    """
+    try:
+        got_it_button = page.get_by_role("button", name="Got it", exact=False)
+
+        if got_it_button.is_visible(timeout=3000):
+            logger.debug(green("Found 'Got it' modal. Dismissing..."))
+            got_it_button.click()
+            # Brief sleep to allow the modal animation to finish
+            page.wait_for_timeout(1000)
+    except Exception:
+        # We pass silently because if the button isn't there, it's not an error
+        pass
 
 
 class DescriptionTooLong(Exception):
