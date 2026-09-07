@@ -7,7 +7,7 @@ class ProxyDict(TypedDict, total=False):
     user: str
     password: str
     host: str
-    port: str
+    port: str | int
 
 
 class VideoDict(TypedDict, total=False):

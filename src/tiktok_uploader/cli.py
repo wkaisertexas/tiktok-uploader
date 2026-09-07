@@ -3,6 +3,7 @@ CLI is a controller for the command line use of this library
 """
 
 import datetime
+import urllib.parse
 from argparse import ArgumentParser, Namespace
 from os.path import exists, join
 
@@ -203,14 +204,31 @@ def parse_schedule(schedule_raw: str | None) -> datetime.datetime | None:
 
 
 def parse_proxy(proxy_raw: str | None) -> ProxyDict:
+    """
+    Parses proxy string into a ProxyDict.
+    Supports formats:
+      - http://user:password@host:port
+      - socks5://user:password@host:port
+      - user:password@host:port
+      - host:port
+      - http://host:port
+    """
     proxy: ProxyDict = {}
-    if proxy_raw:
-        if "@" in proxy_raw:
-            proxy["user"] = proxy_raw.split("@")[0].split(":")[0]
-            proxy["password"] = proxy_raw.split("@")[0].split(":")[1]
-            proxy["host"] = proxy_raw.split("@")[1].split(":")[0]
-            proxy["port"] = proxy_raw.split("@")[1].split(":")[1]
-        else:
-            proxy["host"] = proxy_raw.split(":")[0]
-            proxy["port"] = proxy_raw.split(":")[1]
+    if not proxy_raw or not proxy_raw.strip():
+        return proxy
+
+    proxy_str = proxy_raw.strip()
+    if "://" not in proxy_str:
+        proxy_str = f"http://{proxy_str}"
+
+    parsed = urllib.parse.urlparse(proxy_str)
+    if parsed.hostname:
+        proxy["host"] = parsed.hostname
+    if parsed.port:
+        proxy["port"] = str(parsed.port)
+    if parsed.username:
+        proxy["user"] = urllib.parse.unquote(parsed.username)
+    if parsed.password:
+        proxy["password"] = urllib.parse.unquote(parsed.password)
+
     return proxy
