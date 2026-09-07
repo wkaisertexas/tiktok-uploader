@@ -45,13 +45,21 @@ def get_browser(
     elif name == "edge":
         launch_args["channel"] = "msedge"
 
-    if proxy:
-        launch_args["proxy"] = {
-            "server": f"{proxy['host']}:{proxy['port']}",
-        }
+    if proxy and proxy.get("host") and proxy.get("port"):
+        server = f"{proxy['host']}:{proxy['port']}"
+        if not (
+            server.startswith("http://")
+            or server.startswith("https://")
+            or server.startswith("socks5://")
+        ):
+            server = f"http://{server}"
+
+        proxy_config: dict[str, Any] = {"server": server}
         if "user" in proxy and "password" in proxy:
-            launch_args["proxy"]["username"] = proxy["user"]
-            launch_args["proxy"]["password"] = proxy["password"]
+            proxy_config["username"] = str(proxy["user"])
+            proxy_config["password"] = str(proxy["password"])
+
+        launch_args["proxy"] = proxy_config
 
     browser = browser_type.launch(**launch_args)
 
