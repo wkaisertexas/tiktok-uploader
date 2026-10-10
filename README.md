@@ -20,6 +20,9 @@
 - [Usage](#usage)
   - [💻 Command Line Interface (CLI)](#cli)
   - [⬆ Uploading Videos](#uploading-videos)
+  - [🤖 Auto Captions](#auto-captions)
+  - [🙈 Drafts](#drafts)
+  - [🤯 AI-Generated Content Label](#ai-label)
   - [🫵 Mentions and Hashtags](#mentions-and-hashtags)
   - [🪡 Stitches, Duets and Comments](#stitches-duets-and-comments)
   - [🌐 Proxy](#proxy)
@@ -31,6 +34,7 @@
   - [🔨 Initial Setup](#initial-setup)
 - [♻️ Examples](#examples)
 - [📝 Notes](#notes)
+- [📡 MCP Server](#mcpserver)
 - [Accounts made with](#made-with)
 
 # Installation
@@ -136,6 +140,43 @@ failed_videos = uploader.upload_videos(videos=videos)
 for video in failed_videos:  # each input video object which failed
     print(f"{video['video']} with description {video['description']} failed")
 ```
+
+<h2 id="auto-captions"> 🤖 Auto Captions</h2>
+
+If you do not pass a description, an English caption with hashtags is written from the video's original title (its `.txt` sidecar or its filename) by an OpenAI-compatible model. The model is configured in the `[captions]` section of `config.toml`:
+
+```toml
+[captions]
+endpoint = "https://inference.do-ai.run/v1/chat/completions" # any OpenAI-compatible API
+model = "anthropic-claude-sonnet-5.5"
+api_key_env = "MODEL_ACCESS_KEY" # environment variable holding the API key
+min_hashtags = 3
+max_hashtags = 5
+timeout = 30 # seconds
+```
+
+The environment variable named by `api_key_env` must be set. If the model can not be reached, the original title is used as the caption instead. Skip caption generation for one upload with the CLI flag `--no-auto-caption`.
+
+<h2 id="drafts"> 🙈 Drafts</h2>
+
+Save a video to your TikTok drafts instead of posting it by passing `draft=True` to `upload_video` / `upload_videos`, or `--draft` on the CLI:
+
+```python
+uploader = TikTokUploader(cookies='cookies.txt')
+uploader.upload_video('video.mp4', description='work in progress', draft=True)
+```
+
+Drafts can not be scheduled: combining `draft` with `schedule` raises an error.
+
+<h2 id="ai-label"> 🤯 AI-Generated Content Label</h2>
+
+Uploads are posted with TikTok's "AI-generated content" label **on** by default. Turn it off for one upload with `ai_label=False` (CLI: `--no-ai-label`):
+
+```python
+uploader.upload_video('video.mp4', description='shot on my phone', ai_label=False)
+```
+
+If the label can not be set the way you asked, the upload fails instead of posting with the wrong label.
 
 <h2 id="mentions-and-hashtags"> 🫵 Mentions and Hashtags</h2>
 
@@ -358,5 +399,55 @@ This bot is **not fool proof**. Though I have not gotten an official ban, the vi
 
 > [!IMPORTANT]
 > If you like this project, please ⭐ it on GitHub to show your support! ❤️
+
+<h2 id="mcpserver"> 📡 MCP Server</h2>
+
+This library ships a built-in [Model Context Protocol (MCP)](https://modelcontextprotocol.org/) server that lets an LLM-powered tool (like Claude or Codex) drive your uploads directly: list the videos in a folder, ask for a caption suggestion, and then post, schedule, or draft a video — all without touching the browser yourself.
+
+Unlike the CLI, the MCP server does **not** take descriptions as positional arguments. Instead, it exposes three tools:
+
+| Tool | Description |
+|------|-------------|
+| `list_videos(directory)` | Lists the uploadable videos in a directory, newest first, with each video's path and original title |
+| `suggest_caption(video_path)` | Writes an English TikTok caption with hashtags from the video's original title, **without uploading anything** |
+| `upload_video(video_path, description?, schedule?, draft?, ai_label?, visibility?)` | Posts, schedules, or saves a video to drafts |
+
+**Starting the server:**
+
+```bash
+tiktok-uploader-mcp
+```
+
+Once running, an MCP client (such as the `claude` MCP client or any MCP host) can connect to the server over its configured transport (stdio by default) and call the tools above.
+
+**Prerequisite configuration:**
+
+The MCP server reuses the cookies-based authentication described in [🔐 Authentication](#authentication), plus the caption-generation settings from [🤖 Auto Captions](#auto-captions):
+
+*   Set the TikTok cookies (either the `TIKTOK_COOKIES` environment variable or the default cookies file) so the server can log in.
+*   The variable named by `api_key_env` in the `[captions]` section of `config.toml` (its API key) must be set in the environment for `suggest_caption` to generate a caption.
+
+<table>
+<tr><th>Variable</th><th>Purpose</th></tr>
+<tr><td><code>TIKTOK_COOKIES</code></td><td>Path to the NetScape-format cookies file to authenticate with</td></tr>
+<tr><td><code>captions.api_key_env</code> <em>(from <code>config.toml</code>)</em></td><td>Name of the environment variable holding the OpenAI-compatible API key used to write the suggested caption</td></tr>
+</table>
+
+The tools are plain functions, so you can also call them directly from your own code:
+
+```python
+from tiktok_uploader import mcp_server
+
+videos = mcp_server.list_videos(directory="downloads")
+path = videos[0]["path"]
+
+# write an English caption + hashtags from the video's original title
+caption = mcp_server.suggest_caption(path)
+
+# post the video with the generated caption
+result = mcp_server.upload_video(path, description=caption)
+```
+
+**Scheduling and drafts** work through the same tool: pass `schedule` (a UTC `"YYYY-MM-DD HH:MM"`, 20 minutes to 10 days ahead) to post later, or `draft=True` to save to your drafts instead of posting.
 
 ![Star History Chart](https://api.star-history.com/svg?repos=wkaisertexas/tiktok-uploader&type=Date)

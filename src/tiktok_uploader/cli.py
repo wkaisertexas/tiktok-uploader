@@ -7,6 +7,7 @@ from argparse import ArgumentParser, Namespace
 from os.path import exists, join
 
 from tiktok_uploader.auth import login_accounts, save_cookies
+from tiktok_uploader.captions import auto_caption
 from tiktok_uploader.types import ProxyDict
 from tiktok_uploader.upload import TikTokUploader
 
@@ -23,6 +24,11 @@ def main() -> None:
     proxy = parse_proxy(args.proxy)
     product_id = args.product_id
     visibility = args.visibility
+    draft = args.draft
+    ai_label = not args.no_ai_label
+    description = args.description
+    if description is None:
+        description = "" if args.no_auto_caption else auto_caption(args.video)
 
     # runs the program using the arguments provided
     with TikTokUploader(
@@ -35,11 +41,13 @@ def main() -> None:
     ) as uploader:
         result = uploader.upload_video(
             filename=args.video,
-            description=args.description,
+            description=description,
             schedule=schedule,
             product_id=product_id,
             cover=args.cover,
             visibility=visibility,
+            draft=draft,
+            ai_label=ai_label,
         )
 
     print("-------------------------")
@@ -61,7 +69,18 @@ def get_uploader_args() -> Namespace:
 
     # primary arguments
     parser.add_argument("-v", "--video", help="Video file", required=True)
-    parser.add_argument("-d", "--description", help="Description", default="")
+    parser.add_argument(
+        "-d",
+        "--description",
+        help="Description. Without one, an English caption with hashtags is "
+        + "written from the video's .txt title or filename",
+        default=None,
+    )
+    parser.add_argument(
+        "--no-auto-caption",
+        action="store_true",
+        help="Upload without a description instead of writing one",
+    )
 
     # secondary arguments
     parser.add_argument(
@@ -85,6 +104,16 @@ def get_uploader_args() -> Namespace:
         default="everyone",
     )
     parser.add_argument("--cover", help="Custom cover image file", default=None)
+    parser.add_argument(
+        "--no-ai-label",
+        action="store_true",
+        help="Do not turn on TikTok's AI-generated content label (on by default)",
+    )
+    parser.add_argument(
+        "--draft",
+        action="store_true",
+        help="Save the video to your TikTok drafts instead of posting it",
+    )
 
     # authentication arguments
     parser.add_argument("-c", "--cookies", help="The cookies you want to use")
@@ -117,6 +146,10 @@ def validate_uploader_args(args: Namespace) -> None:
     # Makes sure the optional cover image file exists
     if args.cover and not exists(args.cover):
         raise FileNotFoundError(f"Could not find the cover image file at {args.cover}")
+
+    # Drafts are not published, so they can not be scheduled
+    if args.draft and args.schedule:
+        raise ValueError("You can not pass in both --draft and --schedule")
 
     # User can not pass in both cookies and username / password
     if args.cookies and (args.username or args.password):

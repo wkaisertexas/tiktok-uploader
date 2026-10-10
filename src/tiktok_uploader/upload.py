@@ -91,6 +91,8 @@ class TikTokUploader:
         product_id: str | None = None,
         cover: str | None = None,
         visibility: Literal["everyone", "friends", "only_you"] = "everyone",
+        draft: bool = False,
+        ai_label: bool = True,
         num_retries: int = 1,
         skip_split_window: bool = False,
         *args,
@@ -112,6 +114,10 @@ class TikTokUploader:
             video_dict["visibility"] = visibility
         if cover:
             video_dict["cover"] = cover
+        if draft:
+            video_dict["draft"] = True
+        if not ai_label:
+            video_dict["ai_label"] = False
 
         failed_list = self.upload_videos(
             [video_dict], num_retries, skip_split_window, *args, **kwargs
@@ -152,6 +158,8 @@ class TikTokUploader:
                     cover_path = abspath(cover_path)
 
                 visibility = video.get("visibility", "everyone")
+                draft = video.get("draft", False)
+                ai_label = video.get("ai_label", True)
 
                 logger.debug(
                     "Posting %s%s",
@@ -173,11 +181,13 @@ class TikTokUploader:
                 if schedule:
                     timezone = pytz.UTC
                     if schedule.tzinfo is None:
-                        schedule = schedule.astimezone(timezone)
-                    elif (utc_offset := schedule.utcoffset()) is not None and int(
-                        utc_offset.total_seconds()
-                    ) == 0:  # Equivalent to UTC
+                        # naive datetimes are UTC by contract (not host local time)
                         schedule = timezone.localize(schedule)
+                    elif (
+                        (utc_offset := schedule.utcoffset()) is not None
+                        and int(utc_offset.total_seconds()) == 0
+                    ):  # Equivalent to UTC; already aware, so convert, don't localize
+                        schedule = schedule.astimezone(timezone)
                     else:
                         print(
                             f"{schedule} is invalid, the schedule datetime must be naive or aware with UTC timezone, skipping"
@@ -208,6 +218,8 @@ class TikTokUploader:
                     num_retries,
                     self.headless,
                     *args,
+                    draft=draft,
+                    ai_label=ai_label,
                     **kwargs,
                 )  # type: ignore[misc]
             except Exception as exception:
@@ -255,6 +267,8 @@ def upload_video(
     product_id: str | None = None,
     cover: str | None = None,
     visibility: Literal["everyone", "friends", "only_you"] = "everyone",
+    draft: bool = False,
+    ai_label: bool = True,
     browser: Literal["chrome", "safari", "chromium", "edge", "firefox"] = "chrome",
     headless: bool = False,
     *args,
@@ -290,6 +304,10 @@ def upload_video(
         video_dict["visibility"] = visibility
     if cover:
         video_dict["cover"] = cover
+    if draft:
+        video_dict["draft"] = True
+    if not ai_label:
+        video_dict["ai_label"] = False
 
     try:
         return uploader.upload_videos([video_dict], *args, **kwargs)
@@ -353,10 +371,12 @@ def complete_upload_form(
     num_retries: int = 1,
     headless: bool = False,
     *args,
+    draft: bool = False,
+    ai_label: bool = True,
     **kwargs,
 ) -> None:
     """
-    Actually uploads each video
+    Actually uploads each video, or saves it as a draft if `draft` is set
     """
     _go_to_upload(page)
     _remove_cookies_window(page)
@@ -367,15 +387,20 @@ def complete_upload_form(
         _set_cover(page, cover_path)
     if not skip_split_window:
         _remove_split_window(page)
+    _remove_onboarding_tour(page)
     _set_interactivity(page, **kwargs)
     _set_description(page, description)
     if visibility != "everyone":
         _set_visibility(page, visibility)
+    _set_ai_label(page, ai_label)
     if schedule:
         _set_schedule_video(page, schedule)
     if product_id:
         _add_product_link(page, product_id)
-    _post_video(page)
+    if draft:
+        _save_draft(page)
+    else:
+        _post_video(page)
 
 
 def _go_to_upload(page: Page) -> None:
@@ -415,9 +440,8 @@ def _set_description(page: Page, description: str) -> None:
 
         desc_locator.click()
 
-        # Clear existing text
-        desc_locator.press("Control+A")
-        desc_locator.press("Backspace")
+        # Clear existing text (TikTok pre-fills the caption with the filename)
+        _clear(desc_locator)
 
         desc_locator.click()
         time.sleep(1)
@@ -435,9 +459,13 @@ def _set_description(page: Page, description: str) -> None:
                     mention_box.wait_for(
                         state="visible", timeout=config.add_hashtag_wait * 1000
                     )
-                    desc_locator.press("Enter")
+                    # pressing Enter inserts a line break instead of picking the
+                    # suggestion, so click the hashtag that matches exactly
+                    mention_box.get_by_text(word, exact=True).first.click(
+                        timeout=config.add_hashtag_wait * 1000
+                    )
                 except Exception:
-                    pass
+                    desc_locator.press_sequentially(" ")
 
             elif word[0] == "@":
                 logger.debug(green("- Adding Mention: " + word))
@@ -486,7 +514,7 @@ def _clear(locator) -> None:
     """
     Clears the text of the element
     """
-    locator.press("Control+A")
+    locator.press("ControlOrMeta+A")
     locator.press("Backspace")
 
 
@@ -549,6 +577,30 @@ def _remove_split_window(page: Page) -> None:
             window.click()
     except PlaywrightTimeoutError:
         logger.debug(red("Split window not found or operation timed out"))
+
+
+def _remove_onboarding_tour(page: Page, max_steps: int = 5) -> None:
+    """
+    Dismisses the "new features" onboarding tour, whose overlay blocks the upload form
+    """
+    logger.debug(green("Removing onboarding tour"))
+
+    # the tour can have several steps, each dismissed by its own button
+    for _ in range(max_steps):
+        try:
+            button = page.locator(
+                f"xpath={config.selectors.upload.onboarding_tour_button}"
+            ).first
+            if not button.is_visible(timeout=config.implicit_wait * 1000):
+                return
+            button.click()
+        except PlaywrightTimeoutError:
+            break
+
+    page.evaluate("""
+        const portal = document.getElementById("react-joyride-portal");
+        if (portal) portal.remove();
+    """)
 
 
 def _set_interactivity(
@@ -686,7 +738,7 @@ def __date_picker(page: Page, month: int, day: int) -> None:
 def __verify_date_picked_is_correct(page: Page, month: int, day: int) -> None:
     date_selected = page.locator(
         f"xpath={config.selectors.schedule.date_picker}"
-    ).inner_text()
+    ).input_value()
     date_selected_month = int(date_selected.split("-")[1])
     date_selected_day = int(date_selected.split("-")[2])
 
@@ -735,7 +787,7 @@ def __time_picker(page: Page, hour: int, minute: int) -> None:
 def __verify_time_picked_is_correct(page: Page, hour: int, minute: int) -> None:
     time_selected = page.locator(
         f"xpath={config.selectors.schedule.time_picker_text}"
-    ).inner_text()
+    ).input_value()
     time_selected_hour = int(time_selected.split(":")[0])
     time_selected_minute = int(time_selected.split(":")[1])
 
@@ -787,6 +839,62 @@ def _post_video(page: Page) -> None:
     post_confirmation.wait_for(state="attached", timeout=config.explicit_wait * 1000)
 
     logger.debug(green("Video posted successfully"))
+
+
+def _set_ai_label(page: Page, ai_label: bool) -> None:
+    """
+    Sets TikTok's "AI-generated content" label, which lives under "Show more"
+    """
+    logger.debug(green(f"Setting AI-generated content label: {ai_label}"))
+
+    try:
+        show_more = page.locator(f"xpath={config.selectors.upload.show_more}").first
+        if show_more.is_visible():
+            show_more.click()
+
+        switch = page.locator(f"xpath={config.selectors.upload.ai_label_switch}")
+        wanted = "checked" if ai_label else "unchecked"
+        if switch.get_attribute("data-state") == wanted:
+            return
+
+        switch.click()
+        if ai_label:
+            # turning the label on asks for confirmation first
+            page.locator(f"xpath={config.selectors.upload.ai_label_confirm}").click()
+
+        for _ in range(10):
+            if switch.get_attribute("data-state") == wanted:
+                return
+            time.sleep(0.5)
+        raise Exception(f"the switch did not change to {wanted}")
+    except Exception as e:
+        # posting realistic AI content unlabeled risks removal, so do not post at all
+        msg = f"Failed to set the AI-generated content label: {e}"
+        logger.error(red(msg))
+        raise FailedToUpload(msg) from e
+
+
+def _save_draft(page: Page) -> None:
+    """
+    Saves the video as a draft instead of posting it
+    """
+    logger.debug(green("Clicking the save draft button"))
+
+    draft_btn = page.locator(f"xpath={config.selectors.upload.save_draft}")
+
+    # the button stays disabled until the video has finished uploading
+    for _ in range(int(config.uploading_wait / 2)):
+        if draft_btn.get_attribute("data-disabled") != "true":
+            break
+        time.sleep(2)
+
+    draft_btn.scroll_into_view_if_needed()
+    draft_btn.click()
+
+    # the upload form closes once the draft is saved
+    draft_btn.wait_for(state="detached", timeout=config.explicit_wait * 1000)
+
+    logger.debug(green("Video saved as draft"))
 
 
 def _add_product_link(page: Page, product_id: str) -> None:
@@ -892,7 +1000,11 @@ def _set_cover(page: Page, cover_path: str) -> None:
 
 
 def _check_valid_path(path: str) -> bool:
-    return exists(path) and path.split(".")[-1] in config.supported_file_types
+    return (
+        isinstance(path, str)
+        and exists(path)
+        and path.split(".")[-1] in config.supported_file_types
+    )
 
 
 def _check_valid_cover_path(path: str) -> bool:
@@ -928,7 +1040,7 @@ def _set_valid_schedule_minute(
 def _check_valid_schedule(schedule: datetime.datetime) -> bool:
     valid_tiktok_minute_multiple = 5
     margin_to_complete_upload_form = 5
-    datetime_utc_now = pytz.UTC.localize(datetime.datetime.utcnow())
+    datetime_utc_now = datetime.datetime.now(datetime.timezone.utc)
     min_datetime_tiktok_valid = datetime_utc_now + datetime.timedelta(minutes=15)
     min_datetime_tiktok_valid += datetime.timedelta(
         minutes=margin_to_complete_upload_form
@@ -981,7 +1093,7 @@ def _convert_videos_dict(
             elem[correct_description] = elem[description_intersection.pop()]
         else:
             for _, value in elem.items():
-                if not _check_valid_path(value):
+                if isinstance(value, str) and not _check_valid_path(value):
                     elem[correct_description] = value
                     break
             else:

@@ -24,6 +24,7 @@ classifiers = [
 ]
 
 dependencies = [
+	"mcp>=1.10",
 	"playwright>=1.58.0",
 	"pydantic>=2.10.6",
 	"pytz>=2025.2",
@@ -58,6 +59,7 @@ types = [
 [project.scripts]
 tiktok-uploader = "tiktok_uploader.cli:main"
 tiktok-auth = "tiktok_uploader.cli:auth"
+tiktok-uploader-mcp = "tiktok_uploader.mcp_server:main"
 
 [project.urls]
 "Source Code" = "https://github.com/wkaisertexas/tiktok-uploader"

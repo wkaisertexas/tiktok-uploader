@@ -20,6 +20,18 @@ supported_image_file_types = ["png", "jpg", "jpeg"]
 
 max_description_length = 150 # characters
 
+# Cookies used when no login is given ($TIKTOK_COOKIES overrides it)
+default_cookies = "~/.config/tiktok-uploader/cookies.txt"
+
+# Captions written from a video's original title when no description is given
+[captions]
+endpoint = "https://inference.do-ai.run/v1/chat/completions" # any OpenAI-compatible API
+model = "anthropic-claude-sonnet-5.5"
+api_key_env = "MODEL_ACCESS_KEY" # environment variable holding the API key
+min_hashtags = 3
+max_hashtags = 5
+timeout = 30 # seconds
+
 [paths]
 main = "https://www.tiktok.com/"
 login = "https://www.tiktok.com/login/phone-or-email/email"
@@ -43,6 +55,7 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	iframe = "//iframe"
 	
 	split_window = "//button[./div[text()='Not now']]"
+	onboarding_tour_button = "//div[contains(@class, 'react-joyride__tooltip')]//button"
 	upload_video = "//input[@type='file']"
 	upload_finished = "//div[contains(@class, 'btn-cancel')]"
  	upload_confirmation = "//div[@title]"
@@ -60,22 +73,26 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
 
 	post = "//button[@data-e2e='post_video_button']"
+	save_draft = "//button[@data-e2e='save_draft_button']"
+	show_more = "//*[text()='Show more']"
+	ai_label_switch = "//div[@data-e2e='aigc_container']//div[contains(@class, 'Switch__content')]"
+	ai_label_confirm = "//div[@role='dialog']//button[.='Turn on']"
 	post_now = "//button[.//div[text()='Post now']]"
 	post_confirmation = "//div[contains(text(), 'Your video has been uploaded') or contains(text(), '视频已发布') or contains(text(), 'Video published')]"
 
 
 	[selectors.schedule]
-	switch = "//*[@id='tux-1']"
+	switch = "//label[.//input[@name='postSchedule' and @value='schedule']]"
 
-	date_picker = "//div[contains(@class, 'date-picker-input')]"
+	date_picker = "(//div[contains(@class, 'scheduled-picker')]//input)[2]"
 	calendar = "//div[contains(@class, 'calendar-wrapper')]"
 	calendar_month = "//span[contains(@class, 'month-title')]"
-	calendar_valid_days = "//div[@class='jsx-4172176419 days-wrapper']//span[contains(@class, 'day') and contains(@class, 'valid')]"
+	calendar_valid_days = "//div[contains(@class, 'days-wrapper')]//span[contains(@class, 'day') and contains(@class, 'valid')]"
 	calendar_arrows = "//span[contains(@class, 'arrow')]"  # first last, second next
 
-	time_picker = "//div[contains(@class, 'time-picker-input')]"
-	time_picker_text = "//div[contains(@class, 'time-picker-input')]/*[1]"
-	time_picker_container = "//div[@class='tiktok-timepicker-time-picker-container']"
+	time_picker = "(//div[contains(@class, 'scheduled-picker')]//input)[1]"
+	time_picker_text = "(//div[contains(@class, 'scheduled-picker')]//input)[1]"
+	time_picker_container = "//div[contains(@class, 'tiktok-timepicker-time-picker-container')]"
 	timepicker_hours = "//span[contains(@class, 'tiktok-timepicker-left')]"
 	timepicker_minutes = "//span[contains(@class, 'tiktok-timepicker-right')]"
 

@@ -389,3 +389,182 @@ def test_upload_videos_with_browser_agent_authenticates(
     )
 
     mock_authenticate_agent.assert_called_once_with(browser_agent)
+
+
+def test_remove_onboarding_tour_clicks_until_gone() -> None:
+    """
+    Tests that each tour step is dismissed and stops once no button is visible
+    """
+    from tiktok_uploader.upload import _remove_onboarding_tour
+
+    mock_page = MagicMock()
+    button = mock_page.locator.return_value.first
+    button.is_visible.side_effect = [True, True, False]
+
+    _remove_onboarding_tour(mock_page)
+
+    assert button.click.call_count == 2
+    mock_page.evaluate.assert_not_called()
+
+
+def test_remove_onboarding_tour_falls_back_to_removing_overlay() -> None:
+    """
+    Tests that a tour which never closes is removed from the DOM
+    """
+    from tiktok_uploader.upload import _remove_onboarding_tour
+
+    mock_page = MagicMock()
+    mock_page.locator.return_value.first.is_visible.return_value = True
+
+    _remove_onboarding_tour(mock_page, max_steps=3)
+
+    assert mock_page.locator.return_value.first.click.call_count == 3
+    mock_page.evaluate.assert_called_once()
+
+
+@patch("tiktok_uploader.upload.get_browser")
+@patch("tiktok_uploader.auth.AuthBackend.authenticate_agent")
+@patch("tiktok_uploader.upload.complete_upload_form")
+def test_upload_video_with_draft(mock_complete_upload, mock_auth, mock_browser) -> None:
+    """
+    Tests that upload_video passes the draft flag through, defaulting to False
+    """
+    mock_page = MagicMock()
+    mock_browser.return_value = mock_page
+    mock_auth.return_value = mock_page
+
+    upload_video(filename=FILENAME, sessionid="test_session", draft=True)
+    assert mock_complete_upload.call_args.kwargs["draft"] is True
+
+    mock_complete_upload.reset_mock()
+
+    upload_video(filename=FILENAME, sessionid="test_session")
+    assert mock_complete_upload.call_args.kwargs["draft"] is False
+
+
+@patch("tiktok_uploader.upload._set_ai_label")
+@patch("tiktok_uploader.upload._post_video")
+@patch("tiktok_uploader.upload._save_draft")
+@patch("tiktok_uploader.upload._set_video")
+def test_complete_upload_form_draft_skips_posting(
+    mock_set_video, mock_save_draft, mock_post_video, mock_set_ai_label
+) -> None:
+    """
+    Tests that a draft is saved instead of posted, and that posting is the default
+    """
+    from tiktok_uploader.upload import complete_upload_form
+
+    mock_page = MagicMock()
+
+    complete_upload_form(mock_page, FILENAME, "", None, True, draft=True)
+    mock_save_draft.assert_called_once_with(mock_page)
+    mock_post_video.assert_not_called()
+
+    mock_save_draft.reset_mock()
+
+    complete_upload_form(mock_page, FILENAME, "", None, True)
+    mock_post_video.assert_called_once_with(mock_page)
+    mock_save_draft.assert_not_called()
+
+
+def test_save_draft_clicks_button_and_waits_for_form_to_close() -> None:
+    """
+    Tests that _save_draft clicks the draft button once it is enabled
+    """
+    from tiktok_uploader.upload import _save_draft
+
+    mock_page = MagicMock()
+    draft_btn = mock_page.locator.return_value
+    draft_btn.get_attribute.return_value = "false"
+
+    _save_draft(mock_page)
+
+    draft_btn.click.assert_called_once()
+    draft_btn.wait_for.assert_called_once()
+    assert draft_btn.wait_for.call_args.kwargs["state"] == "detached"
+
+
+@patch("tiktok_uploader.upload._set_ai_label")
+@patch("tiktok_uploader.upload._post_video")
+@patch("tiktok_uploader.upload._set_video")
+def test_complete_upload_form_ai_label_defaults_on(
+    mock_set_video, mock_post_video, mock_set_ai_label
+) -> None:
+    """
+    Tests that the AI-generated content label is on unless turned off
+    """
+    from tiktok_uploader.upload import complete_upload_form
+
+    mock_page = MagicMock()
+
+    complete_upload_form(mock_page, FILENAME, "", None, True)
+    mock_set_ai_label.assert_called_once_with(mock_page, True)
+
+    mock_set_ai_label.reset_mock()
+
+    complete_upload_form(mock_page, FILENAME, "", None, True, ai_label=False)
+    mock_set_ai_label.assert_called_once_with(mock_page, False)
+
+
+@patch("tiktok_uploader.upload.get_browser")
+@patch("tiktok_uploader.auth.AuthBackend.authenticate_agent")
+@patch("tiktok_uploader.upload.complete_upload_form")
+def test_upload_video_passes_ai_label(
+    mock_complete_upload, mock_auth, mock_browser
+) -> None:
+    """
+    Tests that upload_video passes the AI label flag through, defaulting to on
+    """
+    mock_browser.return_value = mock_auth.return_value = MagicMock()
+
+    upload_video(filename=FILENAME, sessionid="test_session")
+    assert mock_complete_upload.call_args.kwargs["ai_label"] is True
+
+    upload_video(filename=FILENAME, sessionid="test_session", ai_label=False)
+    assert mock_complete_upload.call_args.kwargs["ai_label"] is False
+
+
+def _ai_label_page(states: list[str]) -> MagicMock:
+    """
+    A page whose AI label switch reports the given data-state values in order
+    """
+    mock_page = MagicMock()
+    switch = MagicMock()
+    switch.get_attribute.side_effect = states
+    mock_page.locator.side_effect = lambda selector: (
+        switch if "aigc_container" in selector else MagicMock()
+    )
+    mock_page.switch = switch
+    return mock_page
+
+
+def test_set_ai_label_turns_on_and_confirms() -> None:
+    from tiktok_uploader.upload import _set_ai_label
+
+    mock_page = _ai_label_page(["unchecked", "checked"])
+
+    _set_ai_label(mock_page, True)
+
+    mock_page.switch.click.assert_called_once()
+    confirms = [c for c in mock_page.locator.call_args_list if "Turn on" in c.args[0]]
+    assert len(confirms) == 1
+
+
+def test_set_ai_label_leaves_matching_switch_alone() -> None:
+    from tiktok_uploader.upload import _set_ai_label
+
+    mock_page = _ai_label_page(["checked"])
+
+    _set_ai_label(mock_page, True)
+
+    mock_page.switch.click.assert_not_called()
+
+
+@patch("tiktok_uploader.upload.time.sleep")
+def test_set_ai_label_failure_stops_the_upload(mock_sleep) -> None:
+    from tiktok_uploader.upload import FailedToUpload, _set_ai_label
+
+    mock_page = _ai_label_page(["unchecked"] * 20)
+
+    with raises(FailedToUpload):
+        _set_ai_label(mock_page, True)

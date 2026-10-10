@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import toml
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
@@ -24,6 +24,24 @@ class Paths(StrictModel):
     main: HttpUrl
     login: HttpUrl
     upload: HttpUrl
+
+
+class Captions(StrictModel):
+    endpoint: HttpUrl
+    model: str
+    api_key_env: str
+    min_hashtags: Annotated[int, Field(ge=0)]
+    max_hashtags: Annotated[int, Field(ge=0)]
+    timeout: PositiveSeconds
+
+    @field_validator("endpoint")
+    @classmethod
+    def _endpoint_https(cls, v: Any) -> Any:
+        if v.scheme != "https":
+            raise ValueError(
+                "endpoint must use https (the bearer key would otherwise travel cleartext)"
+            )
+        return v
 
 
 class Disguising(StrictModel):
@@ -63,6 +81,11 @@ class Cover(StrictModel):
 class UploadSelectors(StrictModel):
     iframe: str
     split_window: str
+    save_draft: str
+    show_more: str
+    ai_label_switch: str
+    ai_label_confirm: str
+    onboarding_tour_button: str
     upload_video: str
     upload_finished: str
     upload_confirmation: str
@@ -128,9 +151,11 @@ class TikTokConfig(StrictModel):
     supported_file_types: list[str]
     supported_image_file_types: list[str]
     max_description_length: PositiveChars
+    default_cookies: str
 
     # Nested
     paths: Paths
+    captions: Captions
     disguising: Disguising
     selectors: Selectors
 

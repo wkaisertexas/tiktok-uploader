@@ -1,6 +1,8 @@
 """Handles authentication for TikTokUploader"""
 
+import os
 from http import cookiejar
+from pathlib import Path
 from time import sleep, time
 from typing import Any, cast
 
@@ -10,6 +12,15 @@ from tiktok_uploader import config, logger
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.types import Cookie, cookie_from_dict
 from tiktok_uploader.utils import green
+
+
+def default_cookies_path() -> str | None:
+    """
+    The cookies file to log in with when none is given: $TIKTOK_COOKIES, else the
+    `default_cookies` file from config.toml, if it exists
+    """
+    path = Path(os.environ.get("TIKTOK_COOKIES") or config.default_cookies).expanduser()
+    return str(path) if path.is_file() else None
 
 
 class AuthBackend:
@@ -45,6 +56,9 @@ class AuthBackend:
         """
         if (username and not password) or (password and not username):
             raise InsufficientAuth()
+
+        if not (cookies or cookies_str or cookies_list or sessionid or username):
+            cookies = default_cookies_path()
 
         self.cookies_path = cookies
         self.cookies_str = cookies_str
