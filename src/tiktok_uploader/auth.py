@@ -1,5 +1,6 @@
 """Handles authentication for TikTokUploader"""
 
+import os
 from http import cookiejar
 from time import sleep, time
 from typing import Any, cast
@@ -9,7 +10,6 @@ from playwright.sync_api import Page, expect
 from tiktok_uploader import config, logger
 from tiktok_uploader.browsers import get_browser
 from tiktok_uploader.types import Cookie, cookie_from_dict
-from tiktok_uploader.utils import green
 
 
 class AuthBackend:
@@ -42,9 +42,14 @@ class AuthBackend:
         - password -> the account's password
 
         - cookies -> a list of cookie dictionaries of cookies which is Playwright-compatible
+
+        With no login given at all, the cookies file named by $TIKTOK_COOKIES is used.
         """
         if (username and not password) or (password and not username):
             raise InsufficientAuth()
+
+        if not (cookies or cookies_str or cookies_list or sessionid or username):
+            cookies = os.environ.get("TIKTOK_COOKIES") or None
 
         self.cookies_path = cookies
         self.cookies_str = cookies_str
@@ -62,13 +67,13 @@ class AuthBackend:
         self.password = password
 
         if cookies:
-            logger.debug(green("Authenticating browser with cookies"))
+            logger.debug("Authenticating browser with cookies")
         elif username and password:
-            logger.debug(green("Authenticating browser with username and password"))
+            logger.debug("Authenticating browser with username and password")
         elif sessionid:
-            logger.debug(green("Authenticating browser with sessionid"))
+            logger.debug("Authenticating browser with sessionid")
         elif self.cookies_list:
-            logger.debug(green("Authenticating browser with cookies_list"))
+            logger.debug("Authenticating browser with cookies_list")
 
     def authenticate_agent(self, page: Page) -> Page:
         """
@@ -85,7 +90,7 @@ class AuthBackend:
                 "No valid authentication source found. Provide a valid cookies file, cookies list/string, sessionid, or username/password."
             )
 
-        logger.debug(green("Authenticating browser with cookies"))
+        logger.debug("Authenticating browser with cookies")
 
         # Fix cookie keys for Playwright
         playwright_cookies = []
@@ -102,8 +107,8 @@ class AuthBackend:
             # if c.get("domain", "").startswith("."):
             #     c["domain"] = c["domain"][1:]
 
-            # logger.debug(f"Adding cookie: {c}")
-            print(f"DEBUG: Adding cookie: {c}")
+            # the name only: the value (sessionid included) is a credential
+            logger.debug("Adding cookie: %s", c.get("name"))
             playwright_cookies.append(c)
 
         try:
@@ -111,7 +116,7 @@ class AuthBackend:
                 try:
                     page.context.add_cookies([cast(Any, pc)])
                 except Exception as e:
-                    print(f"DEBUG: Failed to add individual cookie {pc['name']}: {e}")
+                    logger.warning("Failed to add cookie %s: %s", pc.get("name"), e)
         except Exception as e:
             logger.error(f"Failed to add cookies: {e}")
 

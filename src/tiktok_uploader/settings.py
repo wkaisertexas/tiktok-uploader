@@ -58,17 +58,36 @@ class Cover(StrictModel):
     upload_cover: str
     upload_confirmation: str
     exit_cover_container: str
+    # TikTok Studio's cover modal (tried first, the legacy flow above is the fallback)
+    studio_edit_cover: str
+    studio_upload_cover: str
+    studio_save: str
+    studio_cancel: str
+
+
+class SoundSelectors(StrictModel):
+    add_sound_button: str
+    search_input: str
+    result_items: str
+    result_title: str
+    result_artist: str
+    result_add_button: str
+    save_button: str
 
 
 class UploadSelectors(StrictModel):
     iframe: str
     split_window: str
+    modal_dismiss: str
+    modal_overlay: str
+    show_more: str
     upload_video: str
     upload_finished: str
     upload_confirmation: str
     process_confirmation: str
     description: str
     cover: Cover
+    sound: SoundSelectors
 
     visibility: str
     options: list[VisibilityOption]
@@ -77,30 +96,40 @@ class UploadSelectors(StrictModel):
     mention_box_user_id: str
 
     comment: str
+    reuse_of_content: str
     duet: str
     stitch: str
+
+    ai_label_switch: str
+    ai_label_confirm: str
+    content_restricted: str
 
     post: str
     post_now: str
     post_confirmation: str
+    post_error: str
+    save_draft: str
 
     cookies_banner: CookiesBanner
 
 
 class ScheduleSelectors(StrictModel):
     switch: str
+    consent_allow: str
 
     date_picker: str
+    date_picker_text: str
     calendar: str
     calendar_month: str
+    calendar_year: str
     calendar_valid_days: str
     calendar_arrows: str
 
     time_picker: str
     time_picker_text: str
     time_picker_container: str
-    timepicker_hours: str
-    timepicker_minutes: str
+    timepicker_hour: str  # {value} is zero-padded: "09"
+    timepicker_minute: str
 
 
 class Selectors(StrictModel):

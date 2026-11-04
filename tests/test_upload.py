@@ -387,5 +387,99 @@ def test_upload_videos_with_browser_agent_authenticates(
         sessionid="test_session",
         browser_agent=browser_agent,
     )
-
     mock_authenticate_agent.assert_called_once_with(browser_agent)
+
+
+# Schedule normalisation: pytz's localize() crashed on an already-aware UTC
+# datetime, and a naive one was read as host-local time, not UTC as documented.
+
+
+@freeze_time("2020-01-01 12:00")
+@patch("tiktok_uploader.upload.get_browser")
+@patch("tiktok_uploader.auth.AuthBackend.authenticate_agent")
+@patch("tiktok_uploader.upload.complete_upload_form")
+def test_upload_video_naive_schedule_is_utc(
+    mock_complete_upload, mock_auth, mock_browser
+) -> None:
+    """A naive datetime is UTC, as the README documents, whatever the host's
+    timezone."""
+    mock_page = MagicMock()
+    mock_browser.return_value = mock_page
+    mock_auth.return_value = mock_page
+
+    naive_schedule = datetime.datetime(2020, 1, 2, 12, 0)
+
+    result = upload_video(
+        filename=FILENAME,
+        description="test",
+        schedule=naive_schedule,
+        sessionid="test_session",
+    )
+
+    assert result == []  # no failed videos
+    passed_schedule = mock_complete_upload.call_args[0][3]
+    assert passed_schedule == datetime.datetime(2020, 1, 2, 12, 0, tzinfo=pytz.UTC)
+
+
+@freeze_time("2020-01-01 12:00")
+@patch("tiktok_uploader.upload.get_browser")
+@patch("tiktok_uploader.auth.AuthBackend.authenticate_agent")
+@patch("tiktok_uploader.upload.complete_upload_form")
+def test_upload_video_aware_utc_schedule_is_accepted(
+    mock_complete_upload, mock_auth, mock_browser
+) -> None:
+    """An already-UTC-aware datetime schedules normally; pytz.UTC.localize()
+    used to raise on it, so this input failed every time."""
+    mock_page = MagicMock()
+    mock_browser.return_value = mock_page
+    mock_auth.return_value = mock_page
+
+    aware_utc_schedule = datetime.datetime(
+        2020, 1, 2, 12, 0, tzinfo=datetime.timezone.utc
+    )
+
+    result = upload_video(
+        filename=FILENAME,
+        description="test",
+        schedule=aware_utc_schedule,
+        sessionid="test_session",
+    )
+
+    assert result == []  # no failed videos
+    mock_complete_upload.assert_called_once()
+    passed_schedule = mock_complete_upload.call_args[0][3]
+    assert passed_schedule == aware_utc_schedule
+
+
+@freeze_time("2020-01-01 12:00")
+@patch("tiktok_uploader.upload.get_browser")
+@patch("tiktok_uploader.auth.AuthBackend.authenticate_agent")
+@patch("tiktok_uploader.upload.complete_upload_form")
+def test_upload_video_aware_non_utc_schedule_converts_to_utc(
+    mock_complete_upload, mock_auth, mock_browser
+) -> None:
+    """An aware, non-UTC datetime must convert to the equivalent UTC instant
+    rather than being rejected outright."""
+    mock_page = MagicMock()
+    mock_browser.return_value = mock_page
+    mock_auth.return_value = mock_page
+
+    eastern = datetime.timezone(datetime.timedelta(hours=-5))
+    # 2020-01-02 07:00 -05:00 == 2020-01-02 12:00 UTC
+    aware_eastern_schedule = datetime.datetime(2020, 1, 2, 7, 0, tzinfo=eastern)
+
+    result = upload_video(
+        filename=FILENAME,
+        description="test",
+        schedule=aware_eastern_schedule,
+        sessionid="test_session",
+    )
+
+    assert result == []  # no failed videos
+    passed_schedule = mock_complete_upload.call_args[0][3]
+    assert passed_schedule == datetime.datetime(2020, 1, 2, 12, 0, tzinfo=pytz.UTC)
+    assert passed_schedule.utcoffset() == datetime.timedelta(0)
+
+
+# The react-joyride tour dismissal is tested in test_browsers.py: it is an
+# init script installed by get_browser, not a helper in this module.

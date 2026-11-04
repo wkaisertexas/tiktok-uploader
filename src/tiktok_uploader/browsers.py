@@ -74,6 +74,38 @@ def get_browser(
         });
     """)
 
+    # TikTok Studio's react-joyride product tour overlays the upload form and
+    # re-renders on every step, so a one-off removal does not last. An init
+    # script runs on every document this context loads, and its
+    # MutationObserver removes the tour (the overlay in #react-joyride-portal
+    # and each step's tooltip in its own #react-joyride-step-N sibling) each
+    # time it comes back.
+    context.add_init_script("""
+        (function () {
+            function dismissTour() {
+                try {
+                    document.querySelectorAll('.react-joyride__overlay')
+                        .forEach(function (el) { el.remove(); });
+                    var portal = document.getElementById('react-joyride-portal');
+                    if (portal) { portal.remove(); }
+                    document.querySelectorAll('[id^="react-joyride-step-"]')
+                        .forEach(function (el) { el.remove(); });
+                } catch (e) { /* best-effort, never block the page */ }
+            }
+            dismissTour();
+            var observer = new MutationObserver(function () { dismissTour(); });
+            var attach = function () {
+                if (document.documentElement) {
+                    observer.observe(document.documentElement,
+                        { childList: true, subtree: true });
+                } else {
+                    setTimeout(attach, 50);
+                }
+            };
+            attach();
+        })();
+    """)
+
     page = context.new_page()
     page.set_default_timeout(config.implicit_wait * 1000)  # Convert seconds to ms
 

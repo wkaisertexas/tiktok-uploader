@@ -13,13 +13,20 @@ class ProxyDict(TypedDict, total=False):
 class VideoDict(TypedDict, total=False):
     path: str
     video: str
+    comment: bool
     stitch: bool
     duet: bool
+    reuse_of_content: bool
     description: str
     schedule: datetime
     product_id: str
     cover: str
     visibility: Literal["everyone", "friends", "only_you"]
+    sound_name: str
+    sound_artist: str
+    draft: bool
+    ai_label: bool
+    skip_restricted: bool
 
 
 class Cookie(TypedDict, total=False):

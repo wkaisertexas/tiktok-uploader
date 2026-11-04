@@ -25,6 +25,12 @@
   - [🌐 Proxy](#proxy)
   - [📆 Schedule](#schedule)
   - [🛍️ Product Link](#product-link)
+  - [🎵 Sounds](#sounds)
+  - [📝 Drafts](#drafts)
+  - [🤖 AI-generated Content Label](#ai-label)
+  - [🚫 Restricted Content](#restricted-content)
+  - [📦 Batch CLI](#batch-cli)
+  - [📜 Logging](#logging)
   - [🔐 Authentication](#authentication)
   - [👀 Browser Selection](#browser-selection)
   - [🤯 Headless Browsers](#headless)
@@ -93,22 +99,16 @@ tiktok-uploader -v video.mp4 -d "this is my escaped \"description\"" -c cookies.
 from tiktok_uploader.upload import TikTokUploader
 
 # single video
-uploader = TikTokUploader(cookies='cookies.txt')
-uploader.upload_video('video.mp4', description='this is my description')
+uploader = TikTokUploader(cookies="cookies.txt")
+uploader.upload_video("video.mp4", description="this is my description")
 
 # Multiple Videos
 videos = [
-    {
-        'path': 'video.mp4',
-        'description': 'this is my description'
-    },
-    {
-        'path': 'video2.mp4',
-        'description': 'this is also my description'
-    }
+    {"path": "video.mp4", "description": "this is my description"},
+    {"path": "video2.mp4", "description": "this is also my description"},
 ]
 
-uploader = TikTokUploader(cookies='cookies.txt')
+uploader = TikTokUploader(cookies="cookies.txt")
 uploader.upload_videos(videos=videos)
 ```
 
@@ -120,17 +120,11 @@ This library revolves around the `TikTokUploader` class which has a `upload_vide
 from tiktok_uploader.upload import TikTokUploader
 
 videos = [
-    {
-        'video': 'video0.mp4',
-        'description': 'Video 1 is about ...'
-    },
-    {
-        'video': 'video1.mp4',
-        'description': 'Video 2 is about ...'
-    }
+    {"video": "video0.mp4", "description": "Video 1 is about ..."},
+    {"video": "video1.mp4", "description": "Video 2 is about ..."},
 ]
 
-uploader = TikTokUploader(cookies='cookies.txt')
+uploader = TikTokUploader(cookies="cookies.txt")
 failed_videos = uploader.upload_videos(videos=videos)
 
 for video in failed_videos:  # each input video object which failed
@@ -144,8 +138,8 @@ Mentions and Hashtags now work so long as they are followed by a space. However,
 ```python
 from tiktok_uploader.upload import TikTokUploader
 
-uploader = TikTokUploader(cookies='cookies.txt')
-uploader.upload_video('video.mp4', description='#fyp @icespicee')
+uploader = TikTokUploader(cookies="cookies.txt")
+uploader.upload_video("video.mp4", description="#fyp @icespicee")
 ```
 
 <h2 id="stitches-duets-and-comments"> 🪡 Stitches, Duets and Comments</h2>
@@ -153,11 +147,23 @@ uploader.upload_video('video.mp4', description='#fyp @icespicee')
 To set whether or not a video uploaded allows stitches, comments or duet, simply specify `comment`, `stitch` and/or `duet` as keyword arguments to `upload_video` or `upload_videos`.
 
 ```python
-uploader = TikTokUploader(cookies='cookies.txt')
+uploader = TikTokUploader(cookies="cookies.txt")
 uploader.upload_video(..., comment=True, stitch=True, duet=True)
 ```
 
 > Comments, Stitches and Duets are allowed by **default**
+
+TikTok Studio has merged Duet and Stitch into a single "Reuse of content" checkbox. It is allowed only when both `stitch` and `duet` are, unless you set it directly with `reuse_of_content=True/False`. Each of these can also be set per video in `upload_videos`, overriding the keyword:
+
+```python
+uploader.upload_videos(
+    [
+        {"path": "video.mp4", "description": "...", "comment": False},
+        {"path": "video2.mp4", "description": "..."},
+    ],
+    comment=True,
+)
+```
 
 <h2 id="proxy"> 🌐 Proxy</h2>
 
@@ -165,15 +171,15 @@ To set a proxy, currently only works with chrome as the browser, allow user:pass
 
 ```python
 # proxy = {'user': 'myuser', 'pass': 'mypass', 'host': '111.111.111', 'port': '99'}  # user:pass
-proxy = {'host': '111.111.111', 'port': '99'}
+proxy = {"host": "111.111.111", "port": "99"}
 
-uploader = TikTokUploader(cookies='cookies.txt', proxy=proxy)
+uploader = TikTokUploader(cookies="cookies.txt", proxy=proxy)
 uploader.upload_video(...)
 ```
 
 <h2 id="schedule"> 📆 Schedule</h2>
 
-The datetime to schedule the video will be treated with the UTC timezone. <br>
+The datetime to schedule the video will be treated with the UTC timezone; a timezone-aware datetime is converted to UTC. <br>
 The scheduled datetime must be at least 20 minutes in the future and a maximum of 10 days.
 
 ```python
@@ -182,7 +188,7 @@ from tiktok_uploader.upload import TikTokUploader
 
 schedule = datetime.datetime(2020, 12, 20, 13, 00)
 
-uploader = TikTokUploader(cookies='cookies.txt')
+uploader = TikTokUploader(cookies="cookies.txt")
 uploader.upload_video(..., schedule=schedule)
 ```
 
@@ -194,7 +200,7 @@ TikTok supports ".png", ".jpeg" and ".jpg".
 ```python
 my_cover = "crazy_cover.jpg"
 
-uploader = TikTokUploader(cookies='cookies.txt')
+uploader = TikTokUploader(cookies="cookies.txt")
 uploader.upload_video(..., cover=my_cover)
 ```
 
@@ -226,28 +232,83 @@ tiktok-uploader -v video.mp4 -d "this is my description" -c cookies.txt --produc
 ```python
 from tiktok_uploader.upload import TikTokUploader
 
-uploader = TikTokUploader(cookies='cookies.txt')
+uploader = TikTokUploader(cookies="cookies.txt")
 
 # Single video
-uploader.upload_video('video.mp4',
-            description='this is my description',
-            product_id='YOUR_PRODUCT_ID')
+uploader.upload_video(
+    "video.mp4", description="this is my description", product_id="YOUR_PRODUCT_ID"
+)
 
 # Multiple videos
 videos = [
     {
-        'path': 'video.mp4',
-        'description': 'this is my description',
-        'product_id': 'YOUR_PRODUCT_ID_1' # Add product link to this video
+        "path": "video.mp4",
+        "description": "this is my description",
+        "product_id": "YOUR_PRODUCT_ID_1",  # Add product link to this video
     },
     {
-        'path': 'video2.mp4',
-        'description': 'this is also my description' # No product link for this video
-    }
+        "path": "video2.mp4",
+        "description": "this is also my description",  # No product link for this video
+    },
 ]
 
 uploader.upload_videos(videos=videos)
 ```
+
+<h2 id="sounds"> 🎵 Sounds</h2>
+
+Add a sound from TikTok's library with `sound_name`. The first result with that exact title is used (and, with `sound_artist`, whose artist contains it); with no exact match, the first result is used. A sound that cannot be set is logged and the video is posted without it.
+
+```python
+uploader.upload_video(..., sound_name="Espresso", sound_artist="Sabrina Carpenter")
+```
+
+```bash
+tiktok-uploader -v video.mp4 -d "..." -c cookies.txt --sound-name "Espresso" --sound-artist "Sabrina Carpenter"
+```
+
+<h2 id="drafts"> 📝 Drafts</h2>
+
+`draft=True` (CLI `--draft`) saves the video to the account's drafts instead of posting it. Drafts cannot be scheduled.
+
+<h2 id="ai-label"> 🤖 AI-generated Content Label</h2>
+
+`ai_label=True` turns on TikTok's "AI-generated content" label, and `ai_label=False` turns it off (CLI `--ai-label` / `--no-ai-label`). Left out, the label is left as TikTok sets it. If the label was asked for but cannot be set, the video is not posted.
+
+<h2 id="restricted-content"> 🚫 Restricted Content</h2>
+
+`skip_restricted=True` (CLI `--skip-restricted`) does not post a video when TikTok's content check warns that it "may be restricted"; it is reported as failed instead.
+
+<h2 id="batch-cli"> 📦 Batch CLI</h2>
+
+`tiktok-uploader-batch` uploads several videos in one browser session, optionally scheduled at a fixed interval. Descriptions pair with videos in order; the sound and post options apply to every video.
+
+```bash
+tiktok-uploader-batch -v a.mp4 -v b.mp4 -v c.mp4 -d "first" -d "second" -d "third" \
+    --schedule-from "2026-03-20 10:00" --timezone Europe/London --schedule-interval 240 \
+    -c cookies.txt
+```
+
+`--schedule-from` is read in `--timezone` (default UTC), and the last video must still fall within TikTok's 10-day limit. The single-video `-t/--schedule` is read as UTC.
+
+Both commands exit with status 1 if any video failed.
+
+<h2 id="logging"> 📜 Logging</h2>
+
+The uploader logs on the `tiktok_uploader` logger and leaves the handlers and level to your application:
+
+- **INFO**: one line per video: `Posted <path>`, `Scheduled <path> for <time> UTC` or `Saved <path> as a draft`, then `Uploaded 3 of 4 videos` for a batch
+- **WARNING**: a step that was skipped while the upload went on, such as a sound, cover or product link that could not be set
+- **ERROR**: `Failed to upload <path>: <reason>` or `Skipped <path>: <reason>`
+- **DEBUG**: every step of the form, and the traceback of each failure
+
+```python
+import logging
+
+logging.basicConfig(level=logging.INFO)
+```
+
+With no logging configured, Python still prints warnings and errors. The CLI prints every step.
 
 <h2 id="authentication"> 🔐 Authentication</h2>
 
@@ -275,7 +336,7 @@ After installing, open the extensions menu on [TikTok.com](https://tiktok.com/) 
 > 3. Manually add it to your downloaded `cookies.txt`: `.tiktok.com	TRUE	/	FALSE	2147483647	sessionid	YOUR_SESSION_ID`
 
 ```python
-uploader = TikTokUploader(cookies='cookies.txt')
+uploader = TikTokUploader(cookies="cookies.txt")
 uploader.upload_video(...)
 ```
 
@@ -284,17 +345,23 @@ uploader.upload_video(...)
 ```python
 cookies_list = [
     {
-        'name': 'sessionid',
-        'value': '**your session id**',
-        'domain': 'https://tiktok.com',
-        'path': '/',
-        'expiry': '10/8/2023, 12:18:58 PM'
+        "name": "sessionid",
+        "value": "**your session id**",
+        "domain": "https://tiktok.com",
+        "path": "/",
+        "expiry": "10/8/2023, 12:18:58 PM",
     },
     # the rest of your cookies all in a list
 ]
 
 uploader = TikTokUploader(cookies_list=cookies_list)
 uploader.upload_video(...)
+```
+
+**Without any login**, the cookies file named by the `TIKTOK_COOKIES` environment variable is used:
+
+```bash
+export TIKTOK_COOKIES=~/cookies.txt
 ```
 
 <h2 id="browser-selection"> 👀 Browser Selection</h2>
@@ -306,16 +373,10 @@ from tiktok_uploader.upload import TikTokUploader
 
 from random import choice
 
-BROWSERS = [
-    'chrome',
-    'safari',
-    'chromium',
-    'edge',
-    'firefox'
-]
+BROWSERS = ["chrome", "safari", "chromium", "edge", "firefox"]
 
 # randomly picks a web browser
-uploader = TikTokUploader(cookies='cookies.txt', browser=choice(BROWSERS))
+uploader = TikTokUploader(cookies="cookies.txt", browser=choice(BROWSERS))
 uploader.upload_video(...)
 ```
 
@@ -332,7 +393,7 @@ uploader.upload_video(...)
 When using Chrome, adding the `--headless` flag using the CLI or passing `headless` as a keyword argument to `TikTokUploader` is all that is required.
 
 ```python
-uploader = TikTokUploader(cookies='cookies.txt', headless=True)
+uploader = TikTokUploader(cookies="cookies.txt", headless=True)
 uploader.upload_video(...)
 ```
 
