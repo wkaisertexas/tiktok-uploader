@@ -24,9 +24,9 @@ classifiers = [
 ]
 
 dependencies = [
-	"playwright>=1.58.0",
-	"pydantic>=2.10.6",
-	"pytz>=2025.2",
+	"playwright>=1.64.1",
+	"pydantic>=2.14.2",
+	"pytz>=2026.6",
 	"toml>=0.10.2",
 ]
 
@@ -36,27 +36,19 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "freezegun>=0.3.15",
-    "mypy>=0.720",
-    "pandas-stubs>=2.3.0.250703",
-    "pytest>=4.6.11",
-    "ruff>=0.0.17",
-    "types-pytz>=2025.2.0.20250516",
-    "types-toml>=0.10.8.20240310",
-]
-types = [
-    "pandas-stubs>=1.2.0.62",
-    "types-pexpect>=4.8.0.1",
-    "types-pygments>=2.16.0.0",
-    "types-pymysql>=1.1.0.1",
-    "types-python-dateutil>=2.8.19.14",
-    "types-pytz>=2023.3.1.1",
-    "types-requests>=2.31.0.5",
-    "types-toml>=0.10.8.7",
+    "freezegun>=1.5.5",
+    "mypy>=2.4.1",
+    # 3.x needs Python 3.11; only examples/series_upload.py imports pandas
+    "pandas-stubs>=2.3.3.260113",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+    "types-pytz>=2026.6.0.20261031",
+    "types-toml>=0.10.8.20260518",
 ]
 
 [project.scripts]
 tiktok-uploader = "tiktok_uploader.cli:main"
+tiktok-uploader-batch = "tiktok_uploader.cli:batch_upload"
 tiktok-auth = "tiktok_uploader.cli:auth"
 
 [project.urls]

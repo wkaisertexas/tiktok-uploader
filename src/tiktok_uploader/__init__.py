@@ -11,16 +11,10 @@ from tiktok_uploader.settings import load_config
 config_dir = abspath(dirname(__file__))
 config = load_config(join(config_dir, "config.toml"))
 
-## Setup Logging
+## Logging
+# The application chooses the handlers and level: INFO gives each upload's
+# outcome, DEBUG every step. Unconfigured, Python still prints WARNING+.
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-formatter = logging.Formatter("%(asctime)s %(message)s", datefmt="[%H:%M:%S]")
-
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
 
 from tiktok_uploader.upload import TikTokUploader, upload_video, upload_videos  # noqa: E402, I001
 

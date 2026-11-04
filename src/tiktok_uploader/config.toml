@@ -43,6 +43,12 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	iframe = "//iframe"
 	
 	split_window = "//button[./div[text()='Not now']]"
+	# One-off Studio modals stacked over the form after the file is chosen
+	# ("New editing features added" etc.); their overlay, in a floating-ui
+	# portal, intercepts every click underneath (upstream issues #237, #239).
+	modal_dismiss = "//div[@data-floating-ui-portal]//button[normalize-space(.)='Got it']"
+	modal_overlay = "TUXModal-overlay" # class of a modal's backdrop
+	show_more = "//*[text()='Show more']" # expands the interactivity / AI label options
 	upload_video = "//input[@type='file']"
 	upload_finished = "//div[contains(@class, 'btn-cancel')]"
  	upload_confirmation = "//div[@title]"
@@ -56,28 +62,53 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 	mention_box_user_id = "//span[contains(@class, 'user-id')]"
 
 	comment = "//label[.='Comment']/following-sibling::div/input"
+	# Studio merged Duet and Stitch into one checkbox; the two below are the
+	# legacy form's, used only when this one is absent
+	reuse_of_content = "//label[.='Reuse of content']/following-sibling::div/input"
 	duet = "//label[.='Duet']/following-sibling::div/input"
 	stitch = "//label[.='Stitch']/following-sibling::div/input"
+
+	ai_label_switch = "//div[@data-e2e='aigc_container']//div[contains(@class, 'Switch__content')]"
+	ai_label_confirm = "//div[@role='dialog']//button[.='Turn on']"
+	content_restricted = "//*[contains(text(), 'Content may be restricted')]"
 
 	post = "//button[@data-e2e='post_video_button']"
 	post_now = "//button[.//div[text()='Post now']]"
 	post_confirmation = "//div[contains(text(), 'Your video has been uploaded') or contains(text(), '视频已发布') or contains(text(), 'Video published')]"
+	post_error = "//*[contains(text(), 'Something went wrong')]"
+	save_draft = "//button[@data-e2e='save_draft_button']"
 
 
 	[selectors.schedule]
-	switch = "//*[@id='tux-1']"
+	# "When to post" is two radios ("Now" / "Schedule") with session-random
+	# ids, so the Schedule radio is picked by its label (fixes #201, #212,
+	# #224, where the literal id "tux-1" no longer existed). The radios are
+	# disabled for visibility="only_you": private videos can't be scheduled.
+	switch = "//label[contains(@class, 'Radio__root') and .//span[normalize-space(text())='Schedule']]"
+	# a one-time "Allow your video to be saved for scheduled posting?" dialog
+	# appears after picking Schedule, before the date/time pickers
+	consent_allow = "//button[.//div[text()='Allow']]"
 
-	date_picker = "//div[contains(@class, 'date-picker-input')]"
-	calendar = "//div[contains(@class, 'calendar-wrapper')]"
-	calendar_month = "//span[contains(@class, 'month-title')]"
-	calendar_valid_days = "//div[@class='jsx-4172176419 days-wrapper']//span[contains(@class, 'day') and contains(@class, 'valid')]"
-	calendar_arrows = "//span[contains(@class, 'arrow')]"  # first last, second next
+	# The date and the time are ARIA comboboxes ("Select date" / "Select
+	# time", showing "Nov 2, 2026" and "14:25") that open a dialog: a
+	# DatePicker__ month grid (day buttons carry data-disabled / data-outside)
+	# and a TimePicker__ wheel of two listboxes whose options are labelled
+	# "Hours 14" / "Minutes 25". Picked by role and label, never by position
+	# or a generated class.
+	date_picker = "//div[@role='combobox' and @aria-label='Select date']"
+	date_picker_text = "//div[@role='combobox' and @aria-label='Select date']//span[contains(@class, 'Picker__value')]"
+	calendar = "//div[contains(@class, 'DatePicker__panel')]"
+	calendar_month = "//div[contains(@class, 'DatePicker__title')]//button[contains(@class, 'DatePicker__titleMonth')]"
+	calendar_year = "//div[contains(@class, 'DatePicker__title')]//button[contains(@class, 'DatePicker__titleYear')]"
+	calendar_valid_days = "//button[contains(@class, 'DatePicker__day') and @data-disabled='false' and @data-outside='false']"
+	calendar_arrows = "//button[contains(@class, 'DatePicker__nav')]"  # first previous, last next
 
-	time_picker = "//div[contains(@class, 'time-picker-input')]"
-	time_picker_text = "//div[contains(@class, 'time-picker-input')]/*[1]"
-	time_picker_container = "//div[@class='tiktok-timepicker-time-picker-container']"
-	timepicker_hours = "//span[contains(@class, 'tiktok-timepicker-left')]"
-	timepicker_minutes = "//span[contains(@class, 'tiktok-timepicker-right')]"
+	time_picker = "//div[@role='combobox' and @aria-label='Select time']"
+	time_picker_text = "//div[@role='combobox' and @aria-label='Select time']//span[contains(@class, 'Picker__value')]"
+	time_picker_container = "//div[contains(@class, 'TimePicker__panel')]"
+	# {value} is the zero-padded number: "Hours 09", "Minutes 05".
+	timepicker_hour = "//div[@role='listbox' and @aria-label='Hours']//button[@role='option' and @aria-label='Hours {value}']"
+	timepicker_minute = "//div[@role='listbox' and @aria-label='Minutes']//button[@role='option' and @aria-label='Minutes {value}']"
 
 	[selectors.upload.cookies_banner]
 		banner = "tiktok-cookie-banner"
@@ -91,3 +122,16 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 		upload_cover = "//input[@type='file' and @accept='image/png, image/jpeg, image/jpg']"
  		upload_confirmation = "//div[not(contains(@class, 'hide-panel'))]/div[contains(@class, 'cover-edit-footer')]/button[contains(@class, 'TUXButton--primary')]"
 		exit_cover_container = "//div[@class='jsx-3186560874']"
+		studio_edit_cover = "//div[normalize-space(text())='Edit cover']"
+		studio_upload_cover = "//label[@aria-label='Upload cover image']//input[@type='file'] | //div[@role='dialog']//input[@type='file' and contains(@accept, 'image')]"
+		studio_save = "//div[@role='dialog']//button[.//div[text()='Save'] or normalize-space(text())='Save']"
+		studio_cancel = "//div[@role='dialog']//button[.//div[text()='Cancel'] or normalize-space(text())='Cancel']"
+
+	[selectors.upload.sound]
+		add_sound_button = "//button[@data-button-name='sounds']"
+		search_input = "//input[@placeholder='Search sounds']"
+		result_items = "//div[@role='listitem' and @data-item-id]"
+		result_title = ".//div[contains(@class, 'MusicPanelMusicItem__infoBasicTitle')]"
+		result_artist = ".//div[contains(@class, 'MusicPanelMusicItem__infoBasicDesc')]"
+		result_add_button = ".//div[contains(@class, 'MusicPanelMusicItem__operation')]//button"
+		save_button = "//div[contains(@class, 'clip-forge-editor-header-right')]//button[contains(@class, 'Button__root--type-primary')]"
