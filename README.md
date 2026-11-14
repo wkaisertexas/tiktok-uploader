@@ -20,6 +20,7 @@
 - [Usage](#usage)
   - [💻 Command Line Interface (CLI)](#cli)
   - [⬆ Uploading Videos](#uploading-videos)
+  - [AI-generated content](#ai-generated-content)
   - [🫵 Mentions and Hashtags](#mentions-and-hashtags)
   - [🪡 Stitches, Duets and Comments](#stitches-duets-and-comments)
   - [🌐 Proxy](#proxy)
@@ -136,6 +137,27 @@ failed_videos = uploader.upload_videos(videos=videos)
 for video in failed_videos:  # each input video object which failed
     print(f"{video['video']} with description {video['description']} failed")
 ```
+
+<h2 id="ai-generated-content">AI-generated content</h2>
+
+Use `--ai-generated` to enable TikTok's native AI-generated content label before
+posting. The uploader expands **Show more** when needed, handles the first-use
+confirmation, and verifies that the switch is on. If it cannot verify the
+requested label, the upload fails before clicking Post. Without this flag, the
+uploader leaves this setting unchanged.
+
+```bash
+tiktok-uploader -v video.mp4 -d "AI-generated music" -c cookies.txt --ai-generated
+```
+
+```python
+uploader.upload_video('video.mp4', description='AI-generated music', ai_generated=True)
+uploader.upload_videos([
+    {'path': 'video.mp4', 'description': 'AI-generated music', 'ai_generated': True}
+])
+```
+
+The convenience `upload_video(...)` function also accepts `ai_generated=True`.
 
 <h2 id="mentions-and-hashtags"> 🫵 Mentions and Hashtags</h2>
 

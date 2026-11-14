@@ -20,6 +20,7 @@ class VideoDict(TypedDict, total=False):
     product_id: str
     cover: str
     visibility: Literal["everyone", "friends", "only_you"]
+    ai_generated: bool
 
 
 class Cookie(TypedDict, total=False):

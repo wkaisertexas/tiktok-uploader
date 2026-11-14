@@ -40,6 +40,7 @@ def main() -> None:
             product_id=product_id,
             cover=args.cover,
             visibility=visibility,
+            ai_generated=args.ai_generated,
         )
 
     print("-------------------------")
@@ -85,6 +86,11 @@ def get_uploader_args() -> Namespace:
         default="everyone",
     )
     parser.add_argument("--cover", help="Custom cover image file", default=None)
+    parser.add_argument(
+        "--ai-generated",
+        action="store_true",
+        help="Enable and verify TikTok's AI-generated content label before posting",
+    )
 
     # authentication arguments
     parser.add_argument("-c", "--cookies", help="The cookies you want to use")

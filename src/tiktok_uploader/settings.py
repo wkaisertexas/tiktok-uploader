@@ -81,6 +81,7 @@ class UploadSelectors(StrictModel):
     stitch: str
 
     post: str
+    ai_generated: str = "//*[@data-e2e='aigc_container']//*[@aria-checked]"
     post_now: str
     post_confirmation: str
 

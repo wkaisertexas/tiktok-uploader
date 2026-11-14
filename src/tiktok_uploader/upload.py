@@ -14,7 +14,7 @@ from os.path import abspath, exists
 from typing import Any, Literal
 
 import pytz
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from tiktok_uploader import config
@@ -94,6 +94,7 @@ class TikTokUploader:
         num_retries: int = 1,
         skip_split_window: bool = False,
         *args,
+        ai_generated: bool = False,
         **kwargs,
     ) -> bool:
         """
@@ -112,6 +113,8 @@ class TikTokUploader:
             video_dict["visibility"] = visibility
         if cover:
             video_dict["cover"] = cover
+        if ai_generated:
+            video_dict["ai_generated"] = True
 
         failed_list = self.upload_videos(
             [video_dict], num_retries, skip_split_window, *args, **kwargs
@@ -152,6 +155,7 @@ class TikTokUploader:
                     cover_path = abspath(cover_path)
 
                 visibility = video.get("visibility", "everyone")
+                ai_generated = video.get("ai_generated", False)
 
                 logger.debug(
                     "Posting %s%s",
@@ -208,6 +212,7 @@ class TikTokUploader:
                     num_retries,
                     self.headless,
                     *args,
+                    ai_generated=ai_generated,
                     **kwargs,
                 )  # type: ignore[misc]
             except Exception as exception:
@@ -258,6 +263,7 @@ def upload_video(
     browser: Literal["chrome", "safari", "chromium", "edge", "firefox"] = "chrome",
     headless: bool = False,
     *args,
+    ai_generated: bool = False,
     **kwargs,
 ) -> list[VideoDict]:
     """
@@ -290,6 +296,8 @@ def upload_video(
         video_dict["visibility"] = visibility
     if cover:
         video_dict["cover"] = cover
+    if ai_generated:
+        video_dict["ai_generated"] = True
 
     try:
         return uploader.upload_videos([video_dict], *args, **kwargs)
@@ -353,6 +361,7 @@ def complete_upload_form(
     num_retries: int = 1,
     headless: bool = False,
     *args,
+    ai_generated: bool = False,
     **kwargs,
 ) -> None:
     """
@@ -375,7 +384,39 @@ def complete_upload_form(
         _set_schedule_video(page, schedule)
     if product_id:
         _add_product_link(page, product_id)
+    _set_ai_generated(page, ai_generated)
     _post_video(page)
+
+
+def _set_ai_generated(page: Page, enabled: bool = False) -> None:
+    """Verify the native disclosure switch before publishing requested AI content."""
+    if not enabled:
+        return
+
+    try:
+        control = page.locator(f"xpath={config.selectors.upload.ai_generated}")
+        if not control.is_visible():
+            page.get_by_text("Show more", exact=True).click()
+        control.wait_for(state="visible", timeout=config.explicit_wait * 1000)
+        if control.get_attribute("aria-checked") != "true":
+            control.click()
+            confirmation = (
+                page.get_by_role("dialog")
+                .filter(has_text="Labeling AI-generated content")
+                .get_by_role("button", name="Turn on", exact=True)
+            )
+            try:
+                confirmation.wait_for(state="visible", timeout=3000)
+            except PlaywrightTimeoutError:
+                # Accounts that already acknowledged the notice toggle directly.
+                pass
+            else:
+                confirmation.click()
+        expect(control).to_have_attribute(
+            "aria-checked", "true", timeout=config.implicit_wait * 1000
+        )
+    except Exception as exc:
+        raise FailedToUpload("Could not verify the AI-generated content label") from exc
 
 
 def _go_to_upload(page: Page) -> None:
